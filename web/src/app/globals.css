@@ -59,7 +59,7 @@ button { font: inherit; }
 .hero-meta { margin-top: 16px; font-size: 12px; color: var(--ink-3); }
 
 /* Sections */
-.section { padding: 26px 0; }
+.section { padding-block: 26px; }
 .section-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
 .section-head h2 { margin: 0; font-size: 26px; letter-spacing: -0.02em; }
 .section-head .sub { color: var(--ink-3); font-size: 14px; }
@@ -139,7 +139,9 @@ button { font: inherit; }
 .quiet summary { list-style: none; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 14px; cursor: pointer; font-size: 14px; color: var(--ink-2); }
 .quiet summary::-webkit-details-marker { display: none; }
 .quiet summary .btn { font-size: 13px; padding: 6px 12px; }
-.quiet[open] summary .btn::after { content: " ▴"; }
+.quiet .when-open { display: none; }
+.quiet[open] .when-open { display: inline; }
+.quiet[open] .when-closed { display: none; }
 .quiet .grid { padding: 0 14px 14px; }
 .sample-note { font-size: 12px; color: var(--ink-3); margin-top: 10px; }
 .sample-note b { color: var(--ink-2); }
@@ -202,6 +204,10 @@ button { font: inherit; }
 .tag { font-family: var(--font-mono); font-size: 11px; border-radius: 6px; padding: 1px 7px; }
 .tag-deploy { background: #fdeee6; color: #b4400f; } .tag-feature { background: #eaf0ff; color: #1e40af; } .tag-people { background: #eaf7ee; color: #15803d; } .tag-data { background: #e9f4f5; color: #0f6e75; } .tag-roles { background: #f2ecfb; color: #6d28d9; }
 .pitch { white-space: pre-line; font-size: 14px; color: var(--ink-2); }
+.pitch-panel summary { list-style: none; cursor: pointer; margin-bottom: 0; align-items: center; }
+.pitch-panel summary::-webkit-details-marker { display: none; }
+.pitch-panel[open] summary { margin-bottom: 12px; }
+.pitch-panel[open] summary .link { display: none; }
 .count { font-size: 12px; background: var(--role-bg); color: var(--role-ink); border-radius: 999px; padding: 1px 8px; font-weight: 600; }
 .roles { display: grid; gap: 10px; }
 .role { border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: grid; gap: 8px; }
@@ -216,6 +222,8 @@ button { font: inherit; }
   .build-head { grid-template-columns: auto 1fr; }
   .build-actions { grid-column: 1 / -1; }
   .map-piece { min-width: 0; padding: 6px 8px; }
+  .panel-head { flex-wrap: wrap; }
+  .panel-head > .mono, .legend { white-space: nowrap; }
 }
 
 /* Live pulse */

@@ -1,0 +1,16 @@
+apiVersion: orun.io/v1
+kind: TaskContract
+metadata:
+  name: OP-5
+spec:
+  goal: The defects found in the prod screenshot pass are fixed and the epic records what shipped.
+  affects:
+    - default/openproduct/web
+    - web/**
+    - tasks/**
+    - specs/epics/openproduct-reimagined/**
+    - README.md
+  doneWhen:
+    - /roles aligns with the header; a long pitch is collapsed; the phone build page headers do not wrap awkwardly; the quiet row's button says Hide when open.
+    - README status is Shipped and IMPLEMENTATION-STATUS lists every milestone's PR.
+  gates: []

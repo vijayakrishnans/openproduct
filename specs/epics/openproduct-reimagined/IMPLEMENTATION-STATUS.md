@@ -8,8 +8,8 @@ the code departed from `design.md`.
 | OP0 — the spec | ✅ Shipped | [#1](https://github.com/vijayakrishnans/openproduct/pull/1) |
 | OP1 — the directory | ✅ Shipped | [#2](https://github.com/vijayakrishnans/openproduct/pull/2) |
 | OP2 — the build page | ✅ Shipped | [#3](https://github.com/vijayakrishnans/openproduct/pull/3) |
-| OP3 — the pulse, roles and phone | | |
-| OP4 — polish and hand-off | | |
+| OP3 — the pulse, roles and phone | ✅ Shipped | [#4](https://github.com/vijayakrishnans/openproduct/pull/4) |
+| OP4 — polish and hand-off | ✅ Shipped | [#5](https://github.com/vijayakrishnans/openproduct/pull/5) |
 
 ## Departures from the design
 

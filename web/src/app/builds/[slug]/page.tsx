@@ -95,10 +95,13 @@ export default async function BuildPage({ params }: { params: Params }) {
             </div>
 
             {b.pitch ? (
-              <div className="panel">
-                <div className="panel-head"><h2>The pitch</h2></div>
+              <details className="panel pitch-panel">
+                <summary className="panel-head">
+                  <h2>The pitch</h2>
+                  <span className="link">Read it</span>
+                </summary>
                 <div className="pitch">{b.pitch}</div>
-              </div>
+              </details>
             ) : null}
           </div>
 

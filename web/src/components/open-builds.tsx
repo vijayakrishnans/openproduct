@@ -60,7 +60,10 @@ export function OpenBuilds({ builds, topics, sort, cat }: { builds: Build[]; top
             <span>
               <b style={{ color: "var(--ink)" }}>Below the floor</b> · {quiet.length} {quiet.length === 1 ? "build" : "builds"} had no public changes this week. They stay listed, just quieter.
             </span>
-            <span className="btn btn-ghost">Show {quiet.length} quiet builds</span>
+            <span className="btn btn-ghost">
+              <span className="when-closed">Show {quiet.length} quiet builds</span>
+              <span className="when-open">Hide quiet builds</span>
+            </span>
           </summary>
           <div className="grid">{quiet.map((b) => <BuildCard key={b.slug} build={b} topics={topics} />)}</div>
         </details>
