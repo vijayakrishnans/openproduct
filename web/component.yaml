@@ -1,0 +1,49 @@
+apiVersion: sourceplane.io/v1
+kind: Component
+metadata:
+  name: web
+  description: The openproduct directory (Next.js on Cloudflare Workers + Static Assets via OpenNext)
+spec:
+  type: cloudflare-workers-assets-turbo
+  lifecycle: production
+  owner: vijayakrishnans
+  domain: directory
+  path: web
+  lane: isolated
+  subscribe:
+    environments:
+      - name: dev
+        profile: verify
+      - name: stage
+        profile: verify
+        profileRules:
+          - profile: deploy
+            when:
+              triggerRef: github-push-main
+      - name: prod
+        profile: verify
+        profileRules:
+          - profile: deploy
+            when:
+              triggerRef: github-push-main
+  parameters:
+    nodeVersion: "22"
+    pnpmVersion: "10.12.1"
+    # A single app, not a monorepo: the workspace is this directory.
+    workspaceDir: .
+    appDir: .
+    turboFilter: openproduct-web
+    wranglerConfig: wrangler.jsonc
+    workerEntrypoint: .open-next/worker.js
+    assetsDir: .open-next/assets
+    workerName: openproduct-web
+    environmentAwareWorkerName: true
+    workersDevSubdomain: vijayakrishnan12994
+    installCommand: pnpm install --frozen-lockfile
+    buildCommand: pnpm test && pnpm build
+    # The home page renders the directory's own heading. Buffered before grep
+    # so an early match cannot cut curl off.
+    smokeCommand: "html=$(curl -sfL \"${DEPLOYED_URL}/\") && echo \"${html}\" | grep -q 'Products built'"
+  labels:
+    surface: web
+    runtime: cloudflare

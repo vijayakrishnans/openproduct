@@ -8,7 +8,7 @@ It is for showing the direction to a collaborator before anyone changes openprod
 
 | Field | Value |
 |-------|-------|
-| Status | Draft |
+| Status | In progress |
 | Cluster | **OP** (OP0–OP4) |
 | Owner(s) | `apps/web` (the whole app) |
 | Builds on | Nothing: a fresh repository. orun builds and deploys it with the stack-tectonic `cloudflare-workers-assets-turbo` composition, against the newopenproduct workspace |
