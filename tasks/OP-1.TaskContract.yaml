@@ -1,0 +1,13 @@
+apiVersion: orun.io/v1
+kind: TaskContract
+metadata:
+  name: OP-1
+spec:
+  goal: The openproduct-reimagined epic's design doc set is on main.
+  affects:
+    - specs/epics/openproduct-reimagined/**
+    - tasks/**
+  doneWhen:
+    - The five documents are on main under specs/epics/openproduct-reimagined.
+    - This contract is on main under tasks/.
+  gates: []
