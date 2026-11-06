@@ -217,3 +217,61 @@ button { font: inherit; }
   .build-actions { grid-column: 1 / -1; }
   .map-piece { min-width: 0; padding: 6px 8px; }
 }
+
+/* Live pulse */
+.pulse { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.pulse-head { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; font-weight: 600; font-size: 14px; }
+.pulse-head .mono { font-size: 11px; font-weight: 400; }
+.live-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #22a35a; margin-right: 4px; vertical-align: middle; }
+.pulse ul { list-style: none; margin: 0; padding: 0 14px; }
+.pulse li { display: grid; grid-template-columns: 32px 1fr auto; gap: 10px; align-items: center; padding: 9px 0; border-top: 1px solid var(--line); }
+.pulse li a { text-decoration: none; font-size: 14px; display: grid; }
+.pulse li small { font-size: 11px; color: var(--ink-3); font-family: var(--font-mono); }
+.pulse li .mono { font-size: 11px; }
+.pulse-tile { width: 30px; height: 30px; border-radius: 8px; background: var(--ink); color: #fff; display: inline-grid; place-items: center; font-size: 10.5px; font-weight: 600; }
+.pulse-foot { padding: 10px 14px; font-size: 12px; color: var(--ink-3); background: #faf9f6; border-top: 1px solid var(--line); }
+.ticker { display: none; }
+.lede-short { display: none; }
+
+/* Roles */
+.role-row { display: grid; grid-auto-flow: column; grid-auto-columns: 232px; gap: 12px; overflow-x: auto; padding-bottom: 8px; scroll-snap-type: x mandatory; }
+.role-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; margin-top: 16px; }
+.role-card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: grid; gap: 8px; align-content: start; scroll-snap-align: start; }
+.role-by { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-2); }
+.role-by a { text-decoration: none; }
+.role-by .pulse-tile { width: 22px; height: 22px; border-radius: 6px; font-size: 9px; }
+.role-card strong { font-size: 15px; line-height: 1.3; }
+.role-card .first { font-size: 12.5px; }
+
+/* Bottom bar (phone) */
+.tabbar { display: none; }
+
+@media (max-width: 700px) {
+  body { padding-bottom: 72px; }
+  .wrap { padding: 0 16px; }
+  .header-end .btn, .header-end .btn-plain { display: none; }
+  .header-end::after { content: "Sign in"; font-weight: 500; }
+  .site-header .wrap { height: 56px; }
+  .chips, .hero p.lede, .hero-actions, .hero-meta, .pulse, .site-footer, .band { display: none; }
+  .lede-short { display: block; font-size: 17px; color: var(--ink-2); margin: 0; }
+  .hero { padding: 22px 0 14px; }
+  .hero h1 { font-size: 40px; margin-bottom: 10px; }
+  .ticker { display: flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--card); border-radius: 999px; padding: 8px 14px; font-size: 14px; text-decoration: none; margin-bottom: 14px; }
+  .ticker .mono { margin-left: auto; font-size: 11px; }
+  .toolbar > div:first-child, .formula, .cats, .sample-note { display: none; }
+  .tabs { width: 100%; justify-content: space-between; }
+  .tabs a { padding: 6px 8px; font-size: 13px; }
+  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .map-mini { height: 84px; }
+  .map-node { font-size: 0; padding: 4px; gap: 0; }
+  .map-node.top, .map-node.bottom, .map-line.to-sign-in, .map-line.to-deploy { display: none; }
+  .card-badges .badge.mono, .card-cat, .spark, .vote { display: none; }
+  .card-tag { font-size: 13px; }
+  .role-row { grid-auto-columns: 78%; }
+  .tabbar { display: grid; grid-template-columns: repeat(4, 1fr); position: fixed; left: 0; right: 0; bottom: 0; background: var(--card); border-top: 1px solid var(--line); padding: 8px 0 12px; z-index: 20; }
+  .tabbar a { display: grid; justify-items: center; gap: 2px; text-decoration: none; font-size: 12px; color: var(--ink-2); }
+  .tabbar a span { font-size: 18px; line-height: 1; }
+  .tabbar a.on { color: var(--ink); font-weight: 600; }
+  .tabbar a.accent { color: var(--accent); font-weight: 600; }
+  .quiet summary .btn { display: none; }
+}

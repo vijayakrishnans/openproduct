@@ -1,8 +1,11 @@
 import { HowItWorks } from "@/components/how-it-works";
+import { LivePulse, PulseTicker } from "@/components/live-pulse";
 import { OpenBuilds } from "@/components/open-builds";
+import { RolesRow } from "@/components/roles-row";
+import { TabBar } from "@/components/tab-bar";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import { SORTS, type Sort, belowFloor, loadDirectory } from "@/lib/directory";
+import { SORTS, type Sort, belowFloor, loadDirectory, loadRoles } from "@/lib/directory";
 import { OPENPRODUCT, SOURCE } from "@/lib/links";
 
 // The directory is read per request: it is the live list, not a snapshot.
@@ -16,6 +19,7 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
   const dir = await loadDirectory();
   const cat = dir.ok && dir.topics.some((t) => t.value === q.cat) ? q.cat! : null;
   const updated = new Date().toISOString().slice(11, 16);
+  const roles = dir.ok ? (await loadRoles(dir.builds, 8)).slice(0, 8) : [];
   return (
     <>
       <SiteHeader current="/" />
@@ -28,6 +32,7 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
               <span className="chip">BUILT ON ORUNBASE</span>
             </div>
             <h1>Products built in the open.</h1>
+            <p className="lede-short">Public repos, public workspaces. List yours free, fork anything.</p>
             <p className="lede">
               Every build is a public repo and a public workspace on Orunbase. List yours for free, find people to
               build with, and fork anything you like. The directory itself is open source too.
@@ -42,7 +47,10 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
               </div>
             ) : null}
           </div>
+          {dir.ok ? <LivePulse builds={dir.builds} topics={dir.topics} /> : null}
         </section>
+        {dir.ok ? <PulseTicker builds={dir.builds} /> : null}
+        <RolesRow roles={roles} />
         {dir.ok ? (
           <OpenBuilds builds={dir.builds} topics={dir.topics} sort={sort} cat={cat} />
         ) : (
@@ -54,6 +62,7 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
         <HowItWorks />
       </main>
       <SiteFooter />
+      <TabBar current="/" />
     </>
   );
 }
