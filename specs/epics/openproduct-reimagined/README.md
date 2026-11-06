@@ -8,14 +8,14 @@ It is for showing the direction to a collaborator before anyone changes openprod
 
 | Field | Value |
 |-------|-------|
-| Status | In progress |
+| Status | ✅ Shipped |
 | Cluster | **OP** (OP0–OP4) |
 | Owner(s) | `apps/web` (the whole app) |
 | Builds on | Nothing: a fresh repository. orun builds and deploys it with the stack-tectonic `cloudflare-workers-assets-turbo` composition, against the newopenproduct workspace |
 | Changes | A single Next.js app in `web/`, an `intent.yaml` and an orun CI workflow. No database, no runtime secrets, no sign-in. |
 | Decisions locked | (1) Read-only from `https://api.openproduct.live`; nothing is written. (2) Sample data is labelled on the page wherever it appears. (3) Sign in, List your build, Upvote, Follow and Fork & deploy link to the real openproduct.live and Orunbase. |
 | Gate | OP1 is the first user-visible change: the home page on real data. |
-| Shipped as | |
+| Shipped as | PRs #1–#5 on 2026-11-06; prod: https://openproduct-web-prod.vijayakrishnan12994.workers.dev |
 
 ## Read order
 
