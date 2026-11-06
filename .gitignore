@@ -1,0 +1,12 @@
+node_modules/
+.next/
+.open-next/
+.wrangler/
+.orun/
+**/.orun/
+*.tsbuildinfo
+next-env.d.ts
+.env*
+.dev.vars*
+plan.json
+*.log
