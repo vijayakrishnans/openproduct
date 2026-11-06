@@ -1,0 +1,16 @@
+apiVersion: orun.io/v1
+kind: TaskContract
+metadata:
+  name: OP-4
+spec:
+  goal: The home page has the live pulse and the Looking for people row, /roles lists every open role, and the phone layout matches the PDF.
+  affects:
+    - default/openproduct/web
+    - web/**
+    - tasks/**
+    - specs/epics/openproduct-reimagined/**
+  doneWhen:
+    - The live pulse lists the most recent public commits across builds.
+    - The Looking for people row and /roles show real role titles from the API.
+    - At 390 px the home page has the compact header, the pulse ticker, the two-column cards and the bottom bar.
+  gates: []

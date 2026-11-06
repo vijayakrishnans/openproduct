@@ -58,3 +58,16 @@ describe("sample app map", () => {
     expect(pieces.filter((p) => p.movedLast)).toHaveLength(1);
   });
 });
+
+describe("pulse", () => {
+  it("lists the newest real commits first, with their age", async () => {
+    const { pulse, ago } = await import("./directory");
+    const now = Date.parse("2026-11-06T05:00:00Z");
+    expect(ago("2026-11-06T04:58:00Z", now)).toBe("2m");
+    expect(ago("2026-11-04T05:00:00Z", now)).toBe("2d");
+    const old = toBuild(product("old", { lastCommitAt: { value: "2026-10-01T00:00:00Z" } }))!;
+    const fresh = toBuild(product("fresh", { lastCommitAt: { value: "2026-11-05T00:00:00Z" } }))!;
+    const none = toBuild(product("none"))!;
+    expect(pulse([old, none, fresh]).map((l) => l.slug)).toEqual(["fresh", "old"]);
+  });
+});

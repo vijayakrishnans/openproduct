@@ -224,3 +224,33 @@ export async function loadBuild(slug: string): Promise<BuildDetail | null | "unr
     sample: ["pieces", "log", "pinned", "role.firstTask", "role.skills", ...(maintainers ? [] : ["people"])],
   };
 }
+
+/* ── Pulse and roles ───────────────────────────────────────────────── */
+
+export function ago(iso: string, now = Date.now()): string {
+  const s = Math.max(0, Math.round((now - Date.parse(iso)) / 1000));
+  if (s < 60) return "now";
+  if (s < 3600) return `${Math.floor(s / 60)}m`;
+  if (s < 86400) return `${Math.floor(s / 3600)}h`;
+  return `${Math.floor(s / 86400)}d`;
+}
+
+/** The newest public commits across builds: real times from lastCommitAt. */
+export function pulse(builds: Build[], n = 5): { slug: string; when: string; at: string; category: string | null }[] {
+  return builds
+    .filter((b) => b.lastCommitAt)
+    .sort((a, b) => Date.parse(b.lastCommitAt!) - Date.parse(a.lastCommitAt!))
+    .slice(0, n)
+    .map((b) => ({ slug: b.slug, when: ago(b.lastCommitAt!), at: b.lastCommitAt!, category: b.category }));
+}
+
+export type OpenRole = Role & { slug: string; tagline: string };
+
+/** Open roles across builds, most active builds first. Each needs one detail read. */
+export async function loadRoles(builds: Build[], limit?: number): Promise<OpenRole[]> {
+  const withRoles = sortBuilds(builds.filter((b) => b.roleCount > 0), "active").slice(0, limit ?? builds.length);
+  const details = await Promise.all(withRoles.map((b) => loadBuild(b.slug).catch(() => null)));
+  return details.flatMap((d) =>
+    d && d !== "unreachable" ? d.roles.map((r) => ({ ...r, slug: d.slug, tagline: d.tagline })) : [],
+  );
+}
