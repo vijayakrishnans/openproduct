@@ -1,0 +1,16 @@
+apiVersion: orun.io/v1
+kind: TaskContract
+metadata:
+  name: OP-3
+spec:
+  goal: Every listing has its own build page in the PDF's design, from live data with labelled samples.
+  affects:
+    - default/openproduct/web
+    - web/**
+    - tasks/**
+    - specs/epics/openproduct-reimagined/**
+  doneWhen:
+    - /builds/<slug> renders for every listing with its real tagline, category, licence and open roles.
+    - An unknown slug is a 404.
+    - The app map pieces are selectable and show their detail; sample sections are labelled.
+  gates: []

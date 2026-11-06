@@ -153,3 +153,74 @@ export const initials = (slug: string) => slug.replace(/[^a-z0-9]/gi, "").slice(
 /** Card tint by category, as the PDF colours them. */
 const TINTS = ["#ecf0f8", "#f5ede4", "#efede8", "#ecf2ec", "#efeaf6", "#e8f1f1", "#f3f0e4", "#f6e9ea"];
 export const tint = (b: Build) => TINTS[seed(b.category ?? b.slug) % TINTS.length];
+
+/* ── One build ─────────────────────────────────────────────────────── */
+
+export type Role = { id: string; title: string; firstTask: string; skills: string[] };
+export type LogEntry = { ago: string; kind: "deploy" | "feature" | "people" | "data" | "roles"; text: string };
+
+export type BuildDetail = Build & {
+  pitch: string | null;
+  repoUrl: string | null;
+  liveUrl: string | null;
+  workspaceRef: string | null;
+  maintainers: number;
+  roles: Role[];
+  /** SAMPLE until the API has a build log: derived from the slug. */
+  log: LogEntry[];
+  pinned: string;
+};
+
+const SKILLS = [["TypeScript", "Postgres"], ["React", "Tailwind"], ["Go", "GitHub API"], ["Python", "Supabase"], ["Figma", "React"], ["Markdown"]];
+const FIRST_TASKS = ["a five-minute quickstart", "an import from CSV", "the empty states", "retry and backoff for webhooks", "a settings page", "tests for the billing edge cases"];
+
+export function sampleLog(b: Build): { log: LogEntry[]; pinned: string } {
+  const s = seed(b.slug);
+  const moved = b.pieces.find((p) => p.movedLast);
+  const log: LogEntry[] = [
+    { ago: "14m", kind: "deploy", text: `Deployed to ${moved?.key === "deploy" ? "prod" : "stage and prod"} on Cloudflare` },
+    { ago: "3h", kind: "feature", text: `Shipped a change to ${moved?.label.toLowerCase() ?? "the app"}` },
+    { ago: "1d", kind: "people", text: "New contributor merged their first PR" },
+    { ago: "4d", kind: "data", text: "Added a column to the main table" },
+    { ago: "6d", kind: "roles", text: "Opened a role" },
+  ].slice(0, 3 + (s % 3)) as LogEntry[];
+  return { log, pinned: "Looking for people who want to own a piece of this. Open roles are on the right." };
+}
+
+export async function loadBuild(slug: string): Promise<BuildDetail | null | "unreachable"> {
+  if (!/^[a-z0-9][a-z0-9-]{0,62}$/.test(slug)) return null;
+  let res: Response;
+  try {
+    res = await fetch(`${API_ORIGIN}/v1/products/${slug}`, { headers: { accept: "application/json" }, cache: "no-store" });
+  } catch {
+    return "unreachable";
+  }
+  if (res.status === 404) return null;
+  if (!res.ok) return "unreachable";
+  const data = obj(obj(await res.json()).data);
+  const p = obj(data.product ?? data);
+  const b = toBuild(p);
+  if (!b || !listable(b)) return null;
+  const s = seed(b.slug);
+  const openings = Array.isArray(p.openings) ? p.openings.map(obj) : [];
+  const roles: Role[] = openings
+    .map((o, i) => ({
+      id: str(o.id) ?? String(i),
+      title: str(val(o.title)) ?? "",
+      firstTask: FIRST_TASKS[(s + i) % FIRST_TASKS.length],
+      skills: SKILLS[(s + i) % SKILLS.length],
+    }))
+    .filter((r) => r.title);
+  const maintainers = Array.isArray(p.maintainers) ? p.maintainers.length : 0;
+  return {
+    ...b,
+    pitch: str(val(p.pitch)),
+    repoUrl: str(val(p.repoUrl)),
+    liveUrl: str(val(p.liveUrl)),
+    workspaceRef: str(p.workspaceRef),
+    maintainers,
+    roles,
+    ...sampleLog(b),
+    sample: ["pieces", "log", "pinned", "role.firstTask", "role.skills", ...(maintainers ? [] : ["people"])],
+  };
+}
