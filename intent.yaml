@@ -1,0 +1,84 @@
+apiVersion: sourceplane.io/v1
+kind: Intent
+
+metadata:
+  name: openproduct
+  description: "Products built in the open, a directory of open builds read from openproduct.live's public API"
+  namespace: vijayakrishnans
+
+execution:
+  state:
+    backendUrl: https://api.orunbase.com
+    # The newopenproduct workspace (ws_ENVF0PHY). Every remote operation,
+    # including CI's credential-free OIDC exchange, claims it.
+    workspace: org_dcbd773571444d708058d40821392242
+    requireOrg: true
+    autopushCatalog: true
+  lanes:
+    mode: auto
+    maxLanes: 3
+    concurrency: 3
+
+compositions:
+  sources:
+    # Pinned, so a catalog release cannot change how this repo deploys
+    # without a commit here.
+    - name: stack-tectonic
+      kind: oci
+      ref: oci://ghcr.io/sourceplane/stack-tectonic:0.19.0
+  resolution:
+    precedence:
+      - stack-tectonic
+
+discovery:
+  roots:
+    - web/
+
+automation:
+  triggerBindings:
+    github-pull-request:
+      description: Pull request validation
+      on:
+        provider: github
+        event: pull_request
+        actions: [opened, synchronize, reopened, ready_for_review]
+        baseBranches: [main]
+      plan:
+        scope: changed
+        base: pull_request.base.sha
+        head: pull_request.head.sha
+    github-push-main:
+      description: Deploy after merge
+      on:
+        provider: github
+        event: push
+        branches: [main]
+    local-development:
+      description: Local runs
+      on:
+        provider: local
+
+environments:
+  dev:
+    description: Verify-only. Pull requests build here; nothing is deployed.
+    activation:
+      triggerRefs: [github-pull-request, local-development]
+    dependencyMode: advisory
+  stage:
+    description: Deployed on every merge to main, before prod.
+    url: https://openproduct-web-stage.vijayakrishnan12994.workers.dev
+    activation:
+      triggerRefs: [github-push-main]
+  prod:
+    description: The link to share.
+    url: https://openproduct-web-prod.vijayakrishnan12994.workers.dev
+    activation:
+      triggerRefs: [github-push-main]
+    promotion:
+      dependsOn:
+        - environment: stage
+
+repo:
+  displayName: openproduct
+  docs:
+    overview: README.md

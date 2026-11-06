@@ -1,0 +1,31 @@
+{
+  "name": "openproduct-web",
+  "version": "0.0.0",
+  "private": true,
+  "packageManager": "pnpm@10.12.1",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "dev": "next dev -p 3000",
+    "build": "next build && opennextjs-cloudflare build --skipBuild --skipWranglerConfigCheck",
+    "preview": "opennextjs-cloudflare preview",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@opennextjs/cloudflare": "^1.20.11",
+    "next": "16.3.8",
+    "react": "^19.2.1",
+    "react-dom": "^19.2.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4",
+    "wrangler": "^4.151.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["esbuild", "workerd", "sharp"]
+  }
+}

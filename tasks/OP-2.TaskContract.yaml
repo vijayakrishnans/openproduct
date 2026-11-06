@@ -1,0 +1,18 @@
+apiVersion: orun.io/v1
+kind: TaskContract
+metadata:
+  name: OP-2
+spec:
+  goal: The web app deploys through orun to stage and prod and its home page shows the real directory in the new design.
+  affects:
+    - default/openproduct/web
+    - web/**
+    - intent.yaml
+    - .github/workflows/**
+    - tasks/**
+    - specs/epics/openproduct-reimagined/**
+  doneWhen:
+    - A merge to main deploys openproduct-web to stage and then prod, and the smoke check passes.
+    - The home page lists the builds from api.openproduct.live with app maps, sort tabs, category chips and the quiet row.
+    - The app map is labelled as sample data.
+  gates: []
