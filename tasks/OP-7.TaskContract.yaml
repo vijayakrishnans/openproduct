@@ -1,0 +1,16 @@
+apiVersion: orun.io/v1
+kind: TaskContract
+metadata:
+  name: OP-7
+spec:
+  goal: The community page's Reddit and YouTube cards link to r/Orunbase and the @orunbase channel.
+  affects:
+    - default/openproduct/web
+    - web/**
+    - tasks/**
+  deps:
+    - OP-6
+  doneWhen:
+    - /community links Reddit to https://www.reddit.com/r/Orunbase/ and YouTube to https://www.youtube.com/@orunbase/videos; X still says Link coming soon.
+    - The footer's Community column lists Discord, Reddit and YouTube.
+  gates: []

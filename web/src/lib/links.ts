@@ -30,14 +30,14 @@ export const COMMUNITY: CommunityChannel[] = [
     name: "Reddit",
     pitch: "Longer threads: launch posts, feedback on builds, and stack debates.",
     cta: "Visit the subreddit",
-    url: null,
+    url: "https://www.reddit.com/r/Orunbase/",
   },
   {
     key: "youtube",
     name: "YouTube",
     pitch: "Build walkthroughs, demos, and the weekly digest on video.",
     cta: "Watch the channel",
-    url: null,
+    url: "https://www.youtube.com/@orunbase/videos",
   },
   {
     key: "x",
