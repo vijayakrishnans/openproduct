@@ -6,6 +6,7 @@ const NAV = [
   { href: "/roles", label: "Open roles" },
   { href: "/#topics", label: "Topics" },
   { href: `${OPENPRODUCT}/people`, label: "People" },
+  { href: "/community", label: "Community" },
 ];
 
 export function SiteHeader({ current }: { current?: string }) {

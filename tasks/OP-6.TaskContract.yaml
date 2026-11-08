@@ -1,0 +1,14 @@
+apiVersion: orun.io/v1
+kind: TaskContract
+metadata:
+  name: OP-6
+spec:
+  goal: A /community page lists openproduct's channels (Discord, Reddit, YouTube, X), linked from the header, footer and phone tab bar.
+  affects:
+    - default/openproduct/web
+    - web/**
+    - tasks/**
+  doneWhen:
+    - /community shows a card per channel; Discord links to its invite, and channels without a URL say Link coming soon instead of linking nowhere.
+    - The header, the footer and the phone tab bar link to /community; the footer lists each channel that has a URL.
+  gates: []

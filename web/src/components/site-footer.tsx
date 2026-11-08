@@ -1,4 +1,4 @@
-import { OPENPRODUCT, SOURCE } from "@/lib/links";
+import { COMMUNITY, OPENPRODUCT, SOURCE } from "@/lib/links";
 
 export function SiteFooter() {
   return (
@@ -22,6 +22,14 @@ export function SiteFooter() {
           <li><a href={`${OPENPRODUCT}/rss`}>RSS</a></li>
           <li><a href={`${OPENPRODUCT}/automation`}>What runs automatically</a></li>
           <li><a href="/#ranking">Ranking formulas</a></li>
+        </ul>
+        <ul>
+          <li><a href="/community">Community</a></li>
+          {COMMUNITY.filter((c) => c.url).map((c) => (
+            <li key={c.key}>
+              <a href={c.url!} target="_blank" rel="noopener noreferrer">{c.name}</a>
+            </li>
+          ))}
         </ul>
       </div>
     </footer>
