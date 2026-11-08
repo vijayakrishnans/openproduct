@@ -79,7 +79,7 @@ button { font: inherit; }
 
 /* Footer */
 .site-footer { border-top: 1px solid var(--line); margin-top: 40px; padding: 26px 0 60px; font-size: 14px; }
-.site-footer .wrap { display: grid; grid-template-columns: 2fr 1.2fr 1fr; gap: 24px; }
+.site-footer .wrap { display: grid; grid-template-columns: 2fr 1.2fr 1fr 1fr; gap: 24px; }
 .site-footer p { color: var(--ink-2); margin: 6px 0 8px; max-width: 320px; }
 .site-footer ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .site-footer a { text-decoration: none; color: var(--ink-2); }
@@ -276,10 +276,21 @@ button { font: inherit; }
   .card-badges .badge.mono, .card-cat, .spark, .vote { display: none; }
   .card-tag { font-size: 13px; }
   .role-row { grid-auto-columns: 78%; }
-  .tabbar { display: grid; grid-template-columns: repeat(4, 1fr); position: fixed; left: 0; right: 0; bottom: 0; background: var(--card); border-top: 1px solid var(--line); padding: 8px 0 12px; z-index: 20; }
+  .tabbar { display: grid; grid-template-columns: repeat(5, 1fr); position: fixed; left: 0; right: 0; bottom: 0; background: var(--card); border-top: 1px solid var(--line); padding: 8px 0 12px; z-index: 20; }
   .tabbar a { display: grid; justify-items: center; gap: 2px; text-decoration: none; font-size: 12px; color: var(--ink-2); }
   .tabbar a span { font-size: 18px; line-height: 1; }
   .tabbar a.on { color: var(--ink); font-weight: 600; }
   .tabbar a.accent { color: var(--accent); font-weight: 600; }
   .quiet summary .btn { display: none; }
 }
+
+/* /community */
+.community-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; margin-top: 16px; }
+.community-card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; display: grid; gap: 8px; align-content: start; text-decoration: none; color: inherit; transition: border-color .15s, transform .15s; }
+a.community-card:hover { border-color: var(--line-2); transform: translateY(-1px); }
+.community-card strong { font-size: 18px; letter-spacing: -0.01em; }
+.community-card p { margin: 0; color: var(--ink-2); font-size: 14px; }
+.community-mark { width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 16px; }
+.community-cta { margin-top: 4px; color: var(--link); font-weight: 600; font-size: 14px; }
+.community-cta.soon { color: var(--ink-3); font-weight: 500; }
+.community-card.is-soon .community-mark { opacity: 0.55; }

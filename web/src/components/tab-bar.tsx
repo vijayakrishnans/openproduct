@@ -6,6 +6,7 @@ const TABS = [
   { href: "/roles", label: "Roles", icon: "⚇" },
   { href: OPENPRODUCT, label: "List yours", icon: "+", accent: true },
   { href: "/#topics", label: "Topics", icon: "≡" },
+  { href: "/community", label: "Community", icon: "☺" },
 ];
 
 /** The phone's bottom bar; hidden on wider screens. */
