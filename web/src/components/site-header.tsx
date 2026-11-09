@@ -2,6 +2,7 @@ import Link from "next/link";
 import { currentSession } from "@/lib/auth/request";
 import { OPENPRODUCT } from "@/lib/links";
 import { SearchBox } from "./search-box";
+import { ThemeToggle } from "./theme-toggle";
 
 const NAV = [
   { href: "/", label: "Builds" },
@@ -31,6 +32,7 @@ export async function SiteHeader({ current, query }: { current?: string; query?:
         <div className="header-end">
           <SearchBox initial={query} />
           <Link href="/search" className="search-icon" aria-label="Search">⌕</Link>
+          <ThemeToggle />
           {session ? (
             <Link className="account-chip" href="/account" title={name}>
               {session.account.avatarUrl ? (

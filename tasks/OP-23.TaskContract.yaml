@@ -1,0 +1,15 @@
+apiVersion: orun.io/v1
+kind: TaskContract
+metadata:
+  name: OP-23
+spec:
+  goal: Dark mode — a dark palette for every page, following the device by default, with a header toggle (device, light, dark) remembered in a cookie and applied before first paint.
+  affects:
+    - default/openproduct/web
+    - web/**
+    - tasks/**
+  doneWhen:
+    - Every colour in the stylesheet comes from a theme token, with light and dark values.
+    - The site follows the device setting by default; the header toggle cycles device, light and dark, and the choice survives a reload without a flash.
+    - Screenshots of the main pages in dark mode at 1440 and 390 px show readable text and no overflow.
+  gates: []
