@@ -548,3 +548,17 @@ a.channel-row .channel-text span { color: var(--link); font-weight: 600; }
 .owner-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin: 14px 0 0; padding: 12px 14px; border: 1px dashed var(--line-2); border-radius: 12px; background: var(--card); font-size: 14px; color: var(--ink-2); }
 .owner-bar.mine { border-style: solid; border-color: var(--role-bg); background: #f5f8ff; }
 .owner-bar .btn { font: inherit; font-weight: 600; padding: 7px 14px; }
+
+/* Support links (BP4) */
+.support-block { margin: 18px 0 0; }
+.panel .support-block { margin: 0; }
+.support-block h2 { font-size: 17px; margin: 0 0 10px; letter-spacing: -0.01em; }
+.support-list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.support-link { display: inline-flex; align-items: center; gap: 7px; padding: 8px 12px; border: 1px solid var(--line-2); border-radius: 999px; background: var(--card); color: var(--ink); text-decoration: none; font-weight: 600; font-size: 14px; }
+.support-link:hover { border-color: var(--ink-3); }
+.support-heart { color: #db2777; }
+.support-host { color: var(--ink-3); font-weight: 400; font-size: 12.5px; }
+.support-hint { margin: 0; font-size: 13px; color: var(--ink-3); }
+.support-slots { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+@media (max-width: 640px) { .support-slots { grid-template-columns: minmax(0, 1fr); } }
+.earned-badge.support svg { color: #be185d; background: #fdf2f8; }

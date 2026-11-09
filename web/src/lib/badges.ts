@@ -4,7 +4,7 @@
 // was computed from, in words, so a reader can check it. Nothing here is
 // awarded, and no badge is a score — the contribution tiers stop at 10.
 
-export type BadgeKind = "since" | "open" | "launched" | "maintains" | "contributor-tier" | "contributor";
+export type BadgeKind = "since" | "open" | "launched" | "maintains" | "contributor-tier" | "contributor" | "support";
 
 export type Badge = {
   kind: BadgeKind;
@@ -24,6 +24,8 @@ export type BadgeInputs = {
   contributes: number;
   /** The public builds they contribute to, one badge each; absent on cards. */
   contributesTo?: string[];
+  /** How many support links they list on this site (BP4). */
+  supportLinks?: number;
 };
 
 export const CONTRIBUTION_TIERS = [
@@ -62,6 +64,13 @@ export function builderBadges(i: BadgeInputs): Badge[] {
       kind: "contributor-tier",
       label: tier.label,
       from: `Listed as a contributor on ${plural(i.contributes, "public build", "public builds")}`,
+    });
+  }
+  if (i.supportLinks && i.supportLinks > 0) {
+    out.push({
+      kind: "support",
+      label: "Open to support",
+      from: `They list ${plural(i.supportLinks, "way", "ways")} to support their work`,
     });
   }
   if (i.publishedAt) {

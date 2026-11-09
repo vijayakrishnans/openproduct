@@ -71,6 +71,27 @@ export const MIGRATIONS: { version: number; name: string; statements: string[] }
        )`,
     ],
   },
+  {
+    version: 2,
+    name: "support_links",
+    statements: [
+      // builder-profiles BP4 (D5): up to four links per builder handle or
+      // per build slug, in the author's order. `account_id` is who set them;
+      // deleting that account deletes them. The allowlist isn't in the
+      // schema: it's re-applied on every read, so a provider dropped later
+      // stops rendering without a migration.
+      `CREATE TABLE IF NOT EXISTS support_links (
+         owner_kind TEXT NOT NULL CHECK (owner_kind IN ('builder', 'build')),
+         owner_key TEXT NOT NULL COLLATE NOCASE,
+         position INTEGER NOT NULL CHECK (position BETWEEN 0 AND 3),
+         provider TEXT NOT NULL,
+         url TEXT NOT NULL CHECK (length(url) <= 300),
+         account_id TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+         updated_at TEXT NOT NULL,
+         PRIMARY KEY (owner_kind, owner_key, position)
+       )`,
+    ],
+  },
 ];
 
 const applied = new WeakSet<object>();
