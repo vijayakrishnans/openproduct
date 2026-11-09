@@ -6,9 +6,9 @@ What actually shipped, and every place the code departed from `design.md`.
 |---|---|---|
 | BP0: the spec | ✅ Shipped | [#14](https://github.com/vijayakrishnans/openproduct/pull/14), [#16](https://github.com/vijayakrishnans/openproduct/pull/16) |
 | BP1: badges and projects | ✅ Shipped | [#15](https://github.com/vijayakrishnans/openproduct/pull/15) |
-| BP2: accounts | 🚧 In review | |
+| BP2: accounts | ✅ Shipped | [#17](https://github.com/vijayakrishnans/openproduct/pull/17) |
 | BP3: Apple and email sign-in | ⏳ Not started | |
-| BP4: support links | ⏳ Not started | |
+| BP4: support links | 🚧 In review | |
 | BP5: community discussions | ⏳ Not started | |
 | BP6: builder posts | ⏳ Not started | |
 | BP7: merged-PR badges | ⏳ Not started | |
@@ -42,3 +42,15 @@ The pipeline deploys stage and prod from the same `wrangler.jsonc` and changes o
 ### Orunbase's client expires, so the site re-registers (BP2)
 
 Orunbase forgets a self-registered client 30 days after it was last used. The site stores its client id per callback address, and registers a new client if 25 days pass without a sign-in.
+
+### Maintainers come from the claimed profile, and a build's links follow its maintainer (BP4)
+
+The public build data lists no maintainers (`maintainers` is empty on every listing). So "maintains this build" means the build is in the `maintains` list of the account's claimed openproduct.live profile, read live. A build's links render only while whoever set them still maintains it, which needs one more profile read on build pages that have links.
+
+### Drafts open on openproduct.live (BP4, fixes BP1)
+
+The directory leaves out drafts (no tagline or no category), so `/builds/<draft>` is a 404. Project cards on builder pages, and the account page's build links, now send drafts to their openproduct.live listing. A draft's support links are saved, and show once it's listed.
+
+### The support badge is "Open to support" (BP4)
+
+D2 called it "Has support links". The badge reads "Open to support" and says how many ways are listed.

@@ -60,6 +60,16 @@ describe("builderBadges", () => {
   });
 });
 
+describe("support badge (BP4)", () => {
+  it("appears with the count of links, and not at zero", () => {
+    const none = { publishedAt: null, openToProject: false, launched: false, maintains: 0, contributes: 0 };
+    expect(builderBadges({ ...none, supportLinks: 2 })).toEqual([
+      { kind: "support", label: "Open to support", from: "They list 2 ways to support their work" },
+    ]);
+    expect(builderBadges({ ...none, supportLinks: 0 })).toEqual([]);
+  });
+});
+
 describe("cardBadges", () => {
   it("keeps at most three, drops the date and the per-build badges", () => {
     const card = cardBadges({

@@ -374,3 +374,9 @@ export async function loadPerson(handle: string): Promise<PersonDetail | null | 
     contributesToBuilds: listings(c.contributesToListings),
   };
 }
+
+/** The slugs a builder maintains on openproduct.live, or null when the profile can't be read. */
+export async function maintainsOf(handle: string): Promise<string[] | null> {
+  const person = await loadPerson(handle);
+  return person && person !== "unreachable" ? person.maintainsBuilds.map((b) => b.slug) : null;
+}

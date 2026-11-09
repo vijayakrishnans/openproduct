@@ -3,7 +3,10 @@ import { notFound } from "next/navigation";
 import { AppMap } from "@/components/app-map";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import { initials, loadBuild, loadDirectory } from "@/lib/directory";
+import { SupportLinks } from "@/components/support-links";
+import { buildSupportLinks } from "@/lib/auth/support";
+import { database } from "@/lib/server/env";
+import { initials, loadBuild, loadDirectory, maintainsOf } from "@/lib/directory";
 import { OPENPRODUCT, ORUNBASE } from "@/lib/links";
 import { ROLE_GUIDE, ROLE_LABEL } from "@/lib/roles";
 
@@ -34,7 +37,8 @@ export default async function BuildPage({ params }: { params: Params }) {
       </>
     );
   }
-  const dir = await loadDirectory();
+  const [dir, db] = await Promise.all([loadDirectory(), database()]);
+  const support = db ? await buildSupportLinks(db, b.slug, maintainsOf).catch(() => []) : [];
   const label = dir.ok ? (dir.topics.find((t) => t.value === b.category)?.label ?? b.category) : b.category;
   const listing = `${OPENPRODUCT}/${b.slug}`;
   return (
@@ -107,6 +111,11 @@ export default async function BuildPage({ params }: { params: Params }) {
           </div>
 
           <aside className="build-side">
+            {support.length ? (
+              <div className="panel">
+                <SupportLinks links={support} title={`Support ${b.slug}`} />
+              </div>
+            ) : null}
             <div className="panel dark">
               <h2>Run your own copy</h2>
               <p>Fork to your GitHub and deploy to your own cloud on Orunbase. Your fork stays linked to {b.slug}.</p>

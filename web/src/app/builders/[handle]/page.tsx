@@ -10,6 +10,8 @@ import { TabBar } from "@/components/tab-bar";
 import { githubLoginOf } from "@/lib/auth/accounts";
 import { builderByHandle, builderOfAccount, canClaim, githubLoginFromUrl, type OwnedBuilder } from "@/lib/auth/builders";
 import { currentSession } from "@/lib/auth/request";
+import { builderSupportLinks } from "@/lib/auth/support";
+import { SupportLinks } from "@/components/support-links";
 import type { Session } from "@/lib/auth/session";
 import { builderBadges } from "@/lib/badges";
 import { initials, loadDirectory, loadPerson, type Build, type PersonDetail } from "@/lib/directory";
@@ -126,7 +128,8 @@ function Projects({ projects }: { projects: Project[] }) {
         <ul className="project-grid">
           {projects.map((p) => (
             <li key={p.slug}>
-              <Link href={`/builds/${p.slug}`} className="project-card">
+              {/* A draft has no build page here (the directory leaves drafts out), so it opens on openproduct.live. */}
+              <Link href={p.build ? `/builds/${p.slug}` : `${OPENPRODUCT}/${p.slug}`} className="project-card">
                 {p.build ? <CardCover build={p.build} /> : <div className="card-cover blank"><span className="cover-tile mono" aria-hidden>{initials(p.slug)}</span></div>}
                 <div className="project-body">
                   <div className="project-top">
@@ -156,6 +159,7 @@ export default async function PersonPage({ params, searchParams }: { params: Par
   const fromHere = remote === null && owner?.kind === "new";
   const person = fromHere ? localPerson(owner!) : remote;
   if (person === null) notFound();
+  const support = db && person !== "unreachable" ? await builderSupportLinks(db, person.handle).catch(() => []) : [];
   const badges =
     person === "unreachable"
       ? []
@@ -166,6 +170,7 @@ export default async function PersonPage({ params, searchParams }: { params: Par
           maintains: person.maintainsBuilds.length,
           contributes: person.contributesToBuilds.length,
           contributesTo: person.contributesToBuilds.map((b) => b.slug),
+          supportLinks: support.length,
         });
   return (
     <>
@@ -196,6 +201,7 @@ export default async function PersonPage({ params, searchParams }: { params: Par
             ) : null}
             {q.started ? <p className="auth-ok" role="status">Your builder profile is live.</p> : null}
             <OwnerBar person={person} owner={owner} session={session} fromHere={fromHere} />
+            <SupportLinks links={support} title={`Support ${person.displayName}`} />
             <section className="person-section">
               <h2>Badges</h2>
               {badges.length > 0 ? (

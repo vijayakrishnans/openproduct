@@ -2,12 +2,16 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ProviderMark } from "@/components/provider-mark";
+import { SupportForm } from "@/components/support-form";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { identitiesOf } from "@/lib/auth/accounts";
 import { builderOfAccount, MAX_BIO, MAX_DISPLAY_NAME } from "@/lib/auth/builders";
 import { configuredProviders, PROVIDER_LABEL } from "@/lib/auth/providers";
 import { currentSession, safeNext } from "@/lib/auth/request";
+import { maintainedBuilds, supportLinksOf } from "@/lib/auth/support";
+import { loadDirectory, maintainsOf } from "@/lib/directory";
+import { OPENPRODUCT } from "@/lib/links";
 import { appEnv, database } from "@/lib/server/env";
 
 export const dynamic = "force-dynamic";
@@ -22,6 +26,12 @@ export default async function AccountPage({ searchParams }: { searchParams: Sear
   const [env, db] = await Promise.all([appEnv(), database()]);
   if (!db) redirect("/signin");
   const [identities, builder] = await Promise.all([identitiesOf(db, session.account.id), builderOfAccount(db, session.account.id)]);
+  const [ownLinks, builds] = builder
+    ? await Promise.all([supportLinksOf(db, { kind: "builder", key: builder.handle }), maintainedBuilds(db, session.account.id, maintainsOf)])
+    : [null, [] as string[]];
+  // Drafts have no build page here; their link goes to openproduct.live.
+  const listed = builds.length ? await loadDirectory().then((d) => new Set(d.ok ? d.builds.map((x) => x.slug) : [])) : new Set<string>();
+  const buildLinks = await Promise.all(builds.map(async (slug) => ({ slug, ...(await supportLinksOf(db, { kind: "build", key: slug })) })));
   const linked = new Set(identities.map((i) => i.provider));
   const addable = configuredProviders(env, true).filter((p) => !linked.has(p));
   const next = q.next ? safeNext(q.next) : null;
@@ -85,6 +95,38 @@ export default async function AccountPage({ searchParams }: { searchParams: Sear
             </form>
           )}
         </section>
+
+        {builder && ownLinks ? (
+          <section className="panel account-section" id="support">
+            <div className="panel-head">
+              <div>
+                <h2>Support links</h2>
+                <p className="sub">Where people can pay you, shown on your builder page.</p>
+              </div>
+            </div>
+            <SupportForm kind="builder" ownerKey={builder.handle} links={ownLinks.links} label="Your profile" />
+          </section>
+        ) : null}
+
+        {buildLinks.map((b) => (
+          <section className="panel account-section" id={`build-${b.slug}`} key={b.slug}>
+            <div className="panel-head">
+              <div>
+                <h2>Support {b.slug}</h2>
+                <p className="sub">
+                  You maintain this build.{" "}
+                  {listed.has(b.slug) ? "These show on its build page." : "It's still a draft, so these show once it's listed with a tagline and category."}
+                </p>
+              </div>
+              {listed.has(b.slug) ? (
+                <Link className="btn btn-ghost" href={`/builds/${b.slug}`}>View build</Link>
+              ) : (
+                <a className="btn btn-ghost" href={`${OPENPRODUCT}/${b.slug}`}>View on openproduct.live</a>
+              )}
+            </div>
+            <SupportForm kind="build" ownerKey={b.slug} links={b.links} label={b.slug} />
+          </section>
+        ))}
 
         <section className="panel account-section">
           <div className="panel-head">
