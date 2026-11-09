@@ -257,8 +257,7 @@ button { font: inherit; }
 @media (max-width: 700px) {
   body { padding-bottom: 72px; }
   .wrap { padding: 0 16px; }
-  .header-end .btn, .header-end .btn-plain { display: none; }
-  .header-end::after { content: "Sign in"; font-weight: 500; }
+  .header-end .btn { display: none; }
   .site-header .wrap { height: 56px; }
   .chips, .hero p.lede, .hero-actions, .hero-meta, .pulse, .site-footer, .band { display: none; }
   .lede-short { display: block; font-size: 17px; color: var(--ink-2); margin: 0; }
@@ -505,3 +504,47 @@ a.channel-row .channel-text span { color: var(--link); font-weight: 600; }
 @media (max-width: 640px) {
   .earned, .project-grid { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Accounts (BP2) */
+.account-chip { display: inline-flex; align-items: center; gap: 8px; text-decoration: none; color: var(--ink); font-weight: 500; font-size: 14px; max-width: 180px; }
+.account-chip img, .account-initial { width: 26px; height: 26px; border-radius: 999px; flex: none; }
+.account-initial { display: grid; place-items: center; background: var(--role-bg); color: var(--role-ink); font-weight: 700; font-size: 13px; }
+.account-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 1180px) { .account-name { display: none; } }
+.auth-page { display: grid; place-items: start center; }
+.auth-card { width: min(440px, 100%); box-sizing: border-box; padding: 28px; display: grid; gap: 14px; }
+.auth-card h1 { margin: 0; font-size: 26px; letter-spacing: -0.02em; }
+.auth-card .sub { margin: 0; font-size: 14.5px; color: var(--ink-2); }
+.auth-buttons { display: grid; gap: 8px; }
+.auth-btn { justify-content: center; padding: 11px 16px; }
+.auth-fine { margin: 0; font-size: 12.5px; color: var(--ink-3); line-height: 1.5; }
+.auth-error, .auth-ok { margin: 12px 0; padding: 10px 12px; border-radius: 10px; font-size: 14px; }
+.auth-error { background: #fdecea; color: #8a1c12; border: 1px solid #f5c6c0; }
+.auth-ok { background: #e9f7ee; color: #14532d; border: 1px solid #bfe5cc; }
+.provider-mark { display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 4px; box-sizing: border-box; border-radius: 6px; font: 700 11px var(--font-mono); background: var(--ink); color: #fff; }
+.provider-mark.google { background: #1a73e8; }
+.provider-mark.orunbase { background: var(--accent); }
+.account-page { max-width: 760px; }
+.account-page h1 { font-size: 30px; letter-spacing: -0.02em; margin: 14px 0 6px; }
+.account-page > .sub { color: var(--ink-2); margin: 0 0 14px; }
+.account-section { margin-top: 16px; display: grid; gap: 10px; }
+.account-section p { margin: 0; color: var(--ink-2); font-size: 14.5px; line-height: 1.5; }
+.account-section.danger { border-color: #f5c6c0; }
+.account-empty { display: grid; gap: 10px; }
+.account-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.account-form { display: grid; gap: 12px; }
+.account-form label { display: grid; gap: 5px; font-weight: 600; font-size: 14px; }
+.account-form label.check { display: flex; align-items: center; gap: 8px; font-weight: 500; }
+.account-form input:not([type="checkbox"]), .account-form textarea { font: inherit; font-weight: 400; font-size: 15px; border: 1px solid var(--line-2); border-radius: 10px; padding: 9px 11px; background: var(--card); color: var(--ink); width: 100%; box-sizing: border-box; }
+.account-form small { font-weight: 400; color: var(--ink-3); font-size: 12.5px; }
+.account-form .btn { justify-self: start; font: inherit; font-weight: 600; }
+.handle-input { display: flex; align-items: center; border: 1px solid var(--line-2); border-radius: 10px; background: var(--card); padding-left: 11px; }
+.handle-input input { border: 0 !important; padding-left: 4px !important; }
+.btn-danger { background: #b42318; color: #fff; }
+.identity-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.identity-list li { display: flex; align-items: center; gap: 10px; font-size: 14.5px; }
+.signout-form { margin-top: 16px; }
+.signout-form .btn { font: inherit; font-weight: 600; }
+.owner-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin: 14px 0 0; padding: 12px 14px; border: 1px dashed var(--line-2); border-radius: 12px; background: var(--card); font-size: 14px; color: var(--ink-2); }
+.owner-bar.mine { border-style: solid; border-color: var(--role-bg); background: #f5f8ff; }
+.owner-bar .btn { font: inherit; font-weight: 600; padding: 7px 14px; }

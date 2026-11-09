@@ -5,5 +5,10 @@
   "compatibility_date": "2026-10-01",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "assets": { "directory": ".open-next/assets", "binding": "ASSETS" },
+  // The site's own database (builder-profiles D8). This names stage's;
+  // scripts/select-env.mjs swaps in prod's when the build runs for prod.
+  "d1_databases": [
+    { "binding": "DB", "database_name": "openproduct-web-stage", "database_id": "c15aee01-e621-4cc1-98ae-d0b0cf399555" }
+  ],
   "observability": { "enabled": true }
 }
