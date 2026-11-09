@@ -1,0 +1,15 @@
+apiVersion: orun.io/v1
+kind: TaskContract
+metadata:
+  name: OP-22
+spec:
+  goal: Merged-PR badges (BP7) from GitHub, for builders signed in with GitHub.
+  affects:
+    - default/openproduct/web
+    - web/**
+    - tasks/**
+    - specs/**
+  doneWhen:
+    - A builder whose PR to an openproduct build merged shows First PR merged without anyone setting it.
+    - A builder without GitHub shows neither badge and no zero.
+  gates: []

@@ -3,13 +3,16 @@ kind: TaskContract
 metadata:
   name: OP-17
 spec:
-  goal: Show community threads (threads with no listing) on the community page, with a Start a discussion link and the Started a discussion badge (BP3).
+  goal: Accounts (BP2) — a D1 database, hashed sessions, and sign-in with GitHub, Google and Orunbase; claim an openproduct profile by GitHub match, or start a new builder profile.
   affects:
     - default/openproduct/web
     - web/**
     - tasks/**
     - specs/**
   doneWhen:
-    - Community threads appear in the forum list labelled Community, and open to their thread page.
-    - The starter discussions are live and visible here.
+    - A person signs in with GitHub, Google or Orunbase and returns where they started, signed in; a provider without secrets is not offered.
+    - A second provider added from /account joins the same account; accounts are never merged by email.
+    - A GitHub account matching an openproduct profile GitHub link can claim it; others cannot.
+    - Sign-out ends the session; the database stores only token hashes.
+    - Tests cover sessions, OAuth state and PKCE, the origin check, the claim rule and handle rules.
   gates: []

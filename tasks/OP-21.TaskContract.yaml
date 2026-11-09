@@ -1,0 +1,15 @@
+apiVersion: orun.io/v1
+kind: TaskContract
+metadata:
+  name: OP-21
+spec:
+  goal: Builder posts (BP6) — blog posts with optional YouTube, Vimeo or Loom video, on the builder page, a post page and the community feed.
+  affects:
+    - default/openproduct/web
+    - web/**
+    - tasks/**
+    - specs/**
+  doneWhen:
+    - A post with a YouTube link plays on the builder page, its own page and the community feed.
+    - Any other video URL is refused and no stored post contains HTML; tests cover the video parser.
+  gates: []

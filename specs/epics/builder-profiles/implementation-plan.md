@@ -1,68 +1,68 @@
 # builder-profiles (BP): implementation plan
 
-Order: BP1 needs no backend change, so it ships first. BP2 and BP3 are small backend additions. BP3 comes before BP4 because the starter discussions were asked for directly, and BP4 is the largest piece. BP5 depends on an observation openproduct.live doesn't make yet.
+Revised 2026-11-09: everything is built in this repository, on this site's own accounts and database (design D4, D8 to D12). Nothing changes in orun-cloud.
 
-Backend milestones are two PRs each: one in orun-cloud (`apps/openproduct`) with its own task there, then one here to render the new fields.
+Order: accounts (BP2) come before anything a builder writes. Apple and email (BP3) need a custom domain and accounts the owner has to create, so they come after the three providers that work on the current `workers.dev` address. BP5 comes before BP6 because the starter discussions were asked for directly.
 
-## BP0: the spec (OP-14)
+## BP0: the spec (OP-14, revised in OP-16)
 
-**Done when:** this doc set is merged.
+**Done when:** this doc set and its revision are merged.
 
-## BP1: badges and projects (OP-15)
+## BP1: badges and projects (OP-15) ✅
 
-- `web/src/lib/badges.ts`: `builderBadges(person)` returns `{kind, label, from, href?}[]` per D2's BP1 rows, with unit tests.
-- Builder page: a badge row under the bio, where each badge's tooltip and accessible label says what it was computed from. Below it, a **Projects** grid of public listings with cover, tagline, and a "Maintainer" or "Contributor" tag.
-- Builder cards on `/builders`: up to three badges.
+## BP2: accounts (OP-17)
 
-**Done when:**
-- Every builder page shows its badges, and each badge says what it was computed from.
-- The projects grid shows exactly the builder's public maintained and contributed listings.
-- Tests cover every badge rule, including a builder with no contributions (no contributor badges and no zero-count badge).
-
-## BP2: support links (orun-cloud task, then OP-16)
-
-- contracts: the `SUPPORT_PROVIDERS` allowlist, `parseSupportLink(url)`, and `supportLinks` on `PublicContributor` and on the public listing. Also `makerMarkInputs` on `PublicContributor`.
-- db: a migration adding `support_links` (JSON, at most 4) to contributor and listing records.
-- core: `PUT /me` and the listing edit accept `supportLinks`, validated with `parseSupportLink`.
-- openproduct.live `/me` and the listing settings: a "Support links" editor.
-- This site: a **Support** block on the builder page and on the build page, with provider icons, plus the First launch and Clean vote badges.
+- D1 databases `openproduct-web-stage` and `openproduct-web-prod`, bound as `DB`; `web/migrations/0001_accounts.sql`: accounts, identities, sessions, oauth state, builder profiles, claims.
+- `web/src/lib/auth/`: sessions (hashed token, cookie, 30-day sliding expiry), origin check, and a provider for each of GitHub, Google and Orunbase on Arctic. The Orunbase client is registered once with Orunbase's dynamic registration and its id kept in config.
+- Routes: `/signin` (shows only providers whose secrets are set), `/auth/<provider>` and `/auth/<provider>/callback`, `/signout`, and `/account` (identities, add a provider, delete the account).
+- Header: "Sign in" becomes the account menu when signed in.
+- Builder pages: "Claim this profile" when the signed-in GitHub account matches the profile's GitHub link (D10); otherwise "Start your builder profile" makes a new one with a free handle.
 
 **Done when:**
-- A builder adds a Patreon link on openproduct.live and it appears on their builder page here.
-- A maintainer adds a GitHub Sponsors link to a listing and it appears on that build page.
-- A link to any host not on the allowlist is refused with a message naming the hosts that are accepted.
+- A person signs in with GitHub, Google or Orunbase and lands back where they started, signed in.
+- Signing in with a second provider from `/account` adds it to the same account.
+- A GitHub account matching an openproduct profile's GitHub link can claim it; any other can't.
+- Sign-out ends the session, and a stolen database row can't be used as a cookie.
+- Tests cover sessions, state and PKCE checking, the origin check, the claim rule and handle rules.
 
-## BP3: community discussions (orun-cloud task, then OP-17)
+## BP3: Apple and email sign-in (OP-18)
 
-- core: `handleCreateThread` accepts a missing `slug` and creates a community thread. The forum index and thread page include community threads, labelled **Community** in place of a listing.
-- openproduct.live: a "Start a discussion" button on `/threads`.
-- This site: the community page shows community threads, plus "Start a discussion" linking to openproduct.live. Builder badges: Started a discussion.
-- Starter threads, posted under the account of the repo owner (vijayakrishnans) after they approve the drafts:
-  1. **Vercel vs Cloudflare for a side project that might grow up** (question)
-  2. **How much freedom do you actually get: Base44 vs Orunbase?** (design)
-  3. **Your first PR to someone else's build: what made it easy or hard?** (contributing)
-  4. **Funding open builds: Patreon, GitHub Sponsors, or nothing?** (governance)
-  5. **What's the smallest accessible thing every build should ship?** (accessibility)
+Needs: a domain for the site, an Apple Developer account, and an email-sending service (Cloudflare Email Service on that domain).
 
-**Done when:**
-- The starter threads are live on openproduct.live and on this site's community page, and anyone signed in can reply.
+**Done when:** Sign in with Apple and the email link both work on the custom domain, and an email link works once and expires after 15 minutes.
 
-## BP4: builder posts (orun-cloud task, then OP-18)
+## BP4: support links (OP-19)
 
-- contracts: the `Post` type, `parseVideoUrl(url)` returning `{provider, id}` for YouTube, Vimeo or Loom (anything else returns null), and `videoEmbedSrc`.
-- db: a `posts` table (id, author subject, title, body, video provider and id, optional listing, created and updated times, moderation state).
-- core: create, edit and delete for the author; public list by builder and a public community feed; reports through the existing moderation flow.
-- openproduct.live: a "Write a post" form on `/me`.
-- This site: **Posts** on the builder page, a **From the builders** feed on the community page, and a post page with a sandboxed embed. Badge: *N* posts.
+- `web/src/lib/support-links.ts`: the allowlist and parser (D5), with tests.
+- An "Edit profile" page with four support-link slots; a maintainer of a build (per its public listing, for a claimed profile) gets the same on the build.
+- A **Support** block on builder and build pages, and the "Has support links" badge.
 
 **Done when:**
-- A builder publishes a post with a YouTube link on openproduct.live, and the video plays on their builder page and on the community page here.
-- A post with a non-allowlisted video URL is refused, and no stored post contains HTML.
+- A builder adds a Patreon link here and it shows on their page; a maintainer adds one to their build and it shows there.
+- A link to a site not on the list is refused with the list of sites that are.
 
-## BP5: merged-PR badges (orun-cloud task, then OP-19)
+## BP5: community discussions (OP-20)
 
-- core: count merged pull requests per GitHub login on public listings' repos, using the sweep's existing repo observation, and publish `mergedPrs` (null where unobserved).
-- This site: First PR merged and *N* PRs merged badges.
+- Threads and replies tables; "Start a discussion" and reply forms for signed-in builders; the community list merges threads from here and from openproduct.live (D6); report and hide.
+- The "Started a discussion" badge.
+- The starter threads, posted by the owner's account after they approve the drafts:
+  1. Vercel vs Cloudflare for a side project that might grow up (question)
+  2. How much freedom do you actually get: Base44 vs Orunbase? (design)
+  3. Your first PR to someone else's build: what made it easy or hard? (contributing)
+  4. Funding open builds: Patreon, GitHub Sponsors, or nothing? (governance)
+  5. What's the smallest accessible thing every build should ship? (accessibility)
 
-**Done when:**
-- A builder whose first PR to an openproduct build merges shows "First PR merged" within one sweep, without anyone setting it.
+**Done when:** the starter threads are live on the community page and signed-in builders can reply.
+
+## BP6: builder posts (OP-21)
+
+- Posts table; write, edit and delete for the author; `parseVideoUrl` for YouTube, Vimeo and Loom (D7).
+- Posts on the builder page, a post page, and a "From the builders" feed on the community page; the "*N* posts" badge.
+
+**Done when:** a post with a YouTube link plays on the builder page, its own page and the community feed; any other video URL is refused and no post stores HTML.
+
+## BP7: merged-PR badges (OP-22)
+
+- For a builder signed in with GitHub, count their merged pull requests to the public repos of openproduct builds through GitHub's search API, cached for a day.
+
+**Done when:** a builder whose PR to an openproduct build merged shows "First PR merged" without anyone setting it; a builder without GitHub shows neither badge and no zero.

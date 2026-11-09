@@ -3,13 +3,11 @@ kind: TaskContract
 metadata:
   name: OP-16
 spec:
-  goal: Render support links on builder and build pages, plus the First launch and Clean vote badges, from the API fields BP2 adds in orun-cloud.
+  goal: Revise the builder-profiles spec — the site gets its own accounts (GitHub, Google, Apple, Orunbase, email) and D1 database, and nothing changes on openproduct.live.
   affects:
-    - default/openproduct/web
-    - web/**
-    - tasks/**
     - specs/**
+    - tasks/**
   doneWhen:
-    - A builder's support links show on their page with provider icons; a build's show on its build page.
-    - First launch and Clean vote badges render from makerMarkInputs, and are absent where the input is null.
+    - design.md has D4 reversed and D8 to D12 for storage, sign-in, claiming, personal data and secrets, with the rejected alternatives named.
+    - The plan has BP2 to BP7, and every task it names has a contract.
   gates: []
