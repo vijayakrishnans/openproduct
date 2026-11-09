@@ -10,6 +10,8 @@ export type AppEnv = {
   GITHUB_CLIENT_SECRET?: string;
   GOOGLE_CLIENT_ID?: string;
   GOOGLE_CLIENT_SECRET?: string;
+  /** Comma-separated GitHub logins who may hide posts; defaults to the site owner. */
+  MODERATORS?: string;
 };
 
 export async function appEnv(): Promise<AppEnv> {

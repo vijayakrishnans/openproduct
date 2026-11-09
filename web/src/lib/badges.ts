@@ -4,7 +4,7 @@
 // was computed from, in words, so a reader can check it. Nothing here is
 // awarded, and no badge is a score — the contribution tiers stop at 10.
 
-export type BadgeKind = "since" | "open" | "launched" | "maintains" | "contributor-tier" | "contributor" | "support";
+export type BadgeKind = "since" | "open" | "launched" | "maintains" | "contributor-tier" | "contributor" | "support" | "discussion";
 
 export type Badge = {
   kind: BadgeKind;
@@ -26,6 +26,8 @@ export type BadgeInputs = {
   contributesTo?: string[];
   /** How many support links they list on this site (BP4). */
   supportLinks?: number;
+  /** How many visible discussions they started here (BP5). */
+  discussions?: number;
 };
 
 export const CONTRIBUTION_TIERS = [
@@ -71,6 +73,14 @@ export function builderBadges(i: BadgeInputs): Badge[] {
       kind: "support",
       label: "Open to support",
       from: `They list ${plural(i.supportLinks, "way", "ways")} to support their work`,
+    });
+  }
+  if (i.discussions && i.discussions > 0) {
+    out.push({
+      kind: "discussion",
+      label: i.discussions === 1 ? "Started a discussion" : `Started ${i.discussions} discussions`,
+      from: `${plural(i.discussions, "discussion", "discussions")} they started in the community`,
+      href: "/community",
     });
   }
   if (i.publishedAt) {

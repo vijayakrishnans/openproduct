@@ -11,6 +11,7 @@ import { githubLoginOf } from "@/lib/auth/accounts";
 import { builderByHandle, builderOfAccount, canClaim, githubLoginFromUrl, type OwnedBuilder } from "@/lib/auth/builders";
 import { currentSession } from "@/lib/auth/request";
 import { builderSupportLinks } from "@/lib/auth/support";
+import { threadsStartedBy } from "@/lib/auth/discussions";
 import { SupportLinks } from "@/components/support-links";
 import type { Session } from "@/lib/auth/session";
 import { builderBadges } from "@/lib/badges";
@@ -159,7 +160,10 @@ export default async function PersonPage({ params, searchParams }: { params: Par
   const fromHere = remote === null && owner?.kind === "new";
   const person = fromHere ? localPerson(owner!) : remote;
   if (person === null) notFound();
-  const support = db && person !== "unreachable" ? await builderSupportLinks(db, person.handle).catch(() => []) : [];
+  const [support, discussions] =
+    db && person !== "unreachable"
+      ? await Promise.all([builderSupportLinks(db, person.handle).catch(() => []), threadsStartedBy(db, person.handle).catch(() => 0)])
+      : [[], 0];
   const badges =
     person === "unreachable"
       ? []
@@ -171,6 +175,7 @@ export default async function PersonPage({ params, searchParams }: { params: Par
           contributes: person.contributesToBuilds.length,
           contributesTo: person.contributesToBuilds.map((b) => b.slug),
           supportLinks: support.length,
+          discussions,
         });
   return (
     <>

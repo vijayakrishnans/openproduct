@@ -31,6 +31,8 @@ export type Thread = {
   createdAt: string;
   lastPostAt: string | null;
   replies: number;
+  /** Written on this site (BP5) rather than read from openproduct.live. */
+  local?: boolean;
 };
 
 export type RenderNode =
@@ -165,4 +167,15 @@ export async function loadThread(id: string): Promise<{ thread: Thread; posts: P
       body: toNodes(p.body),
     }));
   return { thread, posts };
+}
+
+/**
+ * One list from two sources (BP5, D6): threads written here and threads read
+ * from openproduct.live, in the same order the forum's tabs promise.
+ */
+export function mergeThreads(a: Thread[], b: Thread[], order: ForumOrder, limit = 50): Thread[] {
+  const moved = (t: Thread) => Date.parse(t.lastPostAt ?? t.createdAt) || 0;
+  const all = [...a, ...b];
+  all.sort((x, y) => (order === "replied" ? y.replies - x.replies : 0) || moved(y) - moved(x));
+  return all.slice(0, limit);
 }
