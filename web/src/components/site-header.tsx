@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { OPENPRODUCT } from "@/lib/links";
+import { SearchBox } from "./search-box";
 
 const NAV = [
   { href: "/", label: "Builds" },
@@ -9,7 +10,7 @@ const NAV = [
   { href: "/community", label: "Community" },
 ];
 
-export function SiteHeader({ current }: { current?: string }) {
+export function SiteHeader({ current, query }: { current?: string; query?: string }) {
   return (
     <header className="site-header">
       <div className="wrap">
@@ -25,9 +26,8 @@ export function SiteHeader({ current }: { current?: string }) {
           ))}
         </nav>
         <div className="header-end">
-          <div className="search" role="search">
-            <span aria-hidden>⌕</span> Search builds, stacks, people <span className="kbd mono">⌘K</span>
-          </div>
+          <SearchBox initial={query} />
+          <Link href="/search" className="search-icon" aria-label="Search">⌕</Link>
           <a className="btn-plain" href={OPENPRODUCT} style={{ textDecoration: "none", fontWeight: 500 }}>
             Sign in
           </a>
