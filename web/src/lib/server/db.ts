@@ -1,0 +1,96 @@
+// The site's own database (builder-profiles D8): one D1 per environment,
+// bound as `DB`. Everything a builder writes lives here; nothing from
+// openproduct.live is copied in.
+//
+// THE SCHEMA MIGRATES ITSELF. The deploy pipeline runs `wrangler deploy` and
+// nothing else, so instead of a migration step the worker applies any
+// migration it hasn't seen, once per isolate, before its first query. Every
+// statement is idempotent (`IF NOT EXISTS`), and `schema_migrations` records
+// what ran, so two isolates racing apply the same thing twice harmlessly.
+
+/** The slice of D1's API this app uses — also what the test adapter implements. */
+export interface Db {
+  prepare(sql: string): Statement;
+  batch(statements: Statement[]): Promise<unknown[]>;
+}
+export interface Statement {
+  bind(...values: unknown[]): Statement;
+  first<T = Record<string, unknown>>(): Promise<T | null>;
+  all<T = Record<string, unknown>>(): Promise<{ results: T[] }>;
+  run(): Promise<unknown>;
+}
+
+export const MIGRATIONS: { version: number; name: string; statements: string[] }[] = [
+  {
+    version: 1,
+    name: "accounts",
+    statements: [
+      `CREATE TABLE IF NOT EXISTS accounts (
+         id TEXT PRIMARY KEY,
+         display_name TEXT,
+         avatar_url TEXT,
+         email TEXT,
+         created_at TEXT NOT NULL
+       )`,
+      // One row per way in. The provider's own id is the key: a login or an
+      // email can change hands, the provider's numeric/opaque id can't.
+      `CREATE TABLE IF NOT EXISTS identities (
+         provider TEXT NOT NULL,
+         provider_user_id TEXT NOT NULL,
+         account_id TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+         login TEXT,
+         created_at TEXT NOT NULL,
+         PRIMARY KEY (provider, provider_user_id)
+       )`,
+      `CREATE INDEX IF NOT EXISTS identities_account ON identities(account_id)`,
+      // Only the SHA-256 of the session token is stored, so a copy of this
+      // table can't be replayed as cookies.
+      `CREATE TABLE IF NOT EXISTS sessions (
+         id_hash TEXT PRIMARY KEY,
+         account_id TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+         expires_at INTEGER NOT NULL,
+         created_at INTEGER NOT NULL
+       )`,
+      `CREATE INDEX IF NOT EXISTS sessions_account ON sessions(account_id)`,
+      // A builder profile owned by an account: a claimed openproduct.live
+      // profile, or a new one started here (D10). One per account.
+      `CREATE TABLE IF NOT EXISTS builders (
+         handle TEXT PRIMARY KEY COLLATE NOCASE,
+         account_id TEXT NOT NULL UNIQUE REFERENCES accounts(id) ON DELETE CASCADE,
+         kind TEXT NOT NULL CHECK (kind IN ('claimed', 'new')),
+         display_name TEXT,
+         bio TEXT,
+         created_at TEXT NOT NULL
+       )`,
+      // Small server-owned values, e.g. the Orunbase client id this site
+      // registered for itself.
+      `CREATE TABLE IF NOT EXISTS settings (
+         key TEXT PRIMARY KEY,
+         value TEXT NOT NULL,
+         updated_at INTEGER NOT NULL
+       )`,
+    ],
+  },
+];
+
+const applied = new WeakSet<object>();
+
+/** Apply every migration this database hasn't recorded. Safe to call on every request. */
+export async function ensureSchema(db: Db): Promise<void> {
+  if (applied.has(db)) return;
+  await db
+    .prepare(`CREATE TABLE IF NOT EXISTS schema_migrations (version INTEGER PRIMARY KEY, name TEXT NOT NULL, applied_at TEXT NOT NULL)`)
+    .run();
+  const done = await db.prepare(`SELECT version FROM schema_migrations`).all<{ version: number }>();
+  const have = new Set(done.results.map((r) => r.version));
+  for (const m of MIGRATIONS) {
+    if (have.has(m.version)) continue;
+    await db.batch([
+      ...m.statements.map((s) => db.prepare(s)),
+      db
+        .prepare(`INSERT OR IGNORE INTO schema_migrations (version, name, applied_at) VALUES (?, ?, ?)`)
+        .bind(m.version, m.name, new Date().toISOString()),
+    ]);
+  }
+  applied.add(db);
+}

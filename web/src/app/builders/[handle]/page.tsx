@@ -7,12 +7,91 @@ import { Avatar } from "@/components/person-card";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { TabBar } from "@/components/tab-bar";
+import { githubLoginOf } from "@/lib/auth/accounts";
+import { builderByHandle, builderOfAccount, canClaim, githubLoginFromUrl, type OwnedBuilder } from "@/lib/auth/builders";
+import { currentSession } from "@/lib/auth/request";
+import type { Session } from "@/lib/auth/session";
 import { builderBadges } from "@/lib/badges";
 import { initials, loadDirectory, loadPerson, type Build, type PersonDetail } from "@/lib/directory";
+import { OPENPRODUCT } from "@/lib/links";
+import { database } from "@/lib/server/env";
 
 export const dynamic = "force-dynamic";
 
 type Params = Promise<{ handle: string }>;
+type Search = Promise<{ claim?: string; message?: string; started?: string }>;
+
+const CLAIM_MESSAGES: Record<string, string> = {
+  done: "Claimed. This profile is yours on openproduct now.",
+  unproved: "That didn't prove it's you: sign in with the GitHub account this profile links to.",
+  unreachable: "We couldn't reach openproduct.live to check. Try again in a minute.",
+  missing: "That profile isn't on openproduct.live.",
+  invalid: "That isn't a builder handle.",
+};
+
+/** A profile started here, shaped like one read from openproduct.live (no builds yet). */
+function localPerson(b: OwnedBuilder): PersonDetail {
+  return {
+    handle: b.handle,
+    displayName: b.displayName ?? b.handle,
+    bio: b.bio,
+    openToProject: false,
+    maintains: [],
+    contributesTo: 0,
+    launched: null,
+    githubUrl: null,
+    siteUrl: null,
+    followers: 0,
+    publishedAt: b.createdAt,
+    maintainsBuilds: [],
+    contributesToBuilds: [],
+  };
+}
+
+/** What the signed-in person can do with this profile: edit it, claim it, or nothing. */
+async function OwnerBar({ person, owner, session, fromHere }: { person: PersonDetail; owner: (OwnedBuilder & { accountId: string }) | null; session: Session | null; fromHere: boolean }) {
+  if (owner && session && owner.accountId === session.account.id) {
+    return (
+      <div className="owner-bar mine">
+        <span>This is your profile.</span>
+        <Link className="btn btn-dark" href="/account#profile">Edit profile</Link>
+      </div>
+    );
+  }
+  if (owner) return fromHere ? null : <div className="owner-bar"><span className="pill">✓ Claimed on openproduct</span></div>;
+  if (fromHere) return null;
+  const linked = githubLoginFromUrl(person.githubUrl);
+  if (!session) {
+    return (
+      <div className="owner-bar">
+        <span>Is this you?</span>
+        <Link className="link" href={`/signin?next=${encodeURIComponent(`/builders/${person.handle}`)}`}>Sign in to claim this profile</Link>
+      </div>
+    );
+  }
+  const db = await database();
+  if (!db) return null;
+  const [mine, login] = await Promise.all([builderOfAccount(db, session.account.id), githubLoginOf(db, session.account.id)]);
+  if (mine) return null;
+  if (canClaim(person.githubUrl, login)) {
+    return (
+      <form className="owner-bar" method="post" action="/account/claim">
+        <input type="hidden" name="handle" value={person.handle} />
+        <span>Your GitHub account matches this profile.</span>
+        <button className="btn btn-dark" type="submit">Claim this profile</button>
+      </form>
+    );
+  }
+  return (
+    <div className="owner-bar">
+      <span>
+        {linked
+          ? <>Is this you? <Link className="link" href={`/auth/github?next=${encodeURIComponent(`/builders/${person.handle}`)}`}>Sign in with GitHub as @{linked}</Link> to claim it.</>
+          : <>Is this you? Add your GitHub link on <a className="link" href={OPENPRODUCT}>openproduct.live</a>, then sign in with GitHub here to claim it.</>}
+      </span>
+    </div>
+  );
+}
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { handle } = await params;
@@ -65,9 +144,17 @@ function Projects({ projects }: { projects: Project[] }) {
   );
 }
 
-export default async function PersonPage({ params }: { params: Params }) {
+export default async function PersonPage({ params, searchParams }: { params: Params; searchParams: Search }) {
   const { handle } = await params;
-  const [person, directory] = await Promise.all([loadPerson(handle), loadDirectory()]);
+  const q = await searchParams;
+  const [remote, directory, session, db] = await Promise.all([loadPerson(handle), loadDirectory(), currentSession(), database()]);
+  const found = db ? await builderByHandle(db, handle).catch(() => null) : null;
+  // A profile started here can't share a handle with an openproduct.live one;
+  // if one ever does, the openproduct.live profile wins and the row is ignored.
+  const owner = found && !(found.kind === "new" && remote !== null) ? found : null;
+  // A profile started here has no openproduct.live page; render it from the database.
+  const fromHere = remote === null && owner?.kind === "new";
+  const person = fromHere ? localPerson(owner!) : remote;
   if (person === null) notFound();
   const badges =
     person === "unreachable"
@@ -96,12 +183,19 @@ export default async function PersonPage({ params }: { params: Params }) {
                 <span className="mono handle">@{person.handle}</span>
                 {person.bio ? <p>{person.bio}</p> : null}
                 <div className="card-badges">
-                  <span className="badge">{person.followers} {person.followers === 1 ? "follower" : "followers"}</span>
+                  {fromHere ? <span className="badge">Started on this site</span> : <span className="badge">{person.followers} {person.followers === 1 ? "follower" : "followers"}</span>}
                   {person.githubUrl ? <a className="badge" href={person.githubUrl} rel="noopener noreferrer">GitHub</a> : null}
                   {person.siteUrl ? <a className="badge" href={person.siteUrl} rel="noopener noreferrer">Website</a> : null}
                 </div>
               </div>
             </div>
+            {q.claim && CLAIM_MESSAGES[q.claim] ? (
+              <p className={q.claim === "done" ? "auth-ok" : "auth-error"} role="status">{CLAIM_MESSAGES[q.claim]}</p>
+            ) : q.claim === "refused" && q.message ? (
+              <p className="auth-error" role="status">{q.message.slice(0, 200)}</p>
+            ) : null}
+            {q.started ? <p className="auth-ok" role="status">Your builder profile is live.</p> : null}
+            <OwnerBar person={person} owner={owner} session={session} fromHere={fromHere} />
             <section className="person-section">
               <h2>Badges</h2>
               {badges.length > 0 ? (

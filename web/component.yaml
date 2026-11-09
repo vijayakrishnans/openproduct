@@ -40,7 +40,9 @@ spec:
     environmentAwareWorkerName: true
     workersDevSubdomain: vijayakrishnan12994
     installCommand: pnpm install --frozen-lockfile
-    buildCommand: pnpm test && pnpm build
+    # ORUN_ENVIRONMENT tells scripts/select-env.mjs which D1 database to bind.
+    environmentBuildVar: ORUN_ENVIRONMENT
+    buildCommand: pnpm test && node scripts/select-env.mjs && pnpm build
     # The home page renders the directory's own heading. Buffered before grep
     # so an early match cannot cut curl off.
     smokeCommand: "html=$(curl -sfL \"${DEPLOYED_URL}/\") && echo \"${html}\" | grep -q 'Products built'"

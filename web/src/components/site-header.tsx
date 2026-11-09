@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { currentSession } from "@/lib/auth/request";
 import { OPENPRODUCT } from "@/lib/links";
 import { SearchBox } from "./search-box";
 
@@ -10,7 +11,9 @@ const NAV = [
   { href: "/community", label: "Community" },
 ];
 
-export function SiteHeader({ current, query }: { current?: string; query?: string }) {
+export async function SiteHeader({ current, query }: { current?: string; query?: string }) {
+  const session = await currentSession();
+  const name = session?.account.displayName ?? "Your account";
   return (
     <header className="site-header">
       <div className="wrap">
@@ -28,9 +31,21 @@ export function SiteHeader({ current, query }: { current?: string; query?: strin
         <div className="header-end">
           <SearchBox initial={query} />
           <Link href="/search" className="search-icon" aria-label="Search">⌕</Link>
-          <a className="btn-plain" href={OPENPRODUCT} style={{ textDecoration: "none", fontWeight: 500 }}>
-            Sign in
-          </a>
+          {session ? (
+            <Link className="account-chip" href="/account" title={name}>
+              {session.account.avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={session.account.avatarUrl} alt="" width={26} height={26} referrerPolicy="no-referrer" />
+              ) : (
+                <span className="account-initial" aria-hidden>{name.slice(0, 1).toUpperCase()}</span>
+              )}
+              <span className="account-name">{name}</span>
+            </Link>
+          ) : (
+            <Link className="btn-plain" href="/signin" style={{ textDecoration: "none", fontWeight: 500 }}>
+              Sign in
+            </Link>
+          )}
           <a className="btn btn-dark" href={OPENPRODUCT}>
             + List your build
           </a>
