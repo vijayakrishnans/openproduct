@@ -25,9 +25,6 @@ export function OpenBuilds({ builds, topics, sort, cat }: { builds: Build[]; top
           <div className="section-head" style={{ marginBottom: 2 }}>
             <h2 id="builds-h">Open builds</h2>
           </div>
-          <div className="sub" style={{ color: "var(--ink-3)", fontSize: 14 }}>
-            Each box is a living app map: the pieces it uses, and the one that moved last.
-          </div>
         </div>
         <nav className="tabs" aria-label="Sort">
           {SORTS.map((s) => (
@@ -69,8 +66,7 @@ export function OpenBuilds({ builds, topics, sort, cat }: { builds: Build[]; top
         </details>
       ) : null}
       <p className="sample-note">
-        <b>Live data:</b> names, taglines, categories, licences, open roles, changes and upvotes, from api.openproduct.live.{" "}
-        <b>Sample:</b> the app map on each card, until the API describes a build&apos;s integrations.
+        <b>Live data:</b> names, taglines, categories, licences, open roles, changes and upvotes, from api.openproduct.live.
       </p>
     </section>
   );

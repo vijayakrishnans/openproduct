@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Build, Topic } from "@/lib/directory";
-import { AppMapMini } from "./app-map-mini";
+import { CardCover } from "./card-cover";
 
 function Spark({ build }: { build: Build }) {
   // Seven bars, the last one this week's changes. Earlier weeks are not in
@@ -19,7 +19,7 @@ export function BuildCard({ build, topics }: { build: Build; topics: Topic[] }) 
   const label = topics.find((t) => t.value === build.category)?.label ?? build.category;
   return (
     <Link href={`/builds/${build.slug}`} className="card">
-      <AppMapMini build={build} />
+      <CardCover build={build} />
       <div className="card-body">
         <div className="card-title">
           <strong>{build.slug}</strong>

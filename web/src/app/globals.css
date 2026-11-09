@@ -56,7 +56,6 @@ button { font: inherit; }
 .hero h1 { font-size: clamp(40px, 6vw, 58px); line-height: 1.02; letter-spacing: -0.035em; margin: 0 0 18px; }
 .hero p.lede { font-size: 17px; color: var(--ink-2); max-width: 520px; margin: 0 0 22px; }
 .hero-actions { display: flex; gap: 10px; flex-wrap: wrap; }
-.hero-meta { margin-top: 16px; font-size: 12px; color: var(--ink-3); }
 
 /* Sections */
 .section { padding-block: 26px; }
@@ -119,19 +118,11 @@ button { font: inherit; }
 .spark span { width: 3px; background: #d8d3c8; border-radius: 1px; }
 .spark span.hot { background: var(--accent); }
 
-/* Mini app map */
-.map-mini { position: relative; height: 128px; border-bottom: 1px solid var(--line); }
-.map-line { position: absolute; background: #cfcac0; }
-.map-line.to-sign-in { left: 50%; top: 22px; bottom: 50%; width: 1px; }
-.map-line.to-deploy { left: 50%; top: 50%; bottom: 22px; width: 1px; }
-.map-line.to-data { left: 30px; right: 50%; top: 50%; height: 1px; }
-.map-line.to-payments { left: 50%; right: 30px; top: 50%; height: 1px; }
-.map-tile { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 42px; height: 42px; border-radius: 11px; background: var(--ink); color: #fff; display: grid; place-items: center; font-size: 14px; font-weight: 600; }
-.map-node { position: absolute; display: inline-flex; align-items: center; gap: 5px; background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 1px 8px; font-size: 10.5px; color: var(--ink-2); white-space: nowrap; }
-.map-node.top { left: 50%; top: 10px; transform: translateX(-50%); }
-.map-node.bottom { left: 50%; bottom: 10px; transform: translateX(-50%); }
-.map-node.left { left: 8px; top: 50%; transform: translateY(-50%); }
-.map-node.right { right: 8px; top: 50%; transform: translateY(-50%); }
+/* Card cover: tile over the hero screenshot, or over a dark panel */
+.card-cover { position: relative; height: 128px; border-bottom: 1px solid var(--line); overflow: hidden; background: #1c1b19; }
+.card-cover img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top center; }
+.card-cover:not(.blank)::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(20,19,17,.15), rgba(20,19,17,.45)); }
+.cover-tile { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 1; width: 46px; height: 46px; border-radius: 12px; background: var(--ink); color: #fff; display: grid; place-items: center; font-size: 15px; font-weight: 600; border: 2px solid rgba(255,255,255,.85); box-shadow: 0 6px 18px rgba(0,0,0,.28); }
 .map-dot { width: 6px; height: 6px; border-radius: 50%; background: #a8a296; }
 .map-dot.moved { background: var(--accent); box-shadow: 0 0 0 3px #f6d3c2; }
 
@@ -249,7 +240,6 @@ button { font: inherit; }
 .role-by a { text-decoration: none; }
 .role-by .pulse-tile { width: 22px; height: 22px; border-radius: 6px; font-size: 9px; }
 .role-card strong { font-size: 15px; line-height: 1.3; }
-.role-card .first { font-size: 12.5px; }
 
 /* Bottom bar (phone) */
 .tabbar { display: none; }
@@ -270,9 +260,7 @@ button { font: inherit; }
   .tabs { width: 100%; justify-content: space-between; }
   .tabs a { padding: 6px 8px; font-size: 13px; }
   .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-  .map-mini { height: 84px; }
-  .map-node { font-size: 0; padding: 4px; gap: 0; }
-  .map-node.top, .map-node.bottom, .map-line.to-sign-in, .map-line.to-deploy { display: none; }
+  .card-cover { height: 84px; }
   .card-badges .badge.mono, .card-cat, .spark, .vote { display: none; }
   .card-tag { font-size: 13px; }
   .role-row { grid-auto-columns: 78%; }

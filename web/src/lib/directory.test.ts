@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { activity, belowFloor, listable, samplePieces, sortBuilds, toBuild } from "./directory";
+import { activity, belowFloor, listable, samplePieces, sortBuilds, toBuild, toCover } from "./directory";
 
 const product = (slug: string, extra: Record<string, unknown> = {}) => ({
   slug,
@@ -89,5 +89,21 @@ describe("toPerson", () => {
   it("drops a contributor with no handle", async () => {
     const { toPerson } = await import("./directory");
     expect(toPerson({ displayName: "nobody" })).toBeNull();
+  });
+});
+
+describe("toCover", () => {
+  const ref = (c: string, ext = "png") => `${c.repeat(64)}.${ext}`;
+  const m = (value: object) => ({ value, provenance: { class: "authored" } });
+
+  it("takes the hero image over earlier gallery images", () => {
+    const cover = toCover([m({ ref: ref("a"), kind: "gallery", alt: "x" }), m({ ref: ref("b"), kind: "hero", alt: "Dashboard" })]);
+    expect(cover).toEqual({ src: `https://api.openproduct.live/v1/media/${ref("b")}`, alt: "Dashboard" });
+  });
+
+  it("is null when there are no images, and ignores refs that are not content hashes", () => {
+    expect(toCover([])).toBeNull();
+    expect(toCover(undefined)).toBeNull();
+    expect(toCover([m({ ref: "../../etc/passwd", kind: "hero" })])).toBeNull();
   });
 });

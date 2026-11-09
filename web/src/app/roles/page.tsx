@@ -27,7 +27,7 @@ export default async function RolesPage() {
             The directory could not be reached just now. Roles are listed at <a className="link" href={OPENPRODUCT}>openproduct.live</a>.
           </div>
         )}
-        <p className="sample-note"><b>Live:</b> role titles. <b>Sample:</b> skills and first tasks.</p>
+        <p className="sample-note"><b>Live:</b> role titles. <b>Sample:</b> skills.</p>
       </main>
       <SiteFooter />
       <TabBar current="/roles" />

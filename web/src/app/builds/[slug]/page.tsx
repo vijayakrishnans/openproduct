@@ -123,10 +123,9 @@ export default async function BuildPage({ params }: { params: Params }) {
                     <div className="role" key={r.id}>
                       <strong>{r.title}</strong>
                       <div className="skills">{r.skills.map((s) => <span key={s} className="skill mono">{s}</span>)}</div>
-                      <a className="link" href={listing}>Start with: {r.firstTask}</a>
                     </div>
                   ))}
-                  <div className="sample-tag">Role titles are live. Skills and first tasks are sample.</div>
+                  <div className="sample-tag">Role titles are live. Skills are sample.</div>
                 </div>
               ) : (
                 <p className="muted">No open roles right now.</p>

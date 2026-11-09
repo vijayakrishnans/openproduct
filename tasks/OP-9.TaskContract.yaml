@@ -1,0 +1,16 @@
+apiVersion: orun.io/v1
+kind: TaskContract
+metadata:
+  name: OP-9
+spec:
+  goal: The home page drops the hero stats line, the sample first tasks and the app-map subtitle, and each build card shows the build's tile over its hero screenshot (or a dark panel when it has none) instead of the sample app map.
+  affects:
+    - default/openproduct/web
+    - web/**
+    - tasks/**
+  doneWhen:
+    - The hero has no "N builds · N below the floor · updated HH:MM UTC" line.
+    - Role cards and the build page show no "First task" / "Start with" line.
+    - The Open builds header has no "Each box is a living app map" subtitle.
+    - Build cards show the build's initials tile over its hero image from api.openproduct.live/v1/media, or over a dark panel when the listing has no images; no data/payments/deploy/sign-in nodes.
+  gates: []

@@ -5,7 +5,7 @@ import { RolesRow } from "@/components/roles-row";
 import { TabBar } from "@/components/tab-bar";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import { SORTS, type Sort, belowFloor, loadDirectory, loadRoles } from "@/lib/directory";
+import { SORTS, type Sort, loadDirectory, loadRoles } from "@/lib/directory";
 import { OPENPRODUCT, SOURCE } from "@/lib/links";
 
 // The directory is read per request: it is the live list, not a snapshot.
@@ -18,7 +18,6 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
   const sort: Sort = SORTS.some((s) => s.key === q.sort) ? (q.sort as Sort) : "active";
   const dir = await loadDirectory();
   const cat = dir.ok && dir.topics.some((t) => t.value === q.cat) ? q.cat! : null;
-  const updated = new Date().toISOString().slice(11, 16);
   const roles = dir.ok ? (await loadRoles(dir.builds, 8)).slice(0, 8) : [];
   return (
     <>
@@ -41,11 +40,6 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
               <a className="btn btn-accent" href={OPENPRODUCT}>List your build</a>
               <a className="btn btn-ghost" href={SOURCE}>&lt;&gt; Read this site&apos;s source</a>
             </div>
-            {dir.ok ? (
-              <div className="hero-meta mono">
-                {dir.builds.length} builds · {dir.builds.filter(belowFloor).length} below the floor · updated {updated} UTC
-              </div>
-            ) : null}
           </div>
           {dir.ok ? <LivePulse builds={dir.builds} topics={dir.topics} /> : null}
         </section>
