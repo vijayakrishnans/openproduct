@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { OpenRole } from "@/lib/directory";
 import { initials } from "@/lib/directory";
+import { ROLE_LABEL } from "@/lib/roles";
 
 export function RoleCard({ role }: { role: OpenRole }) {
   return (
@@ -9,8 +10,11 @@ export function RoleCard({ role }: { role: OpenRole }) {
         <span className="pulse-tile mono">{initials(role.slug)}</span>
         <Link href={`/builds/${role.slug}`}>{role.slug}</Link>
       </div>
+      <span className={`role-type t-${role.type}`}>{ROLE_LABEL[role.type]}</span>
       <strong>{role.title}</strong>
-      <div className="skills">{role.skills.map((s) => <span key={s} className="skill mono">{s}</span>)}</div>
+      {role.skills.length ? (
+        <div className="skills"><span className="muted">First PR in</span>{role.skills.map((s) => <span key={s} className="skill mono">{s}</span>)}</div>
+      ) : null}
     </div>
   );
 }
@@ -27,7 +31,6 @@ export function RolesRow({ roles }: { roles: OpenRole[] }) {
       <div className="role-row">
         {roles.map((r) => <RoleCard key={`${r.slug}-${r.id}`} role={r} />)}
       </div>
-      <p className="sample-note"><b>Live:</b> role titles. <b>Sample:</b> skills.</p>
     </section>
   );
 }

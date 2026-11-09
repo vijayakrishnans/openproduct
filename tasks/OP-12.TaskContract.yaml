@@ -1,0 +1,16 @@
+apiVersion: orun.io/v1
+kind: TaskContract
+metadata:
+  name: OP-12
+spec:
+  goal: Redesign /roles — headline and three steps, role-type chips and search, seats grouped by build, and a detail panel per seat.
+  affects:
+    - default/openproduct/web
+    - web/**
+    - tasks/**
+  doneWhen:
+    - /roles shows the "Less CV. More PR." headline and the three steps (Claim a seat, Open a PR, Get merged, get in).
+    - Chips filter by role type with counts and search filters seats; filtering shows every match, otherwise one seat per build plus a "+N more roles" bar to the build page.
+    - Clicking a seat opens a panel (a bottom sheet on phone) with what it owns, a suggested first PR, the build's real stack, a claim button and the build's other seats.
+    - Role cards on the home and build pages show the type and the real stack instead of sample skills.
+  gates: []
