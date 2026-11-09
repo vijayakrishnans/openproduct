@@ -20,6 +20,8 @@ export type Build = {
   publishedAt: string | null;
   lastCommitAt: string | null;
   pieces: Piece[];
+  /** The listing's hero screenshot, when the maintainer uploaded one. */
+  cover: { src: string; alt: string } | null;
   /** Which values on this build are sample, not from the API. */
   sample: string[];
 };
@@ -74,6 +76,16 @@ export function samplePieces(slug: string): Piece[] {
   });
 }
 
+/** The hero image from a listing's media, else its first image; null when it has none. */
+export function toCover(media: unknown): Build["cover"] {
+  const items = (Array.isArray(media) ? media : [])
+    .map((m) => obj(val(m)))
+    .filter((m) => typeof m.ref === "string" && /^[a-f0-9]{64}\.(png|jpe?g|webp|gif)$/.test(m.ref));
+  const pick = items.find((m) => m.kind === "hero") ?? items[0];
+  if (!pick) return null;
+  return { src: `${API_ORIGIN}/v1/media/${pick.ref}`, alt: str(pick.alt) ?? "" };
+}
+
 export function toBuild(p: Json): Build | null {
   const slug = str(p.slug);
   if (!slug) return null;
@@ -92,6 +104,7 @@ export function toBuild(p: Json): Build | null {
     publishedAt: str(p.publishedAt),
     lastCommitAt: str(val(p.lastCommitAt)),
     pieces: samplePieces(slug),
+    cover: toCover(p.media),
     sample: ["pieces"],
   };
 }
@@ -150,9 +163,6 @@ export async function loadDirectory(): Promise<Directory> {
 
 export const initials = (slug: string) => slug.replace(/[^a-z0-9]/gi, "").slice(0, 2).toUpperCase();
 
-/** Card tint by category, as the PDF colours them. */
-const TINTS = ["#ecf0f8", "#f5ede4", "#efede8", "#ecf2ec", "#efeaf6", "#e8f1f1", "#f3f0e4", "#f6e9ea"];
-export const tint = (b: Build) => TINTS[seed(b.category ?? b.slug) % TINTS.length];
 
 /* ── One build ─────────────────────────────────────────────────────── */
 
