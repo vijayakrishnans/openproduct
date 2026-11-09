@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { AppMap } from "@/components/app-map";
+import { McpPanel } from "@/components/mcp-panel";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { initials, loadBuild, loadDirectory } from "@/lib/directory";
@@ -95,6 +96,8 @@ export default async function BuildPage({ params }: { params: Params }) {
               <div className="sample-tag">Sample: the API has no build log yet.</div>
             </div>
 
+            <McpPanel slug={b.slug} />
+
             {b.pitch ? (
               <details className="panel pitch-panel">
                 <summary className="panel-head">
@@ -142,7 +145,7 @@ export default async function BuildPage({ params }: { params: Params }) {
             </div>
 
             <div className="panel">
-              <div className="panel-head"><h2>People</h2></div>
+              <div className="panel-head"><h2>Builders</h2></div>
               <p className="muted" style={{ margin: 0 }}>
                 {b.maintainers ? `${b.maintainers} maintainers` : "Maintainers and contributors are pulled from the repo once it is linked."} Join by opening a PR on any open role.
               </p>

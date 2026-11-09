@@ -9,7 +9,7 @@ import { TabBar } from "@/components/tab-bar";
 import { loadDirectory, loadPeople } from "@/lib/directory";
 import { search } from "@/lib/search";
 
-export const metadata: Metadata = { title: "Search", description: "Search openproduct builds, stacks, people and topics." };
+export const metadata: Metadata = { title: "Search", description: "Search openproduct builds, stacks, builders and topics." };
 
 type Search = Promise<{ q?: string | string[] }>;
 
@@ -45,7 +45,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
             ) : null}
             {res.people.length ? (
               <section>
-                <h2>People<span className="count">{res.people.length}</span></h2>
+                <h2>Builders<span className="count">{res.people.length}</span></h2>
                 <div className="people-grid">{res.people.map((p) => <PersonCard key={p.handle} person={p} />)}</div>
               </section>
             ) : null}

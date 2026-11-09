@@ -3,7 +3,7 @@ import Link from "next/link";
 const TABS = [
   { href: "/", label: "Builds", icon: "▦" },
   { href: "/roles", label: "Roles", icon: "⚇" },
-  { href: "/people", label: "People", icon: "☻" },
+  { href: "/builders", label: "Builders", icon: "☻" },
   { href: "/topics", label: "Topics", icon: "≡" },
   { href: "/community", label: "Community", icon: "☺" },
 ];

@@ -39,7 +39,7 @@ function draw(n: RenderNode, i: number): ReactNode {
     }
     case "mention":
       return n.claimed ? (
-        <Link key={i} className="link" href={`/people/${encodeURIComponent(n.handle)}`}>@{n.handle}</Link>
+        <Link key={i} className="link" href={`/builders/${encodeURIComponent(n.handle)}`}>@{n.handle}</Link>
       ) : (
         `@${n.handle}`
       );

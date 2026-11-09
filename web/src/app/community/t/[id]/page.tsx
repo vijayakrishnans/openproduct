@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 }
 
 function Author({ name, handle }: { name: string | null; handle: string | null }) {
-  if (handle) return <Link className="post-author" href={`/people/${encodeURIComponent(handle)}`}>{name ?? handle}</Link>;
+  if (handle) return <Link className="post-author" href={`/builders/${encodeURIComponent(handle)}`}>{name ?? handle}</Link>;
   return <span className="post-author">{name ?? "Someone"}</span>;
 }
 
