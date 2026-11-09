@@ -14,7 +14,7 @@ export function HowItWorks() {
           <div className="kicker">HOW A BUILD GETS HERE</div>
           <h2 id="how">Ship on Orunbase, and your listing keeps itself up to date.</h2>
         </div>
-        <a className="btn" style={{ background: "#fff", color: "var(--ink)" }} href={OPENPRODUCT}>
+        <a className="btn" style={{ background: "#fff", color: "#17150f" }} href={OPENPRODUCT}>
           List your build, free
         </a>
       </div>
