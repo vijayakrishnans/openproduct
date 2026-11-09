@@ -285,6 +285,8 @@ export type Person = {
   /** Slugs of the builds this person maintains. */
   maintains: string[];
   contributesTo: number;
+  /** Whether a build they maintain has launched; null where the read doesn't say. */
+  launched: boolean | null;
 };
 
 export type PersonDetail = Person & {
@@ -320,6 +322,7 @@ export function toPerson(c: Json): Person | null {
     openToProject: c.openToProject === true,
     maintains,
     contributesTo: num(c.contributesTo),
+    launched: typeof c.launched === "boolean" ? c.launched : null,
   };
 }
 
@@ -356,6 +359,11 @@ export async function loadPerson(handle: string): Promise<PersonDetail | null | 
   const c = obj(obj(obj(await res.json()).data).contributor);
   const person = toPerson(c);
   if (!person) return null;
+  // The profile read doesn't carry `launched`; the directory list does.
+  if (person.launched === null) {
+    const all = await loadPeople().catch(() => "unreachable" as const);
+    if (all !== "unreachable") person.launched = all.find((p) => p.handle === person.handle)?.launched ?? null;
+  }
   return {
     ...person,
     githubUrl: httpUrl(c.githubUrl),

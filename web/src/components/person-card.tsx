@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { BadgeList } from "@/components/badge-list";
+import { cardBadges } from "@/lib/badges";
 import type { Person } from "@/lib/directory";
 import { initials } from "@/lib/directory";
 
@@ -21,15 +23,16 @@ export function PersonCard({ person }: { person: Person }) {
         </div>
       </div>
       {person.bio ? <p>{person.bio}</p> : null}
-      <div className="card-badges">
-        {person.openToProject ? <span className="badge role">Open to a project</span> : null}
-        {person.maintains.length > 0 ? (
-          <span className="badge">
-            Maintains {person.maintains.length} {person.maintains.length === 1 ? "build" : "builds"}
-          </span>
-        ) : null}
-        {person.contributesTo > 0 ? <span className="badge">Contributes to {person.contributesTo}</span> : null}
-      </div>
+      <BadgeList
+        compact
+        badges={cardBadges({
+          publishedAt: null,
+          openToProject: person.openToProject,
+          launched: person.launched,
+          maintains: person.maintains.length,
+          contributes: person.contributesTo,
+        })}
+      />
     </Link>
   );
 }

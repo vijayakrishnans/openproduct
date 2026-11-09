@@ -479,3 +479,29 @@ a.channel-row .channel-text span { color: var(--link); font-weight: 600; }
   .site-header .wrap { gap: 14px; }
   .nav a { padding: 6px 7px; }
 }
+
+/* Builder badges (BP1) */
+.earned { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; }
+.earned-badge > a, .earned-badge > span { display: grid; grid-template-columns: auto 1fr; column-gap: 8px; row-gap: 2px; align-items: center; height: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); color: var(--ink); text-decoration: none; }
+.earned-badge > a:hover { border-color: var(--line-2); }
+.earned-badge svg { color: var(--role-ink); background: var(--role-bg); border-radius: 999px; padding: 5px; box-sizing: content-box; grid-row: span 2; }
+.earned-label { font-weight: 600; font-size: 14px; }
+.earned-badge small { grid-column: 2; color: var(--ink-3); font-size: 12.5px; line-height: 1.35; }
+.earned-badge.open svg, .earned-badge.launched svg { color: #8a4b08; background: #fdf0dc; }
+.earned.compact { display: flex; flex-wrap: wrap; gap: 6px; }
+.earned.compact .earned-badge > span { display: inline-flex; gap: 5px; padding: 2px 8px 2px 4px; border-radius: 999px; font-size: 12px; }
+.earned.compact .earned-badge svg { padding: 3px; width: 11px; height: 11px; grid-row: auto; }
+.earned.compact .earned-label { font-size: 12px; font-weight: 600; }
+.badge-note { color: var(--ink-3); font-size: 13px; margin: 10px 0 0; }
+.person-section h2 .count { color: var(--ink-3); font-weight: 500; font-size: 15px; margin-left: 4px; }
+.project-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+.project-card { display: block; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--card); color: inherit; text-decoration: none; transition: border-color .15s, transform .15s; height: 100%; }
+.project-card:hover { border-color: var(--line-2); transform: translateY(-1px); }
+.project-card .card-cover { height: 96px; }
+.project-body { padding: 12px 14px; display: grid; gap: 4px; }
+.project-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.project-top strong { font-size: 15px; overflow-wrap: anywhere; }
+.project-tagline { color: var(--ink-2); font-size: 13.5px; line-height: 1.4; }
+@media (max-width: 640px) {
+  .earned, .project-grid { grid-template-columns: minmax(0, 1fr); }
+}
