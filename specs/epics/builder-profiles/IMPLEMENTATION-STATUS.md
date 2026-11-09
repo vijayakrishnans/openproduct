@@ -9,7 +9,7 @@ What actually shipped, and every place the code departed from `design.md`.
 | BP2: accounts | ✅ Shipped | [#17](https://github.com/vijayakrishnans/openproduct/pull/17) |
 | BP3: Apple and email sign-in | ⏳ Not started | |
 | BP4: support links | ✅ Shipped | [#18](https://github.com/vijayakrishnans/openproduct/pull/18) |
-| BP5: community discussions | 🚧 In review | |
+| BP5: community discussions | ✅ Shipped | [#20](https://github.com/vijayakrishnans/openproduct/pull/20), [#21](https://github.com/vijayakrishnans/openproduct/pull/21) |
 | BP6: builder posts | ⏳ Not started | |
 | BP7: merged-PR badges | ⏳ Not started | |
 
@@ -58,3 +58,7 @@ D2 called it "Has support links". The badge reads "Open to support" and says how
 ### Posting needs a builder profile; moderators are GitHub logins (BP5)
 
 Posting and replying need a builder profile (claimed or started here), so every post names a builder. Reporting only needs an account. A moderator is an account signed in with a GitHub login on the `MODERATORS` list (a Worker secret, comma-separated). It defaults to the site owner, `vijayakrishnans`. A moderator can hide or restore a thread or post, and sees open reports at `/community/moderation`. Limits: 3 threads and 20 posts per account per hour.
+
+### BP5 landed in two pull requests
+
+#20 was stacked on the dark-mode branch (#19, OP-23, outside this epic) and merged into that branch after #19 had already merged, so it never reached `main`. #21 carries the same commit to `main` unchanged.
