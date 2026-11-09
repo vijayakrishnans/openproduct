@@ -1,0 +1,15 @@
+apiVersion: orun.io/v1
+kind: TaskContract
+metadata:
+  name: OP-11
+spec:
+  goal: The header search is a real input that opens /search, which finds builds, people and topics.
+  affects:
+    - default/openproduct/web
+    - web/**
+    - tasks/**
+  doneWhen:
+    - The header search box accepts typing; Enter goes to /search?q=<text>; Cmd/Ctrl+K and / focus it.
+    - /search shows matching builds (name, tagline, topic, licence, stack), people (name, handle, bio, builds) and topics, name matches first, with a no-results message.
+    - On phone a search icon in the header opens /search.
+  gates: []
