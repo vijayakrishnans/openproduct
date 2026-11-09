@@ -1,0 +1,17 @@
+apiVersion: orun.io/v1
+kind: TaskContract
+metadata:
+  name: OP-15
+spec:
+  goal: Builder pages show badges computed from public data and a grid of the builder's public projects (BP1).
+  affects:
+    - default/openproduct/web
+    - web/**
+    - tasks/**
+    - specs/**
+  doneWhen:
+    - Every builder page shows its badges, each saying what it was computed from.
+    - The projects grid shows exactly the builder's public maintained and contributed listings, with cover and role.
+    - Builder cards on /builders show up to three badges.
+    - Unit tests cover every badge rule, including a builder with no contributions.
+  gates: []

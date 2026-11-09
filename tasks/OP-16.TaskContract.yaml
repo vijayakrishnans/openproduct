@@ -1,0 +1,15 @@
+apiVersion: orun.io/v1
+kind: TaskContract
+metadata:
+  name: OP-16
+spec:
+  goal: Render support links on builder and build pages, plus the First launch and Clean vote badges, from the API fields BP2 adds in orun-cloud.
+  affects:
+    - default/openproduct/web
+    - web/**
+    - tasks/**
+    - specs/**
+  doneWhen:
+    - A builder's support links show on their page with provider icons; a build's show on its build page.
+    - First launch and Clean vote badges render from makerMarkInputs, and are absent where the input is null.
+  gates: []

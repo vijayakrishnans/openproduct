@@ -1,0 +1,15 @@
+apiVersion: orun.io/v1
+kind: TaskContract
+metadata:
+  name: OP-18
+spec:
+  goal: Render builder posts — blog text and an embedded YouTube, Vimeo or Loom video — on builder pages, a post page, and a From the builders feed in the community (BP4).
+  affects:
+    - default/openproduct/web
+    - web/**
+    - tasks/**
+    - specs/**
+  doneWhen:
+    - A post with a YouTube link plays on the builder page, its own page, and the community feed.
+    - Embeds are built from provider and id only, in a sandboxed lazy iframe; tests show other URLs produce no embed.
+  gates: []
