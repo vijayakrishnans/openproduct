@@ -294,3 +294,27 @@ a.community-card:hover { border-color: var(--line-2); transform: translateY(-1px
 .community-cta { margin-top: 4px; color: var(--link); font-weight: 600; font-size: 14px; }
 .community-cta.soon { color: var(--ink-3); font-weight: 500; }
 .community-card.is-soon .community-mark { opacity: 0.55; }
+
+/* /people and /topics */
+.people-grid, .topic-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; margin-top: 16px; }
+.person-card, .topic-card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; display: grid; gap: 8px; align-content: start; text-decoration: none; color: inherit; transition: border-color .15s, transform .15s; }
+.person-card:hover, .topic-card:hover { border-color: var(--line-2); transform: translateY(-1px); }
+.person-card p { margin: 0; color: var(--ink-2); font-size: 14px; }
+.person-head { display: flex; gap: 10px; align-items: center; }
+.person-head strong { display: block; font-size: 16px; }
+.handle { color: var(--ink-3); font-size: 12px; }
+.avatar { display: grid; place-items: center; border-radius: 999px; background: var(--role-bg); color: var(--role-ink); font-weight: 700; flex: none; }
+.person-hero { display: flex; gap: 16px; align-items: flex-start; margin: 16px 0 8px; }
+.person-hero h1 { margin: 0; font-size: 30px; letter-spacing: -0.02em; }
+.person-hero p { margin: 8px 0; color: var(--ink-2); max-width: 560px; }
+.person-hero .card-badges { margin-top: 8px; }
+.person-hero a.badge { text-decoration: none; color: var(--link); }
+.person-section { margin-top: 24px; }
+.person-section h2 { font-size: 18px; margin: 0 0 10px; }
+.person-builds { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.person-builds a { display: grid; gap: 2px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; text-decoration: none; }
+.person-builds a:hover { border-color: var(--line-2); }
+.person-builds span { color: var(--ink-2); font-size: 14px; }
+.topic-card strong { font-size: 18px; letter-spacing: -0.01em; }
+.topic-card .mono { color: var(--ink-3); font-size: 12px; }
+.topic-sample { color: var(--ink-2); font-size: 13px; }

@@ -254,3 +254,95 @@ export async function loadRoles(builds: Build[], limit?: number): Promise<OpenRo
     d && d !== "unreachable" ? d.roles.map((r) => ({ ...r, slug: d.slug, tagline: d.tagline })) : [],
   );
 }
+
+/* ── People ────────────────────────────────────────────────────────── */
+
+export type Person = {
+  handle: string;
+  displayName: string;
+  bio: string | null;
+  openToProject: boolean;
+  /** Slugs of the builds this person maintains. */
+  maintains: string[];
+  contributesTo: number;
+};
+
+export type PersonDetail = Person & {
+  githubUrl: string | null;
+  siteUrl: string | null;
+  followers: number;
+  publishedAt: string | null;
+  maintainsBuilds: { slug: string; tagline: string }[];
+  contributesToBuilds: { slug: string; tagline: string }[];
+};
+
+const HANDLE = /^[a-z0-9][a-z0-9_-]{0,62}$/i;
+const httpUrl = (v: unknown): string | null => {
+  const s = str(v);
+  return s && /^https?:\/\//.test(s) ? s : null;
+};
+const listings = (v: unknown) =>
+  (Array.isArray(v) ? v : [])
+    .map(obj)
+    .map((l) => ({ slug: str(l.slug) ?? "", tagline: str(l.tagline) ?? "" }))
+    .filter((l) => l.slug);
+
+export function toPerson(c: Json): Person | null {
+  const handle = str(c.handle);
+  if (!handle) return null;
+  const maintains = Array.isArray(c.maintains)
+    ? c.maintains.map((m) => (typeof m === "string" ? m : str(obj(m).slug))).filter((m): m is string => !!m)
+    : [];
+  return {
+    handle,
+    displayName: str(c.displayName) ?? handle,
+    bio: str(c.bio),
+    openToProject: c.openToProject === true,
+    maintains,
+    contributesTo: num(c.contributesTo),
+  };
+}
+
+export async function loadPeople(): Promise<Person[] | "unreachable"> {
+  try {
+    const raw = obj(obj(await getJson("/v1/public/openproduct/contributors")).data).contributors;
+    return (Array.isArray(raw) ? raw : [])
+      .map((c) => toPerson(obj(c)))
+      .filter((p): p is Person => !!p)
+      .sort(
+        (a, b) =>
+          Number(b.openToProject) - Number(a.openToProject) ||
+          b.maintains.length + b.contributesTo - (a.maintains.length + a.contributesTo) ||
+          a.handle.localeCompare(b.handle),
+      );
+  } catch {
+    return "unreachable";
+  }
+}
+
+export async function loadPerson(handle: string): Promise<PersonDetail | null | "unreachable"> {
+  if (!HANDLE.test(handle)) return null;
+  let res: Response;
+  try {
+    res = await fetch(`${API_ORIGIN}/v1/public/openproduct/people/${encodeURIComponent(handle)}`, {
+      headers: { accept: "application/json" },
+      cache: "no-store",
+    });
+  } catch {
+    return "unreachable";
+  }
+  if (res.status === 404) return null;
+  if (!res.ok) return "unreachable";
+  const c = obj(obj(obj(await res.json()).data).contributor);
+  const person = toPerson(c);
+  if (!person) return null;
+  return {
+    ...person,
+    githubUrl: httpUrl(c.githubUrl),
+    siteUrl: httpUrl(c.siteUrl),
+    followers: num(c.followers),
+    publishedAt: str(c.publishedAt),
+    maintainsBuilds: listings(c.maintains),
+    contributesToBuilds: listings(c.contributesToListings),
+  };
+}

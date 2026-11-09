@@ -1,11 +1,10 @@
 import Link from "next/link";
-import { OPENPRODUCT } from "@/lib/links";
 
 const TABS = [
   { href: "/", label: "Builds", icon: "▦" },
   { href: "/roles", label: "Roles", icon: "⚇" },
-  { href: OPENPRODUCT, label: "List yours", icon: "+", accent: true },
-  { href: "/#topics", label: "Topics", icon: "≡" },
+  { href: "/people", label: "People", icon: "☻" },
+  { href: "/topics", label: "Topics", icon: "≡" },
   { href: "/community", label: "Community", icon: "☺" },
 ];
 
@@ -14,7 +13,7 @@ export function TabBar({ current }: { current: string }) {
   return (
     <nav className="tabbar" aria-label="Sections">
       {TABS.map((t) => (
-        <Link key={t.label} href={t.href} className={`${t.accent ? "accent" : ""}${current === t.href ? " on" : ""}`}>
+        <Link key={t.label} href={t.href} className={current === t.href ? "on" : undefined}>
           <span aria-hidden>{t.icon}</span>
           {t.label}
         </Link>
