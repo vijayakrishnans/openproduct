@@ -1,0 +1,15 @@
+apiVersion: orun.io/v1
+kind: TaskContract
+metadata:
+  name: OP-10
+spec:
+  goal: /community is a forum like Product Hunt's — the public threads list with category chips and Latest / Most replied, a Trending threads sidebar on the right with the community channels under it, and a page per thread.
+  affects:
+    - default/openproduct/web
+    - web/**
+    - tasks/**
+  doneWhen:
+    - /community lists threads from /v1/public/openproduct/threads, filterable by the six tags and ordered Latest or Most replied, with an empty state when there are none.
+    - A right-hand sidebar shows the five most-replied threads as Trending, and the Discord/Reddit/YouTube/X channels under it; on phone it stacks below the list.
+    - /community/t/<id> shows the thread and its posts from the typed body tree (http(s) links only), and an unknown id is a 404.
+  gates: []
