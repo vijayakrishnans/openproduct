@@ -5,6 +5,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { initials, loadBuild, loadDirectory } from "@/lib/directory";
 import { OPENPRODUCT, ORUNBASE } from "@/lib/links";
+import { ROLE_GUIDE, ROLE_LABEL } from "@/lib/roles";
 
 export const dynamic = "force-dynamic";
 
@@ -112,7 +113,7 @@ export default async function BuildPage({ params }: { params: Params }) {
               <a className="btn btn-light" href={ORUNBASE}>Fork &amp; deploy on Orunbase</a>
             </div>
 
-            <div className="panel">
+            <div className="panel" id="roles">
               <div className="panel-head">
                 <h2>Open roles</h2>
                 {b.roles.length ? <span className="count">{b.roles.length} open</span> : null}
@@ -121,11 +122,19 @@ export default async function BuildPage({ params }: { params: Params }) {
                 <div className="roles">
                   {b.roles.map((r) => (
                     <div className="role" key={r.id}>
+                      <span className={`role-type t-${r.type}`}>{ROLE_LABEL[r.type]}</span>
                       <strong>{r.title}</strong>
-                      <div className="skills">{r.skills.map((s) => <span key={s} className="skill mono">{s}</span>)}</div>
+                      {r.description ? <p className="muted" style={{ margin: 0, fontSize: 13.5 }}>{r.description}</p> : null}
+                      <p className="role-guide"><b>A good first PR:</b> {ROLE_GUIDE[r.type].firstPr}</p>
+                      {r.skills.length ? (
+                        <div className="skills"><span className="muted">First PR in</span>{r.skills.map((s) => <span key={s} className="skill mono">{s}</span>)}</div>
+                      ) : null}
+                      {r.commitment ? <span className="muted" style={{ fontSize: 13 }}>{r.commitment}</span> : null}
+                      <a className="btn btn-dark role-claim" href={b.repoUrl ?? listing} target="_blank" rel="noopener noreferrer">
+                        {b.repoUrl ? "Claim with a PR" : "Claim this seat"} →
+                      </a>
                     </div>
                   ))}
-                  <div className="sample-tag">Role titles are live. Skills are sample.</div>
                 </div>
               ) : (
                 <p className="muted">No open roles right now.</p>

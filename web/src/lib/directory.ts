@@ -2,6 +2,7 @@
 // shapes into the app's own (design.md §1). Every read is tolerant: a missing
 // field is a blank, never a crash, and a failed read is an `unreachable`
 // result the page renders, never a 500.
+import { roleType, stackName, type RoleType } from "./roles";
 
 export const API_ORIGIN = "https://api.openproduct.live";
 
@@ -166,7 +167,17 @@ export const initials = (slug: string) => slug.replace(/[^a-z0-9]/gi, "").slice(
 
 /* ── One build ─────────────────────────────────────────────────────── */
 
-export type Role = { id: string; title: string; firstTask: string; skills: string[] };
+export type Role = {
+  id: string;
+  title: string;
+  type: RoleType;
+  /** The maintainer's brief for the seat, when they wrote one. */
+  description: string | null;
+  /** Hours or terms, when the maintainer gave them. */
+  commitment: string | null;
+  /** The build's own stack: where a first PR would land. */
+  skills: string[];
+};
 export type LogEntry = { ago: string; kind: "deploy" | "feature" | "people" | "data" | "roles"; text: string };
 
 export type BuildDetail = Build & {
@@ -181,8 +192,6 @@ export type BuildDetail = Build & {
   pinned: string;
 };
 
-const SKILLS = [["TypeScript", "Postgres"], ["React", "Tailwind"], ["Go", "GitHub API"], ["Python", "Supabase"], ["Figma", "React"], ["Markdown"]];
-const FIRST_TASKS = ["a five-minute quickstart", "an import from CSV", "the empty states", "retry and backoff for webhooks", "a settings page", "tests for the billing edge cases"];
 
 export function sampleLog(b: Build): { log: LogEntry[]; pinned: string } {
   const s = seed(b.slug);
@@ -211,14 +220,15 @@ export async function loadBuild(slug: string): Promise<BuildDetail | null | "unr
   const p = obj(data.product ?? data);
   const b = toBuild(p);
   if (!b || !listable(b)) return null;
-  const s = seed(b.slug);
   const openings = Array.isArray(p.openings) ? p.openings.map(obj) : [];
   const roles: Role[] = openings
     .map((o, i) => ({
       id: str(o.id) ?? String(i),
       title: str(val(o.title)) ?? "",
-      firstTask: FIRST_TASKS[(s + i) % FIRST_TASKS.length],
-      skills: SKILLS[(s + i) % SKILLS.length],
+      type: roleType(str(val(o.title)) ?? ""),
+      description: str(val(o.description)),
+      commitment: str(val(o.commitment)),
+      skills: b.stack.slice(0, 3).map(stackName),
     }))
     .filter((r) => r.title);
   const maintainers = Array.isArray(p.maintainers) ? p.maintainers.length : 0;
@@ -231,7 +241,7 @@ export async function loadBuild(slug: string): Promise<BuildDetail | null | "unr
     maintainers,
     roles,
     ...sampleLog(b),
-    sample: ["pieces", "log", "pinned", "role.firstTask", "role.skills", ...(maintainers ? [] : ["people"])],
+    sample: ["pieces", "log", "pinned", ...(maintainers ? [] : ["people"])],
   };
 }
 
@@ -254,14 +264,14 @@ export function pulse(builds: Build[], n = 5): { slug: string; when: string; at:
     .map((b) => ({ slug: b.slug, when: ago(b.lastCommitAt!), at: b.lastCommitAt!, category: b.category }));
 }
 
-export type OpenRole = Role & { slug: string; tagline: string };
+export type OpenRole = Role & { slug: string; tagline: string; repoUrl: string | null };
 
 /** Open roles across builds, most active builds first. Each needs one detail read. */
 export async function loadRoles(builds: Build[], limit?: number): Promise<OpenRole[]> {
   const withRoles = sortBuilds(builds.filter((b) => b.roleCount > 0), "active").slice(0, limit ?? builds.length);
   const details = await Promise.all(withRoles.map((b) => loadBuild(b.slug).catch(() => null)));
   return details.flatMap((d) =>
-    d && d !== "unreachable" ? d.roles.map((r) => ({ ...r, slug: d.slug, tagline: d.tagline })) : [],
+    d && d !== "unreachable" ? d.roles.map((r) => ({ ...r, slug: d.slug, tagline: d.tagline, repoUrl: d.repoUrl })) : [],
   );
 }
 
