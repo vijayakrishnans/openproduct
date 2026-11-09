@@ -1,0 +1,14 @@
+apiVersion: orun.io/v1
+kind: TaskContract
+metadata:
+  name: OP-19
+spec:
+  goal: First PR merged and N PRs merged badges from the mergedPrs field BP5 adds in orun-cloud.
+  affects:
+    - default/openproduct/web
+    - web/**
+    - tasks/**
+    - specs/**
+  doneWhen:
+    - A builder with merged PRs shows the badges; a builder with mergedPrs null shows neither and no zero.
+  gates: []

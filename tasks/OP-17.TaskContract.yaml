@@ -1,0 +1,15 @@
+apiVersion: orun.io/v1
+kind: TaskContract
+metadata:
+  name: OP-17
+spec:
+  goal: Show community threads (threads with no listing) on the community page, with a Start a discussion link and the Started a discussion badge (BP3).
+  affects:
+    - default/openproduct/web
+    - web/**
+    - tasks/**
+    - specs/**
+  doneWhen:
+    - Community threads appear in the forum list labelled Community, and open to their thread page.
+    - The starter discussions are live and visible here.
+  gates: []

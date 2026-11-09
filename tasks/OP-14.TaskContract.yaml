@@ -1,0 +1,13 @@
+apiVersion: orun.io/v1
+kind: TaskContract
+metadata:
+  name: OP-14
+spec:
+  goal: Write the builder-profiles epic doc set — badges, public projects, support links, community discussions, builder posts with video, merged-PR badges.
+  affects:
+    - specs/**
+    - tasks/**
+  doneWhen:
+    - specs/epics/builder-profiles/ has README, design, implementation plan, risks and status, with the rejected alternative named.
+    - Every openproduct-side task the plan names has a contract under tasks/.
+  gates: []
