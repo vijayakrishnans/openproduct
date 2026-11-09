@@ -607,7 +607,7 @@ a.channel-row .channel-text span { color: var(--link); font-weight: 600; }
 .account-form { display: grid; gap: 12px; }
 .account-form label { display: grid; gap: 5px; font-weight: 600; font-size: 14px; }
 .account-form label.check { display: flex; align-items: center; gap: 8px; font-weight: 500; }
-.account-form input:not([type="checkbox"]), .account-form textarea { font: inherit; font-weight: 400; font-size: 15px; border: 1px solid var(--line-2); border-radius: 10px; padding: 9px 11px; background: var(--card); color: var(--ink); width: 100%; box-sizing: border-box; }
+.account-form input:not([type="checkbox"]):not([type="radio"]), .account-form textarea { font: inherit; font-weight: 400; font-size: 15px; border: 1px solid var(--line-2); border-radius: 10px; padding: 9px 11px; background: var(--card); color: var(--ink); width: 100%; box-sizing: border-box; }
 .account-form small { font-weight: 400; color: var(--ink-3); font-size: 12.5px; }
 .account-form .btn { justify-self: start; font: inherit; font-weight: 600; }
 .handle-input { display: flex; align-items: center; border: 1px solid var(--line-2); border-radius: 10px; background: var(--card); padding-left: 11px; }
@@ -638,3 +638,23 @@ a.channel-row .channel-text span { color: var(--link); font-weight: 600; }
 /* Theme toggle */
 .theme-toggle { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 9px; border: 1px solid var(--line); background: var(--card); color: var(--ink-2); cursor: pointer; flex: none; }
 .theme-toggle:hover { color: var(--ink); border-color: var(--line-2); }
+
+/* Community discussions (BP5) */
+.tag-picker { border: 0; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.tag-picker legend { font-weight: 600; font-size: 14px; margin-bottom: 6px; padding: 0; }
+.tag-picker label { display: inline-flex !important; cursor: pointer; position: relative; }
+.tag-picker input { position: absolute; left: 0; top: 0; opacity: 0; width: 1px; height: 1px; margin: 0; }
+.tag-picker span { border: 1px solid var(--line); background: var(--card); border-radius: 999px; padding: 5px 13px; font-size: 14px; font-weight: 500; color: var(--ink-2); }
+.tag-picker input:checked + span { background: var(--ink); color: var(--on-ink); border-color: var(--ink); }
+.tag-picker input:focus-visible + span { outline: 2px solid var(--link); outline-offset: 2px; }
+.post-actions { display: flex; gap: 12px; margin-top: 8px; }
+.post-actions form { margin: 0; }
+.thread-header .post-actions { margin-top: 2px; }
+.text-btn { border: 0; background: none; padding: 0; cursor: pointer; color: var(--ink-3); font-size: 12.5px; text-decoration: underline; text-underline-offset: 2px; }
+.text-btn:hover { color: var(--ink); }
+.post.is-hidden { opacity: .6; border-style: dashed; }
+.post { scroll-margin-top: 84px; }
+.reply-box { margin-top: 8px; }
+.reply-box .account-form { margin-top: 0; }
+.mod-excerpt { font-style: italic; }
+.mod-reasons { margin: 0; padding-left: 18px; color: var(--ink-2); font-size: 14px; }
