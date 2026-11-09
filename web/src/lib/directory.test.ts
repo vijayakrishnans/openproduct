@@ -76,8 +76,8 @@ describe("toPerson", () => {
   it("reads a contributor from the list shape (maintains as slugs)", async () => {
     const { toPerson } = await import("./directory");
     expect(
-      toPerson({ handle: "rahul", displayName: "Rahul", bio: "Hi", openToProject: true, maintains: ["a", "b"], contributesTo: 2 }),
-    ).toEqual({ handle: "rahul", displayName: "Rahul", bio: "Hi", openToProject: true, maintains: ["a", "b"], contributesTo: 2 });
+      toPerson({ handle: "rahul", displayName: "Rahul", bio: "Hi", openToProject: true, maintains: ["a", "b"], contributesTo: 2, launched: true }),
+    ).toEqual({ handle: "rahul", displayName: "Rahul", bio: "Hi", openToProject: true, maintains: ["a", "b"], contributesTo: 2, launched: true });
   });
 
   it("reads the profile shape (maintains as listings) and falls back to the handle for a name", async () => {

@@ -5,7 +5,7 @@ import { search } from "./search";
 const build = (slug: string, tagline: string, stack: string[] = [], category = "productivity"): Build => ({
   slug, tagline, category, licence: "MIT", changes7d: 0, upvotes: 0, roleCount: 0, stack, publishedAt: null, lastCommitAt: null, pieces: [], cover: null, sample: [],
 });
-const person = (handle: string, displayName: string, bio: string | null = null): Person => ({ handle, displayName, bio, openToProject: false, maintains: [], contributesTo: 0 });
+const person = (handle: string, displayName: string, bio: string | null = null): Person => ({ handle, displayName, bio, openToProject: false, maintains: [], contributesTo: 0, launched: null });
 const topics: Topic[] = [{ value: "dev-tools", label: "Dev tools", products: 1 }, { value: "productivity", label: "Productivity", products: 2 }];
 const builds = [build("leakbook", "A phone-first refrigerant log"), build("flakeless", "Quarantine flaky tests", ["React"], "dev-tools"), build("bookly", "Bookings for salons")];
 
