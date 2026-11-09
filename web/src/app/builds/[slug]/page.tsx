@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { AppMap } from "@/components/app-map";
-import { McpPanel } from "@/components/mcp-panel";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { initials, loadBuild, loadDirectory } from "@/lib/directory";
@@ -95,8 +94,6 @@ export default async function BuildPage({ params }: { params: Params }) {
               </ul>
               <div className="sample-tag">Sample: the API has no build log yet.</div>
             </div>
-
-            <McpPanel slug={b.slug} />
 
             {b.pitch ? (
               <details className="panel pitch-panel">

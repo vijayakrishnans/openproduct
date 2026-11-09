@@ -3,8 +3,6 @@
 export const OPENPRODUCT = "https://openproduct.live";
 export const ORUNBASE = "https://app.orunbase.com";
 export const SOURCE = "https://github.com/vijayakrishnans/openproduct";
-// openproduct's public MCP server: anonymous, read-only, the same catalog as the API.
-export const OPENPRODUCT_MCP = "https://api.openproduct.live/mcp";
 
 // The community's own channels. A channel with no `url` yet renders as
 // "coming soon" rather than a dead link: fill the URL in here and every
