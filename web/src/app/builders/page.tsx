@@ -6,26 +6,26 @@ import { TabBar } from "@/components/tab-bar";
 import { loadPeople } from "@/lib/directory";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "People", description: "The people who maintain and contribute to builds on openproduct." };
+export const metadata: Metadata = { title: "Builders", description: "The builders who maintain and contribute to builds on openproduct." };
 
-export default async function PeoplePage() {
+export default async function BuildersPage() {
   const people = await loadPeople();
   const open = people === "unreachable" ? 0 : people.filter((p) => p.openToProject).length;
   return (
     <>
-      <SiteHeader current="/people" />
+      <SiteHeader current="/builders" />
       <main className="wrap section">
         <div className="section-head">
-          <h1 style={{ margin: 0, fontSize: 34, letterSpacing: "-0.02em" }}>People</h1>
+          <h1 style={{ margin: 0, fontSize: 34, letterSpacing: "-0.02em" }}>Builders</h1>
           {people !== "unreachable" ? (
             <span className="sub">
-              {people.length} {people.length === 1 ? "person" : "people"} building in the open
+              {people.length} {people.length === 1 ? "builder" : "builders"} building in the open
               {open > 0 ? `, ${open} open to a project` : ""}.
             </span>
           ) : null}
         </div>
         {people === "unreachable" ? (
-          <div className="unreachable">The people directory could not be reached just now. Try again in a minute.</div>
+          <div className="unreachable">The builders directory could not be reached just now. Try again in a minute.</div>
         ) : people.length === 0 ? (
           <div className="unreachable">Nobody has published a profile yet.</div>
         ) : (
@@ -33,7 +33,7 @@ export default async function PeoplePage() {
         )}
       </main>
       <SiteFooter />
-      <TabBar current="/people" />
+      <TabBar current="/builders" />
     </>
   );
 }

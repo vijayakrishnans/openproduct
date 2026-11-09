@@ -25,8 +25,8 @@ export function SearchBox({ initial = "" }: { initial?: string }) {
         type="search"
         name="q"
         defaultValue={initial}
-        placeholder="Search builds, stacks, people"
-        aria-label="Search builds, stacks and people"
+        placeholder="Search builds, builders"
+        aria-label="Search builds, stacks and builders"
         autoComplete="off"
         enterKeyHint="search"
       />

@@ -41,9 +41,9 @@ export default async function PersonPage({ params }: { params: Params }) {
   if (person === null) notFound();
   return (
     <>
-      <SiteHeader current="/people" />
+      <SiteHeader current="/builders" />
       <main className="wrap section">
-        <Link className="link" href="/people">← People</Link>
+        <Link className="link" href="/builders">← Builders</Link>
         {person === "unreachable" ? (
           <div className="unreachable" style={{ marginTop: 16 }}>This profile could not be reached just now. Try again in a minute.</div>
         ) : (
@@ -71,7 +71,7 @@ export default async function PersonPage({ params }: { params: Params }) {
         )}
       </main>
       <SiteFooter />
-      <TabBar current="/people" />
+      <TabBar current="/builders" />
     </>
   );
 }

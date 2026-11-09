@@ -142,7 +142,7 @@ export default async function BuildPage({ params }: { params: Params }) {
             </div>
 
             <div className="panel">
-              <div className="panel-head"><h2>People</h2></div>
+              <div className="panel-head"><h2>Builders</h2></div>
               <p className="muted" style={{ margin: 0 }}>
                 {b.maintainers ? `${b.maintainers} maintainers` : "Maintainers and contributors are pulled from the repo once it is linked."} Join by opening a PR on any open role.
               </p>

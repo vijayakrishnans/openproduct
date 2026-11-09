@@ -1,0 +1,14 @@
+apiVersion: orun.io/v1
+kind: TaskContract
+metadata:
+  name: OP-13
+spec:
+  goal: Rename People to Builders across the site.
+  affects:
+    - default/openproduct/web
+    - web/**
+    - tasks/**
+  doneWhen:
+    - The menu, phone bar, page titles and search results say Builders, the pages live at /builders and /builders/<handle>, and the old /people links redirect there.
+    - Role badges and the header no longer stretch or wrap at mid widths.
+  gates: []

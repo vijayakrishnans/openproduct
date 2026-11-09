@@ -33,7 +33,7 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
             <h1>Products built in the open.</h1>
             <p className="lede-short">Public repos, public workspaces. List yours free, fork anything.</p>
             <p className="lede">
-              Every build is a public repo and a public workspace on Orunbase. List yours for free, find people to
+              Every build is a public repo and a public workspace on Orunbase. List yours for free, find builders to
               build with, and fork anything you like. The directory itself is open source too.
             </p>
             <div className="hero-actions">

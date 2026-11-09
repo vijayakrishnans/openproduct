@@ -12,7 +12,7 @@ export function Avatar({ handle, size = 40 }: { handle: string; size?: number })
 
 export function PersonCard({ person }: { person: Person }) {
   return (
-    <Link href={`/people/${person.handle}`} className="person-card">
+    <Link href={`/builders/${person.handle}`} className="person-card">
       <div className="person-head">
         <Avatar handle={person.handle} />
         <div>
