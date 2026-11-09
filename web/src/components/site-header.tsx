@@ -4,8 +4,8 @@ import { OPENPRODUCT } from "@/lib/links";
 const NAV = [
   { href: "/", label: "Builds" },
   { href: "/roles", label: "Open roles" },
-  { href: "/#topics", label: "Topics" },
-  { href: `${OPENPRODUCT}/people`, label: "People" },
+  { href: "/topics", label: "Topics" },
+  { href: "/people", label: "People" },
   { href: "/community", label: "Community" },
 ];
 

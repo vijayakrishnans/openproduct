@@ -71,3 +71,23 @@ describe("pulse", () => {
     expect(pulse([old, none, fresh]).map((l) => l.slug)).toEqual(["fresh", "old"]);
   });
 });
+
+describe("toPerson", () => {
+  it("reads a contributor from the list shape (maintains as slugs)", async () => {
+    const { toPerson } = await import("./directory");
+    expect(
+      toPerson({ handle: "rahul", displayName: "Rahul", bio: "Hi", openToProject: true, maintains: ["a", "b"], contributesTo: 2 }),
+    ).toEqual({ handle: "rahul", displayName: "Rahul", bio: "Hi", openToProject: true, maintains: ["a", "b"], contributesTo: 2 });
+  });
+
+  it("reads the profile shape (maintains as listings) and falls back to the handle for a name", async () => {
+    const { toPerson } = await import("./directory");
+    const p = toPerson({ handle: "arca", displayName: null, maintains: [{ slug: "my-product", tagline: "x" }] })!;
+    expect(p).toMatchObject({ displayName: "arca", maintains: ["my-product"], openToProject: false, contributesTo: 0 });
+  });
+
+  it("drops a contributor with no handle", async () => {
+    const { toPerson } = await import("./directory");
+    expect(toPerson({ displayName: "nobody" })).toBeNull();
+  });
+});

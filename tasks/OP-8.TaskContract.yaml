@@ -1,0 +1,15 @@
+apiVersion: orun.io/v1
+kind: TaskContract
+metadata:
+  name: OP-8
+spec:
+  goal: People and Topics are pages on the new site (/people, /people/<handle>, /topics, /topics/<topic>) instead of links out to openproduct.live.
+  affects:
+    - default/openproduct/web
+    - web/**
+    - tasks/**
+  doneWhen:
+    - /people lists every published contributor from the public API, open-to-a-project first, and each card opens /people/<handle> with their bio, links and the builds they maintain or contribute to.
+    - /topics lists every topic with its build count, and /topics/<topic> shows that topic's builds as cards, most active first; an unknown handle or topic is a 404.
+    - The header and the phone tab bar link People, Topics and Roles to pages on this site; none of them go to openproduct.live.
+  gates: []
