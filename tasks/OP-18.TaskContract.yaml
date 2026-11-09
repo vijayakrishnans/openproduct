@@ -3,13 +3,13 @@ kind: TaskContract
 metadata:
   name: OP-18
 spec:
-  goal: Render builder posts — blog text and an embedded YouTube, Vimeo or Loom video — on builder pages, a post page, and a From the builders feed in the community (BP4).
+  goal: Sign in with Apple and a one-time email link (BP3), on the site's own domain.
   affects:
     - default/openproduct/web
     - web/**
     - tasks/**
     - specs/**
   doneWhen:
-    - A post with a YouTube link plays on the builder page, its own page, and the community feed.
-    - Embeds are built from provider and id only, in a sandboxed lazy iframe; tests show other URLs produce no embed.
+    - Sign in with Apple works on the custom domain.
+    - An email link signs in once and expires after 15 minutes; tests cover reuse and expiry.
   gates: []

@@ -1,0 +1,15 @@
+apiVersion: orun.io/v1
+kind: TaskContract
+metadata:
+  name: OP-20
+spec:
+  goal: Community discussions (BP5) — signed-in builders start threads and reply here, listed with openproduct.live threads; the starter discussions are posted.
+  affects:
+    - default/openproduct/web
+    - web/**
+    - tasks/**
+    - specs/**
+  doneWhen:
+    - The starter threads are live on the community page and signed-in builders can reply.
+    - Threads can be reported and the owner can hide one.
+  gates: []

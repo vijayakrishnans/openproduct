@@ -9,11 +9,12 @@ Profiles stay honest. Every badge is computed from public data, and each one say
 | Field | Value |
 |-------|-------|
 | Status | 📝 Proposed |
-| Cluster | **BP** (BP0–BP5) |
-| Owner(s) | `web/` here; `apps/openproduct/{core,gateway,web,packages}` in orun-cloud for the backend milestones |
+| Cluster | **BP** (BP0–BP7) |
+| Owner(s) | `web/` here. Nothing in orun-cloud: openproduct.live is not changed by this epic (revised 2026-11-09) |
 | Builds on | openproduct-reimagined (OP), and openproduct.live's existing profiles, maker marks (PE2), discussions and render subset |
-| Decisions locked | (1) Badges are computed from public data, never awarded. (2) Builders edit on openproduct.live, where sign-in already exists, and this site displays the result. (3) Videos are embedded only from an allowlist of providers, stored as provider plus video id, never as raw HTML. (4) Support links accept an allowlist of hosts. (5) Only public listings appear on a profile. |
-| Gate | BP1 ships on today's API with no backend change. |
+| Decisions locked | (1) Badges are computed from public data, never awarded. (2) **This site gets its own accounts and its own database** (Cloudflare D1). Builders sign in here with GitHub, Google, Apple, Orunbase or an email link, and everything they add lives here. openproduct.live stays read-only to us. (3) Videos are embedded only from an allowlist of providers, stored as provider plus video id, never as raw HTML. (4) Support links accept an allowlist of hosts. (5) Only public listings appear on a profile. |
+| Gate | BP2 (accounts) comes before anything a builder writes. |
+| Revised | 2026-11-09: the first version put editing on openproduct.live; the owner asked for everything to live on this site instead. D4 is reversed, and D9 to D12 are new. |
 
 ## Read order
 
@@ -24,11 +25,13 @@ Profiles stay honest. Every badge is computed from public data, and each one say
 
 ## Milestones at a glance
 
-| Milestone | What it lands | Where | Done when |
-|---|---|---|---|
-| BP0: the spec | this doc set | openproduct | merged |
-| BP1: badges and projects | builder page shows badges computed from public data and a grid of public projects; badges also appear on builder cards | openproduct | every builder page shows its badges, each with what it was computed from |
-| BP2: support links | builders and builds can list up to four support links (Patreon, GitHub Sponsors, Ko-fi…); edited on openproduct.live, shown here | orun-cloud, then openproduct | a builder adds a Patreon link on openproduct.live and it shows on their page here |
-| BP3: community discussions | threads that aren't about one build; the starter discussions are posted | orun-cloud, then openproduct | "Vercel vs Cloudflare" and the other starter threads are live and open for replies |
-| BP4: builder posts | builders write blog posts and share videos (YouTube, Vimeo, Loom); shown on their page and in the community | orun-cloud, then openproduct | a builder publishes a post with a YouTube video and it plays on their page and in the community feed |
-| BP5: merged-PR badges | badges for merged pull requests to openproduct builds | orun-cloud, then openproduct | a builder whose first PR merges gets "First PR merged" without anyone setting it |
+| Milestone | What it lands | Done when |
+|---|---|---|
+| BP0: the spec | this doc set (and its revision) | merged |
+| BP1: badges and projects | badges computed from public data, and the builder's public projects | ✅ shipped (#15) |
+| BP2: accounts | a D1 database, sessions, and sign-in with GitHub, Google and Orunbase; a builder claims their openproduct profile or starts a new one | a builder signs in with any of the three and sees "Edit profile" on their own page |
+| BP3: Apple and email sign-in | Sign in with Apple, and a one-time email link | both work on the site's own domain |
+| BP4: support links | builders and maintainers add up to four support links; shown on builder and build pages | a builder adds a Patreon link here and it shows on their page |
+| BP5: community discussions | threads written here, listed with openproduct.live's; the starter discussions | "Vercel vs Cloudflare" and the other starter threads are live here and open for replies |
+| BP6: builder posts | blog posts and YouTube, Vimeo or Loom videos, on the builder page and in the community | a post with a YouTube video plays on the builder page and in the community feed |
+| BP7: merged-PR badges | badges for merged pull requests to openproduct builds, read from GitHub | a builder signed in with GitHub whose PR merged shows "First PR merged" |

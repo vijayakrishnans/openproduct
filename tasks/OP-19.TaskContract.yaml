@@ -3,12 +3,13 @@ kind: TaskContract
 metadata:
   name: OP-19
 spec:
-  goal: First PR merged and N PRs merged badges from the mergedPrs field BP5 adds in orun-cloud.
+  goal: Support links (BP4) — builders and build maintainers add up to four allowlisted support links, shown on builder and build pages.
   affects:
     - default/openproduct/web
     - web/**
     - tasks/**
     - specs/**
   doneWhen:
-    - A builder with merged PRs shows the badges; a builder with mergedPrs null shows neither and no zero.
+    - A builder adds a Patreon link and it shows on their page; a maintainer adds one to their build and it shows there.
+    - A link to a site off the allowlist is refused with the list of accepted sites; tests cover look-alike hosts, http and the limit.
   gates: []
