@@ -9,6 +9,7 @@ import { TabBar } from "@/components/tab-bar";
 import { loadDirectory, loadPeople } from "@/lib/directory";
 import { loadDirectoryHere } from "@/lib/server/directory-here";
 import { search } from "@/lib/search";
+import { loadTopics } from "@/lib/server/topics-here";
 
 export const metadata: Metadata = { title: "Search", description: "Search openproduct builds, stacks, builders and topics." };
 
@@ -17,9 +18,10 @@ type Search = Promise<{ q?: string | string[] }>;
 export default async function SearchPage({ searchParams }: { searchParams: Search }) {
   const raw = (await searchParams).q;
   const q = (Array.isArray(raw) ? raw[0] : raw ?? "").trim().slice(0, 100);
-  const [dir, people] = q ? await Promise.all([loadDirectoryHere(), loadPeople()]) : [null, null];
-  const res =
-    dir && dir.ok ? search(q, dir.builds, people === "unreachable" || !people ? [] : people, dir.topics) : null;
+  const [dir, people, here] = q ? await Promise.all([loadDirectoryHere(), loadPeople(), loadTopics()]) : [null, null, null];
+  const found = dir && dir.ok ? search(q, dir.builds, people === "unreachable" || !people ? [] : people, dir.topics) : null;
+  // TC4: topics are this site's topics (categories, stacks and writing), by their slug.
+  const res = found && here ? { ...found, topics: search(q, [], [], here.topics.map((t) => ({ value: t.slug, label: t.label, products: t.builds }))).topics } : found;
   const total = res ? res.builds.length + res.people.length + res.topics.length : 0;
 
   return (
@@ -54,7 +56,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
               <section>
                 <h2>Topics<span className="count">{res.topics.length}</span></h2>
                 <div className="cats">
-                  {res.topics.map((t) => <Link key={t.value} href={`/topics/${t.value}`}>{t.label}</Link>)}
+                  {res.topics.map((t) => <Link key={t.value} href={`/topics/${t.value}?from=search`} prefetch={false}>{t.label}</Link>)}
                 </div>
               </section>
             ) : null}

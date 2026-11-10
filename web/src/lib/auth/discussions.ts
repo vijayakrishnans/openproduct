@@ -147,7 +147,7 @@ export async function listLocalThreads(
   limit = 50,
   topic?: string,
   /** TC3: only issues or only discussions, and solved or open issues. */
-  filter: { kind?: "discussion" | "issue"; solved?: boolean } = {},
+  filter: { kind?: "discussion" | "issue"; solved?: boolean; topics?: string[] } = {},
 ): Promise<LocalThread[]> {
   const where = ["t.hidden = 0", "t.remote = 0"];
   const binds: unknown[] = [];
@@ -156,6 +156,11 @@ export async function listLocalThreads(
     binds.push(filter.kind);
   }
   if (filter.solved !== undefined) where.push(filter.solved ? "t.solution_post_id IS NOT NULL" : "t.solution_post_id IS NULL");
+  if (filter.topics) {
+    if (!filter.topics.length) return [];
+    where.push(`t.id IN (SELECT content_id FROM content_topics WHERE content_kind = 'thread' AND topic IN (${filter.topics.map(() => "?").join(", ")}))`);
+    binds.push(...filter.topics);
+  }
   if (tag) {
     where.push("t.tag = ?");
     binds.push(tag);

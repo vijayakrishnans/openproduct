@@ -861,6 +861,7 @@ a.channel-row .channel-text span { color: var(--link); font-weight: 600; }
 .topics-block .formula { margin: 0 0 12px; }
 .topic-card .topic-rank { color: var(--ink-3); font-size: 13px; margin-right: 8px; }
 .topic-week { font-size: 12.5px; color: var(--ok-ink); }
+.for-you-h { font-size: 15px; margin: 18px 0 4px; }
 .topic-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin: 12px 0 18px; }
 .topic-head h1 { margin: 0; font-size: 34px; letter-spacing: -0.02em; }
 .topic-head .sub { margin: 4px 0 0; color: var(--ink-3); }

@@ -5,8 +5,8 @@
 | TC0: the spec | ✅ Shipped | [#39](https://github.com/vijayakrishnans/openproduct/pull/39) |
 | TC1: topics as tags | ✅ Shipped | [#40](https://github.com/vijayakrishnans/openproduct/pull/40) |
 | TC2: kinds of writing | ✅ Shipped | [#41](https://github.com/vijayakrishnans/openproduct/pull/41) |
-| TC3: Community as the public square | 🚧 In review | |
-| TC4: personal topics | ⏳ Not started | |
+| TC3: Community as the public square | ✅ Shipped | [#42](https://github.com/vijayakrishnans/openproduct/pull/42) |
+| TC4: personal topics | 🚧 In review | |
 | TC5: rankings | ⏳ Not started | |
 
 ## Departures from the design
@@ -19,9 +19,9 @@ D1 said a topic page appears from two pieces of writing. The page now exists as 
 
 A build's topics are its category and its stack, normalised (so openproduct.live's `workers` stack is `cloudflare-workers`). A topic page lists its six most active builds, with "All N" linking to the Open builds search.
 
-### Trending in TC1 counts new writing only
+### Trending in TC1 counted new writing only
 
-Until TC4 adds searches and follows, "Trending this week" ranks topics by new writing in the last 7 days, and the page says so.
+From TC1 to TC3, "Trending this week" ranked topics by new writing alone. TC4 brings in searches and follows, so it is now D4's formula, shown on the page.
 
 ### Kinds are a picker on the one post form (TC2)
 
@@ -32,3 +32,15 @@ The write form gets a "What are you writing?" picker, and the per-kind fields (r
 Community's overview has five sections (Issues, Solved, New ways, Launches, Discussions), each with "See all". Issues, Solved and Discussions open as full lists in Community; New ways and Launches open the posts index on that kind. A solved issue also reads as "answered", the state openproduct.live's threads use. Discussions from openproduct.live stay discussions: they're read-only here and can't be marked solved (Q3). The "From the builders" row is replaced by New ways and Launches.
 
 openproduct.live's thread reads now give up after 8 seconds, so a slow response can't hang Community; it already handled "unreachable".
+
+### Topic follows get their own table (TC4)
+
+The plan said to reuse `follows`. Its `kind` is held to build or builder by a CHECK constraint, and SQLite can't change a CHECK without rebuilding the table, so topic follows live in `topic_follows` (account, topic, when). Deleting an account removes them. Searches live in `topic_searches`: one row per topic per day holding a count, nothing else (D5).
+
+### Which searches count (TC4)
+
+A search counts when someone follows a topic link from the search page to that topic (the link carries `?from=search` and isn't prefetched). The search page's topics are now this site's topics (categories, stacks and writing), not only the directory's categories. The Open builds search doesn't link to topics yet, so it doesn't feed Trending.
+
+### For you mixes writing and discussions (TC4)
+
+"For you" holds the 20 newest posts and discussions in the topics you follow, newest first. Signed out, Topics shows Trending and All topics only. One account can follow up to 50 topics.

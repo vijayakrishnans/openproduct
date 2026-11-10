@@ -409,6 +409,27 @@ export const MIGRATIONS: { version: number; name: string; statements: string[] }
       `CREATE INDEX IF NOT EXISTS threads_kind ON threads(kind, hidden, last_post_at)`,
     ],
   },
+  {
+    version: 17,
+    name: "personal topics",
+    statements: [
+      // topics-and-community TC4 (D3, D5): following topics, and searches
+      // that land on a topic, counted per topic per day and nothing more.
+      `CREATE TABLE IF NOT EXISTS topic_follows (
+         account_id TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+         topic TEXT NOT NULL,
+         created_at TEXT NOT NULL,
+         PRIMARY KEY (account_id, topic)
+       )`,
+      `CREATE INDEX IF NOT EXISTS topic_follows_topic ON topic_follows(topic, created_at)`,
+      `CREATE TABLE IF NOT EXISTS topic_searches (
+         topic TEXT NOT NULL,
+         day TEXT NOT NULL,
+         count INTEGER NOT NULL DEFAULT 0,
+         PRIMARY KEY (topic, day)
+       )`,
+    ],
+  },
 ];
 
 const applied = new WeakSet<object>();

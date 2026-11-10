@@ -2,6 +2,7 @@
 // signed-out visitors are sent to sign in and brought back.
 import { NextResponse, type NextRequest } from "next/server";
 import { toggleFollow, toggleHand, toggleVote } from "@/lib/auth/reactions";
+import { toggleTopicFollow } from "@/lib/auth/topic-follows";
 import { safeNext, sameOrigin } from "@/lib/auth/request";
 import { SESSION_COOKIE, validateSession } from "@/lib/auth/session";
 import { database } from "@/lib/server/env";
@@ -29,6 +30,11 @@ export async function POST(request: NextRequest) {
       await toggleVote(db, me, field("slug").toLowerCase());
       return go(back);
     case "follow": {
+      // TC4: following a topic.
+      if (field("kind") === "topic") {
+        await toggleTopicFollow(db, me, field("key"));
+        return go(back);
+      }
       const kind = field("kind") === "builder" ? "builder" : "build";
       await toggleFollow(db, me, kind, field("key"));
       return go(back);

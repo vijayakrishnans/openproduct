@@ -225,7 +225,7 @@ export async function getArticle(db: Db, id: string, viewer: { accountId: string
 /** Visible posts, newest first: everyone's, one builder's, or about one build. */
 export async function listArticles(
   db: Db,
-  opts: { handle?: string; build?: string; topic?: string; kind?: PostKind; limit?: number; accountId?: string | null } = {},
+  opts: { handle?: string; build?: string; topic?: string; topics?: string[]; kind?: PostKind; limit?: number; accountId?: string | null } = {},
 ): Promise<Article[]> {
   const where = ["a.hidden = 0"];
   const binds: unknown[] = [];
@@ -236,6 +236,12 @@ export async function listArticles(
   if (opts.topic) {
     where.push("a.id IN (SELECT content_id FROM content_topics WHERE content_kind = 'article' AND topic = ?)");
     binds.push(opts.topic);
+  }
+  // TC4: any of these topics (For you).
+  if (opts.topics) {
+    if (!opts.topics.length) return [];
+    where.push(`a.id IN (SELECT content_id FROM content_topics WHERE content_kind = 'article' AND topic IN (${opts.topics.map(() => "?").join(", ")}))`);
+    binds.push(...opts.topics);
   }
   if (opts.handle) {
     where.push("b.handle = ?");
