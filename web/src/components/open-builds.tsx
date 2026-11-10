@@ -44,7 +44,7 @@ export function OpenBuilds({ builds, topics, sort, cat }: { builds: Build[]; top
       </nav>
       <div className="formula" id="ranking">
         Most active = (changes + 1) × (upvotes + 1), 7 days
-        <a href="https://openproduct.live/transparency">How ranking works</a>
+        <span className="formula-note">Builds with no public changes this week sit below the floor.</span>
       </div>
       {loud.length > 0 ? (
         <div className="grid">{loud.map((b) => <BuildCard key={b.slug} build={b} topics={topics} />)}</div>
@@ -66,7 +66,7 @@ export function OpenBuilds({ builds, topics, sort, cat }: { builds: Build[]; top
         </details>
       ) : null}
       <p className="sample-note">
-        <b>Live data:</b> names, taglines, categories, licences, open roles, changes and upvotes, from api.openproduct.live.
+        <b>Live data:</b> names, taglines, categories, licences, open roles and changes come from the openproduct directory; upvotes add the ones made here.
       </p>
     </section>
   );

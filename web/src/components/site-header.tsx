@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { currentSession } from "@/lib/auth/request";
-import { OPENPRODUCT } from "@/lib/links";
+import { ORUNBASE } from "@/lib/links";
 import { SearchBox } from "./search-box";
 import { ThemeToggle } from "./theme-toggle";
 
@@ -48,7 +48,7 @@ export async function SiteHeader({ current, query }: { current?: string; query?:
               Sign in
             </Link>
           )}
-          <a className="btn btn-dark" href={OPENPRODUCT}>
+          <a className="btn btn-dark" href={ORUNBASE}>
             + List your build
           </a>
         </div>

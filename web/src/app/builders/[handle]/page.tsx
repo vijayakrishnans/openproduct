@@ -20,7 +20,7 @@ import { SupportLinks } from "@/components/support-links";
 import type { Session } from "@/lib/auth/session";
 import { builderBadges } from "@/lib/badges";
 import { initials, loadBuildRepos, loadDirectory, loadPerson, type Build, type PersonDetail } from "@/lib/directory";
-import { OPENPRODUCT } from "@/lib/links";
+import { followState } from "@/lib/auth/reactions";
 import { appEnv, database } from "@/lib/server/env";
 
 export const dynamic = "force-dynamic";
@@ -94,7 +94,7 @@ async function OwnerBar({ person, owner, session, fromHere }: { person: PersonDe
       <span>
         {linked
           ? <>Is this you? <Link className="link" href={`/auth/github?next=${encodeURIComponent(`/builders/${person.handle}`)}`}>Sign in with GitHub as @{linked}</Link> to claim it.</>
-          : <>Is this you? Add your GitHub link on <a className="link" href={OPENPRODUCT}>openproduct.live</a>, then sign in with GitHub here to claim it.</>}
+          : <>Is this you? Add your GitHub link to your openproduct profile, then sign in with GitHub here to claim it.</>}
       </span>
     </div>
   );
@@ -123,6 +123,19 @@ function projectsOf(person: PersonDetail, builds: Build[]): Project[] {
   return out;
 }
 
+function ProjectBody({ p, draft }: { p: Project; draft?: boolean }) {
+  return (
+    <div className="project-body">
+      <div className="project-top">
+        <strong>{p.slug}</strong>
+        <span className={`badge${p.role === "Maintainer" ? " role" : ""}`}>{p.role}</span>
+        {draft ? <span className="badge">Draft</span> : null}
+      </div>
+      {p.tagline ? <span className="project-tagline">{p.tagline}</span> : null}
+    </div>
+  );
+}
+
 function Projects({ projects }: { projects: Project[] }) {
   return (
     <section className="person-section">
@@ -133,17 +146,18 @@ function Projects({ projects }: { projects: Project[] }) {
         <ul className="project-grid">
           {projects.map((p) => (
             <li key={p.slug}>
-              {/* A draft has no build page here (the directory leaves drafts out), so it opens on openproduct.live. */}
-              <Link href={p.build ? `/builds/${p.slug}` : `${OPENPRODUCT}/${p.slug}`} className="project-card">
-                {p.build ? <CardCover build={p.build} /> : <div className="card-cover blank"><span className="cover-tile mono" aria-hidden>{initials(p.slug)}</span></div>}
-                <div className="project-body">
-                  <div className="project-top">
-                    <strong>{p.slug}</strong>
-                    <span className={`badge${p.role === "Maintainer" ? " role" : ""}`}>{p.role}</span>
-                  </div>
-                  {p.tagline ? <span className="project-tagline">{p.tagline}</span> : null}
+              {/* A draft has no public page yet (the directory leaves drafts out), so its card isn't a link. */}
+              {p.build ? (
+                <Link href={`/builds/${p.slug}`} className="project-card">
+                  <CardCover build={p.build} />
+                  <ProjectBody p={p} />
+                </Link>
+              ) : (
+                <div className="project-card is-draft">
+                  <div className="card-cover blank"><span className="cover-tile mono" aria-hidden>{initials(p.slug)}</span></div>
+                  <ProjectBody p={p} draft />
                 </div>
-              </Link>
+              )}
             </li>
           ))}
         </ul>
@@ -201,6 +215,10 @@ export default async function PersonPage({ params, searchParams }: { params: Par
         ])
       : [[], 0, [] as Article[], 0, null];
   const isOwner = !!owner && !!session && owner.accountId === session.account.id;
+  const follow =
+    db && person !== "unreachable"
+      ? await followState(db, "builder", person.handle, session?.account.id ?? null).catch(() => ({ count: 0, mine: false }))
+      : { count: 0, mine: false };
   const badges =
     person === "unreachable"
       ? []
@@ -234,12 +252,24 @@ export default async function PersonPage({ params, searchParams }: { params: Par
                 <span className="mono handle">@{person.handle}</span>
                 {person.bio ? <p>{person.bio}</p> : null}
                 <div className="card-badges">
-                  {fromHere ? <span className="badge">Started on this site</span> : <span className="badge">{person.followers} {person.followers === 1 ? "follower" : "followers"}</span>}
+                  {fromHere ? <span className="badge">Started on this site</span> : null}
+                  {person.followers + follow.count > 0 ? (
+                    <span className="badge">{person.followers + follow.count} {person.followers + follow.count === 1 ? "follower" : "followers"}</span>
+                  ) : null}
                   {person.githubUrl ? <a className="badge" href={person.githubUrl} rel="noopener noreferrer">GitHub</a> : null}
                   {person.siteUrl ? <a className="badge" href={person.siteUrl} rel="noopener noreferrer">Website</a> : null}
                 </div>
               </div>
             </div>
+            {!isOwner ? (
+              <form method="post" action="/act" className="act-form person-follow">
+                <input type="hidden" name="action" value="follow" />
+                <input type="hidden" name="kind" value="builder" />
+                <input type="hidden" name="key" value={person.handle} />
+                <input type="hidden" name="next" value={`/builders/${person.handle}`} />
+                <button type="submit" className={`btn btn-ghost${follow.mine ? " is-on" : ""}`}>{follow.mine ? "✓ Following" : `Follow ${person.displayName}`}</button>
+              </form>
+            ) : null}
             {q.claim && CLAIM_MESSAGES[q.claim] ? (
               <p className={q.claim === "done" ? "auth-ok" : "auth-error"} role="status">{CLAIM_MESSAGES[q.claim]}</p>
             ) : q.claim === "refused" && q.message ? (

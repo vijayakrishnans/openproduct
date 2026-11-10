@@ -5,12 +5,11 @@ import { PostBody } from "@/components/post-body";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { TabBar } from "@/components/tab-bar";
-import { getLocalThread, type LocalPost } from "@/lib/auth/discussions";
+import { getLocalThread, remoteReplies, type LocalPost } from "@/lib/auth/discussions";
 import { viewer, type Viewer } from "@/lib/auth/viewer";
 import { MAX_POST_BODY } from "@/lib/body";
 import { ago } from "@/lib/directory";
 import { TAG_LABELS, loadThread, type Post } from "@/lib/forum";
-import { OPENPRODUCT } from "@/lib/links";
 import { database } from "@/lib/server/env";
 
 export const dynamic = "force-dynamic";
@@ -82,6 +81,34 @@ export default async function ThreadPage({ params, searchParams }: { params: Par
   const local = v.db ? await getLocalThread(v.db, id, { accountId: v.session?.account.id ?? null, moderator: v.moderator }).catch(() => null) : null;
   const found = local ?? (await loadThread(id));
   if (found === null) notFound();
+  // Replies written here to an openproduct.live thread (OP-25).
+  const here = !local && found !== "unreachable" && v.db ? await remoteReplies(v.db, id, { accountId: v.session?.account.id ?? null, moderator: v.moderator }).catch(() => []) : [];
+  const replyBox = (
+    <section id="reply" className="reply-box">
+      {q.error ? <p className="auth-error" role="alert">{q.error.slice(0, 200)}</p> : null}
+      {!v.session ? (
+        <p className="owner-bar">
+          <span>Join the discussion.</span>
+          <Link className="link" href={`/signin?next=${encodeURIComponent(`/community/t/${id}`)}`}>Sign in to reply</Link>
+        </p>
+      ) : !v.builder ? (
+        <p className="owner-bar">
+          <span>To reply, start or claim your builder profile.</span>
+          <Link className="link" href="/builders/new">Start your builder profile</Link>
+        </p>
+      ) : (
+        <form method="post" action="/community/post" className="panel account-form">
+          <input type="hidden" name="action" value="reply" />
+          <input type="hidden" name="thread" value={id} />
+          <label>
+            Reply as @{v.builder.handle}
+            <textarea name="body" required rows={5} maxLength={MAX_POST_BODY} placeholder="**bold**, *italic*, `code`, lists and links work." />
+          </label>
+          <button className="btn btn-dark" type="submit">Post reply</button>
+        </form>
+      )}
+    </section>
+  );
 
   return (
     <>
@@ -118,30 +145,7 @@ export default async function ThreadPage({ params, searchParams }: { params: Par
                     </PostItem>
                   ))}
                 </div>
-                <section id="reply" className="reply-box">
-                  {q.error ? <p className="auth-error" role="alert">{q.error.slice(0, 200)}</p> : null}
-                  {!v.session ? (
-                    <p className="owner-bar">
-                      <span>Join the discussion.</span>
-                      <Link className="link" href={`/signin?next=${encodeURIComponent(`/community/t/${id}`)}`}>Sign in to reply</Link>
-                    </p>
-                  ) : !v.builder ? (
-                    <p className="owner-bar">
-                      <span>To reply, start or claim your builder profile.</span>
-                      <Link className="link" href="/builders/new">Start your builder profile</Link>
-                    </p>
-                  ) : (
-                    <form method="post" action="/community/post" className="panel account-form">
-                      <input type="hidden" name="action" value="reply" />
-                      <input type="hidden" name="thread" value={id} />
-                      <label>
-                        Reply as @{v.builder.handle}
-                        <textarea name="body" required rows={5} maxLength={MAX_POST_BODY} placeholder="**bold**, *italic*, `code`, lists and links work." />
-                      </label>
-                      <button className="btn btn-dark" type="submit">Post reply</button>
-                    </form>
-                  )}
-                </section>
+                {replyBox}
               </>
             ) : (
               <>
@@ -155,9 +159,16 @@ export default async function ThreadPage({ params, searchParams }: { params: Par
                       </div>
                     ))}
                 </div>
-                {found.thread.state !== "locked" ? (
-                  <a className="btn btn-ghost" href={OPENPRODUCT}>Reply on openproduct.live</a>
+                {here.length ? (
+                  <div className="posts">
+                    {here.map((p) => (
+                      <PostItem key={p.id} post={p}>
+                        <PostActions threadId={id} post={p} kind="post" v={v} />
+                      </PostItem>
+                    ))}
+                  </div>
                 ) : null}
+                {found.thread.state !== "locked" ? replyBox : <p className="muted">This thread is locked.</p>}
               </>
             )}
           </>

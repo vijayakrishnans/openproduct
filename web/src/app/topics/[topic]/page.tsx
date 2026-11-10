@@ -6,6 +6,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { TabBar } from "@/components/tab-bar";
 import { loadDirectory, sortBuilds } from "@/lib/directory";
+import { loadDirectoryHere } from "@/lib/server/directory-here";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +19,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 
 export default async function TopicPage({ params }: { params: Params }) {
   const { topic } = await params;
-  const dir = await loadDirectory();
+  const dir = await loadDirectoryHere();
   if (!dir.ok) {
     return (
       <>

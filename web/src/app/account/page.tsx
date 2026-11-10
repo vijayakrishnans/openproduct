@@ -11,7 +11,7 @@ import { configuredProviders, PROVIDER_LABEL } from "@/lib/auth/providers";
 import { currentSession, safeNext } from "@/lib/auth/request";
 import { maintainedBuilds, supportLinksOf } from "@/lib/auth/support";
 import { loadDirectory, maintainsOf } from "@/lib/directory";
-import { OPENPRODUCT } from "@/lib/links";
+import { followingOf } from "@/lib/auth/reactions";
 import { appEnv, database } from "@/lib/server/env";
 
 export const dynamic = "force-dynamic";
@@ -29,9 +29,10 @@ export default async function AccountPage({ searchParams }: { searchParams: Sear
   const [ownLinks, builds] = builder
     ? await Promise.all([supportLinksOf(db, { kind: "builder", key: builder.handle }), maintainedBuilds(db, session.account.id, maintainsOf)])
     : [null, [] as string[]];
-  // Drafts have no build page here; their link goes to openproduct.live.
+  // Drafts have no build page yet, so they get no link.
   const listed = builds.length ? await loadDirectory().then((d) => new Set(d.ok ? d.builds.map((x) => x.slug) : [])) : new Set<string>();
   const buildLinks = await Promise.all(builds.map(async (slug) => ({ slug, ...(await supportLinksOf(db, { kind: "build", key: slug })) })));
+  const following = await followingOf(db, session.account.id).catch(() => []);
   const linked = new Set(identities.map((i) => i.provider));
   const addable = configuredProviders(env, true).filter((p) => !linked.has(p));
   const next = q.next ? safeNext(q.next) : null;
@@ -121,12 +122,35 @@ export default async function AccountPage({ searchParams }: { searchParams: Sear
               {listed.has(b.slug) ? (
                 <Link className="btn btn-ghost" href={`/builds/${b.slug}`}>View build</Link>
               ) : (
-                <a className="btn btn-ghost" href={`${OPENPRODUCT}/${b.slug}`}>View on openproduct.live</a>
+                <span className="pill">Draft</span>
               )}
             </div>
             <SupportForm kind="build" ownerKey={b.slug} links={b.links} label={b.slug} />
           </section>
         ))}
+
+        <section className="panel account-section" id="following">
+          <div className="panel-head">
+            <div>
+              <h2>Following</h2>
+              <p className="sub">Builds and builders you follow here.</p>
+            </div>
+          </div>
+          {following.length ? (
+            <ul className="following-list">
+              {following.map((f) => (
+                <li key={`${f.kind}:${f.key}`}>
+                  <Link className="link" href={f.kind === "build" ? `/builds/${f.key}` : `/builders/${f.key}`}>
+                    {f.kind === "build" ? f.key : `@${f.key}`}
+                  </Link>
+                  <span className="muted">{f.kind === "build" ? "build" : "builder"}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="muted" style={{ margin: 0 }}>Nothing yet. Follow a build or a builder from its page.</p>
+          )}
+        </section>
 
         <section className="panel account-section">
           <div className="panel-head">

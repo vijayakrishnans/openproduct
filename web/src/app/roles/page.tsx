@@ -4,7 +4,6 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { TabBar } from "@/components/tab-bar";
 import { loadDirectory, loadRoles } from "@/lib/directory";
-import { OPENPRODUCT } from "@/lib/links";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -50,7 +49,7 @@ export default async function RolesPage({ searchParams }: { searchParams: Promis
           <RolesBoard roles={roles} initialSeat={typeof seat === "string" ? seat : null} />
         ) : (
           <div className="unreachable">
-            The directory could not be reached just now. Roles are listed at <a className="link" href={OPENPRODUCT}>openproduct.live</a>.
+            The directory could not be reached just now. Try again in a minute.
           </div>
         )}
       </main>

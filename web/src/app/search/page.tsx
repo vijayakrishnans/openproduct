@@ -7,6 +7,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { TabBar } from "@/components/tab-bar";
 import { loadDirectory, loadPeople } from "@/lib/directory";
+import { loadDirectoryHere } from "@/lib/server/directory-here";
 import { search } from "@/lib/search";
 
 export const metadata: Metadata = { title: "Search", description: "Search openproduct builds, stacks, builders and topics." };
@@ -16,7 +17,7 @@ type Search = Promise<{ q?: string | string[] }>;
 export default async function SearchPage({ searchParams }: { searchParams: Search }) {
   const raw = (await searchParams).q;
   const q = (Array.isArray(raw) ? raw[0] : raw ?? "").trim().slice(0, 100);
-  const [dir, people] = q ? await Promise.all([loadDirectory(), loadPeople()]) : [null, null];
+  const [dir, people] = q ? await Promise.all([loadDirectoryHere(), loadPeople()]) : [null, null];
   const res =
     dir && dir.ok ? search(q, dir.builds, people === "unreachable" || !people ? [] : people, dir.topics) : null;
   const total = res ? res.builds.length + res.people.length + res.topics.length : 0;

@@ -187,6 +187,43 @@ export const MIGRATIONS: { version: number; name: string; statements: string[] }
        )`,
     ],
   },
+  {
+    version: 6,
+    name: "everything here",
+    statements: [
+      // OP-25: what used to send people to openproduct.live happens here.
+      // Upvotes on a build: one per account, added to the build's count there.
+      `CREATE TABLE IF NOT EXISTS votes (
+         account_id TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+         slug TEXT NOT NULL COLLATE NOCASE,
+         created_at TEXT NOT NULL,
+         PRIMARY KEY (account_id, slug)
+       )`,
+      `CREATE INDEX IF NOT EXISTS votes_slug ON votes(slug)`,
+      // Following a build or a builder.
+      `CREATE TABLE IF NOT EXISTS follows (
+         account_id TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+         kind TEXT NOT NULL CHECK (kind IN ('build', 'builder')),
+         key TEXT NOT NULL COLLATE NOCASE,
+         created_at TEXT NOT NULL,
+         PRIMARY KEY (account_id, kind, key)
+       )`,
+      `CREATE INDEX IF NOT EXISTS follows_target ON follows(kind, key)`,
+      // A raised hand for an open seat: "I'd like this one", visible on the build.
+      `CREATE TABLE IF NOT EXISTS seat_hands (
+         account_id TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+         slug TEXT NOT NULL COLLATE NOCASE,
+         role_id TEXT NOT NULL,
+         created_at TEXT NOT NULL,
+         PRIMARY KEY (account_id, slug, role_id)
+       )`,
+      `CREATE INDEX IF NOT EXISTS seat_hands_build ON seat_hands(slug)`,
+      // Replies written here to a thread from openproduct.live hang off a
+      // stand-in thread row with the same id, marked remote: it carries the
+      // replies, reports and hiding, and is never listed on its own.
+      `ALTER TABLE threads ADD COLUMN remote INTEGER NOT NULL DEFAULT 0`,
+    ],
+  },
 ];
 
 const applied = new WeakSet<object>();
@@ -201,12 +238,20 @@ export async function ensureSchema(db: Db): Promise<void> {
   const have = new Set(done.results.map((r) => r.version));
   for (const m of MIGRATIONS) {
     if (have.has(m.version)) continue;
-    await db.batch([
-      ...m.statements.map((s) => db.prepare(s)),
-      db
-        .prepare(`INSERT OR IGNORE INTO schema_migrations (version, name, applied_at) VALUES (?, ?, ?)`)
-        .bind(m.version, m.name, new Date().toISOString()),
-    ]);
+    try {
+      await db.batch([
+        ...m.statements.map((s) => db.prepare(s)),
+        db
+          .prepare(`INSERT OR IGNORE INTO schema_migrations (version, name, applied_at) VALUES (?, ?, ?)`)
+          .bind(m.version, m.name, new Date().toISOString()),
+      ]);
+    } catch (e) {
+      // Another isolate may have applied it between our read and our batch
+      // (an ALTER TABLE can't be repeated). The batch is one transaction, so
+      // a failure changed nothing: if the version is recorded now, move on.
+      const now = await db.prepare(`SELECT 1 AS x FROM schema_migrations WHERE version = ?`).bind(m.version).first();
+      if (!now) throw e;
+    }
   }
   applied.add(db);
 }
