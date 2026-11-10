@@ -1,8 +1,9 @@
-// POST /act — upvote, follow and raise a hand (OP-25). Same-origin forms;
+// POST /act — upvote, follow, raise a hand (OP-25), and mark helpful (TC5). Same-origin forms;
 // signed-out visitors are sent to sign in and brought back.
 import { NextResponse, type NextRequest } from "next/server";
 import { toggleFollow, toggleHand, toggleVote } from "@/lib/auth/reactions";
 import { toggleTopicFollow } from "@/lib/auth/topic-follows";
+import { toggleHelpful } from "@/lib/auth/rankings";
 import { safeNext, sameOrigin } from "@/lib/auth/request";
 import { SESSION_COOKIE, validateSession } from "@/lib/auth/session";
 import { database } from "@/lib/server/env";
@@ -39,6 +40,10 @@ export async function POST(request: NextRequest) {
       await toggleFollow(db, me, kind, field("key"));
       return go(back);
     }
+    // TC5: "helpful" on a post (article) or a reply (post).
+    case "helpful":
+      await toggleHelpful(db, me, field("kind"), field("key"));
+      return go(back);
     case "hand": {
       const r = await toggleHand(db, me, field("slug").toLowerCase(), field("role"));
       return go(r.ok ? back : with_(back, { error: r.message }));

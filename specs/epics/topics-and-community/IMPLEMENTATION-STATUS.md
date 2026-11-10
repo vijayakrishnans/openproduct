@@ -6,8 +6,8 @@
 | TC1: topics as tags | ✅ Shipped | [#40](https://github.com/vijayakrishnans/openproduct/pull/40) |
 | TC2: kinds of writing | ✅ Shipped | [#41](https://github.com/vijayakrishnans/openproduct/pull/41) |
 | TC3: Community as the public square | ✅ Shipped | [#42](https://github.com/vijayakrishnans/openproduct/pull/42) |
-| TC4: personal topics | 🚧 In review | |
-| TC5: rankings | ⏳ Not started | |
+| TC4: personal topics | ✅ Shipped | [#43](https://github.com/vijayakrishnans/openproduct/pull/43) |
+| TC5: rankings | 🚧 In review | |
 
 ## Departures from the design
 
@@ -44,3 +44,13 @@ A search counts when someone follows a topic link from the search page to that t
 ### For you mixes writing and discussions (TC4)
 
 "For you" holds the 20 newest posts and discussions in the topics you follow, newest first. Signed out, Topics shows Trending and All topics only. One account can follow up to 50 topics.
+
+### Rankings as built (TC5)
+
+- **Helpful** is a button under each post and each reply written here. Your own writing shows its count with no button. A hidden post can't be voted on, and its votes stop counting while it's hidden.
+- **A topic page's side panel** has three boxes, top to bottom: Top contributors (up to 5), Most helpful (top 3 posts or replies, all time) and Top builds. Each prints its formula. Fewer than three entries are listed without places (D4).
+- **Accepted solutions** count only when the solution is someone else's reply, so marking your own reply doesn't score.
+- **Merged PRs** come from the day's cached GitHub counts (BP7) and count in every topic of the build they went to. Unlike the rest of the score, they aren't limited to 90 days, because the cache keeps totals, not dates. Repos the login owns and builds the account maintains here don't count.
+- **Only builders** (accounts with a builder profile) are listed, since a place links to a profile.
+- **"Known for"** on a builder profile shows their three best topics by the same score, with what earned each one, and "#n in" when they're in a topic's top three.
+- On phones, the side panel now comes after the feed.

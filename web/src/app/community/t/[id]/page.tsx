@@ -9,6 +9,8 @@ import { SiteHeader } from "@/components/site-header";
 import { TabBar } from "@/components/tab-bar";
 import { getLocalThread, remoteReplies, type LocalPost } from "@/lib/auth/discussions";
 import { viewer, type Viewer } from "@/lib/auth/viewer";
+import { helpfulState, type HelpfulState } from "@/lib/auth/rankings";
+import { HelpfulButton } from "@/components/helpful-button";
 import { MAX_POST_BODY } from "@/lib/body";
 import { ago } from "@/lib/directory";
 import { TAG_LABELS, loadThread, type Post } from "@/lib/forum";
@@ -88,6 +90,9 @@ export default async function ThreadPage({ params, searchParams }: { params: Par
   const threadTopics = local && v.db ? ((await topicsFor(v.db, "thread", [id]).catch(() => new Map<string, string[]>())).get(id) ?? []) : [];
   // Replies written here to an openproduct.live thread (OP-25).
   const here = !local && found !== "unreachable" && v.db ? await remoteReplies(v.db, id, { accountId: v.session?.account.id ?? null, moderator: v.moderator }).catch(() => []) : [];
+  // TC5: helpful counts on every post written here.
+  const ids = [...(local?.posts ?? []), ...here].map((p) => p.id);
+  const helpful = v.db ? await helpfulState(v.db, "post", ids, v.session?.account.id ?? null).catch(() => new Map<string, HelpfulState>()) : new Map<string, HelpfulState>();
   const replyBox = (
     <section id="reply" className="reply-box">
       {q.error ? <p className="auth-error" role="alert">{q.error.slice(0, 200)}</p> : null}
@@ -150,7 +155,10 @@ export default async function ThreadPage({ params, searchParams }: { params: Par
                 <div className="posts">
                   {local.posts.map((p, i) => (
                     <PostItem key={p.id} post={p}>
-                      <PostActions threadId={id} post={p} kind="post" v={v} />
+                      <div className="post-foot">
+                        <HelpfulButton kind="post" id={p.id} state={helpful.get(p.id)} mine={p.mine} next={`/community/t/${id}#p-${p.id}`} />
+                        <PostActions threadId={id} post={p} kind="post" v={v} />
+                      </div>
                       {local.thread.kind === "issue" && local.thread.mine && i > 0 ? (
                         <form method="post" action="/community/post" className="solve-form">
                           <input type="hidden" name="thread" value={id} />
@@ -180,7 +188,10 @@ export default async function ThreadPage({ params, searchParams }: { params: Par
                   <div className="posts">
                     {here.map((p) => (
                       <PostItem key={p.id} post={p}>
-                        <PostActions threadId={id} post={p} kind="post" v={v} />
+                        <div className="post-foot">
+                          <HelpfulButton kind="post" id={p.id} state={helpful.get(p.id)} mine={p.mine} next={`/community/t/${id}#p-${p.id}`} />
+                          <PostActions threadId={id} post={p} kind="post" v={v} />
+                        </div>
                       </PostItem>
                     ))}
                   </div>
