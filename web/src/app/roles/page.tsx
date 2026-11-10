@@ -3,7 +3,7 @@ import { RolesBoard } from "@/components/roles-board";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { TabBar } from "@/components/tab-bar";
-import { loadDirectory, loadRoles } from "@/lib/directory";
+import { loadDirectoryHere, loadRolesHere } from "@/lib/server/directory-here";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -19,8 +19,8 @@ const STEPS = [
 
 export default async function RolesPage({ searchParams }: { searchParams: Promise<{ seat?: string }> }) {
   const { seat } = await searchParams;
-  const dir = await loadDirectory();
-  const roles = dir.ok ? await loadRoles(dir.builds) : [];
+  const dir = await loadDirectoryHere();
+  const roles = dir.ok ? await loadRolesHere(dir.builds) : [];
   const builds = new Set(roles.map((r) => r.slug)).size;
   return (
     <>

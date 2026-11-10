@@ -4,7 +4,7 @@
 // listing's code. It's a draft, seen only by its maintainers, until it's
 // verified and has a tagline and a category; then it sits in Open builds.
 import type { Db } from "../server/db";
-import type { Build, BuildDetail } from "../directory";
+import type { Build, BuildDetail, Role } from "../directory";
 import { githubLoginOf } from "./accounts";
 import { builderOfAccount } from "./builders";
 import { randomToken } from "./crypto";
@@ -354,7 +354,7 @@ export async function setPublished(db: Db, slug: string, accountId: string, publ
 /* ── As builds ── */
 
 /** A listing as a directory build, with its numbers from the repo (LB2) once read. */
-export function listingToBuild(l: Listing, stats?: ListingStats | null): Build {
+export function listingToBuild(l: Listing, stats?: ListingStats | null, openRoles = 0): Build {
   return {
     slug: l.slug,
     tagline: l.tagline ?? "",
@@ -363,7 +363,7 @@ export function listingToBuild(l: Listing, stats?: ListingStats | null): Build {
     licence: stats?.status === "ok" ? stats.licence : l.licence,
     changes7d: stats?.status === "ok" ? stats.changes7d : 0,
     upvotes: 0,
-    roleCount: 0,
+    roleCount: openRoles,
     stack: l.stack,
     publishedAt: l.publishedAt,
     lastCommitAt: stats?.status === "ok" ? stats.lastCommitAt : null,
@@ -375,16 +375,16 @@ export function listingToBuild(l: Listing, stats?: ListingStats | null): Build {
   };
 }
 
-export function listingToDetail(l: Listing, stats?: ListingStats | null): BuildDetail {
+export function listingToDetail(l: Listing, stats?: ListingStats | null, roles: Role[] = []): BuildDetail {
   return {
-    ...listingToBuild(l, stats),
+    ...listingToBuild(l, stats, roles.length),
     // The repo's description shows under About; a pitch of the maintainers' own comes with LB5.
     pitch: null,
     repoUrl: `https://github.com/${l.repo}`,
     liveUrl: null,
     workspaceRef: null,
     maintainers: l.maintainers.length,
-    roles: [],
+    roles,
     log: [],
     pinned: "",
   };

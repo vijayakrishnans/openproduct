@@ -20,6 +20,7 @@ const sql = (s) => out.push(s);
 
 const SLUGS = ["openproduct-web", "hired-blog", "weekend-pager"];
 sql(`DELETE FROM votes WHERE slug IN (${SLUGS.map(q).join(", ")}) AND account_id LIKE 'demo-%';`);
+sql(`DELETE FROM seat_hands WHERE slug IN (${SLUGS.map(q).join(", ")}) AND account_id LIKE 'demo-%';`);
 sql(`DELETE FROM listings WHERE slug IN (${SLUGS.map(q).join(", ")});`);
 
 if (!remove) {
@@ -37,6 +38,16 @@ if (!remove) {
     sql(`INSERT INTO listing_maintainers (slug, account_id, role, accepted_at) VALUES (${q(slug)}, ${q(`demo-${owner}`)}, 'owner', ${q(at(hoursAgo))});`);
     for (const o of others) sql(`INSERT INTO listing_maintainers (slug, account_id, role, accepted_at) VALUES (${q(slug)}, ${q(`demo-${o}`)}, 'maintainer', ${q(at(hoursAgo - 3))});`);
   }
+  // Open seats (LB3), with a couple of raised hands.
+  const seats = [
+    ["lr_demoOpWeb1", "openproduct-web", "Frontend engineer for the build pages", "engineering", "Own the build and builder pages: layout, dark mode, phone.", "A few hours a week"],
+    ["lr_demoOpWeb2", "openproduct-web", "Design partner who lists a build", "design-partner", "List your own build here and tell us what was confusing.", "One call, then async"],
+    ["lr_demoHired1", "hired-blog", "Career-coach advisor", "advisor", "Review the essays for advice that would actually get someone hired.", null],
+  ];
+  for (const [id, slug, title, type, description, commitment] of seats) {
+    sql(`INSERT INTO listing_roles (id, slug, title, type, description, commitment, created_at, updated_at) VALUES (${q(id)}, ${q(slug)}, ${q(title)}, ${q(type)}, ${q(description)}, ${q(commitment)}, ${q(at(20))}, ${q(at(20))});`);
+  }
+  sql(`INSERT OR IGNORE INTO seat_hands (account_id, slug, role_id, created_at) VALUES ('demo-sam', 'openproduct-web', 'lr_demoOpWeb1', ${q(at(4))}), ('demo-priya', 'openproduct-web', 'lr_demoOpWeb2', ${q(at(3))});`);
   sql(`INSERT OR IGNORE INTO votes (account_id, slug, created_at) VALUES ('demo-sam', 'openproduct-web', ${q(at(8))}), ('demo-priya', 'openproduct-web', ${q(at(7))}), ('demo-mira', 'hired-blog', ${q(at(6))});`);
 }
 

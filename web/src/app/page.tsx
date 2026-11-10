@@ -7,10 +7,10 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { listArticles, type Article } from "@/lib/auth/articles";
 import { listLocalThreads } from "@/lib/auth/discussions";
-import { SORTS, type Sort, loadRoles } from "@/lib/directory";
+import { SORTS, type Sort } from "@/lib/directory";
 import { loadThreads, mergeThreads, type Thread } from "@/lib/forum";
 import { database } from "@/lib/server/env";
-import { loadDirectoryHere } from "@/lib/server/directory-here";
+import { loadDirectoryHere, loadRolesHere } from "@/lib/server/directory-here";
 import { SOURCE } from "@/lib/links";
 
 // The directory is read per request: it is the live list, not a snapshot.
@@ -25,7 +25,7 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
   const cat = dir.ok && dir.topics.some((t) => t.value === q.cat) ? q.cat! : null;
   // The sidebar: open seats, and the community's latest, from here and openproduct.live.
   const [roles, remoteThreads, localThreads, articles] = await Promise.all([
-    dir.ok ? loadRoles(dir.builds, 6).then((r) => r.slice(0, 6)) : Promise.resolve([]),
+    dir.ok ? loadRolesHere(dir.builds, 6).then((r) => r.slice(0, 6)) : Promise.resolve([]),
     loadThreads("latest", null).catch(() => "unreachable" as const),
     db ? listLocalThreads(db, "latest", null, 4).catch((): Thread[] => []) : Promise.resolve([] as Thread[]),
     db ? listArticles(db, { limit: 2 }).catch((): Article[] => []) : Promise.resolve([] as Article[]),

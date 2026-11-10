@@ -295,6 +295,26 @@ export const MIGRATIONS: { version: number; name: string; statements: string[] }
        )`,
     ],
   },
+  {
+    version: 10,
+    name: "listing roles",
+    statements: [
+      // list-your-build LB3: open seats on builds listed here. Closed seats
+      // are kept (open = 0) so raised hands and links to them still resolve.
+      `CREATE TABLE IF NOT EXISTS listing_roles (
+         id TEXT PRIMARY KEY,
+         slug TEXT NOT NULL REFERENCES listings(slug) ON DELETE CASCADE ON UPDATE CASCADE,
+         title TEXT NOT NULL CHECK (length(title) BETWEEN 1 AND 80),
+         type TEXT NOT NULL,
+         description TEXT CHECK (description IS NULL OR length(description) <= 600),
+         commitment TEXT CHECK (commitment IS NULL OR length(commitment) <= 80),
+         open INTEGER NOT NULL DEFAULT 1,
+         created_at TEXT NOT NULL,
+         updated_at TEXT NOT NULL
+       )`,
+      `CREATE INDEX IF NOT EXISTS listing_roles_slug ON listing_roles(slug, open)`,
+    ],
+  },
 ];
 
 const applied = new WeakSet<object>();

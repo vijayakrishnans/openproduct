@@ -9,6 +9,7 @@ import { followState, handsFor, voteState, type Hand } from "@/lib/auth/reaction
 import { currentSession } from "@/lib/auth/request";
 import { getListing, isMaintainer, listingToDetail, missingForPublish, type Listing } from "@/lib/auth/listings";
 import { isStale, refreshStats, statsOf, type ListingStats } from "@/lib/auth/listing-stats";
+import { rolesOf } from "@/lib/auth/listing-roles";
 import { githubDepsFor } from "@/lib/auth/github-prs";
 import { appEnv } from "@/lib/server/env";
 import Link from "next/link";
@@ -89,7 +90,8 @@ export default async function BuildPage({ params, searchParams }: { params: Para
       if (stats?.status !== "missing" || mine) listing = l;
     }
   }
-  const b = listing ? listingToDetail(listing, stats) : remote;
+  const seats = listing && db0 ? await rolesOf(db0, listing.slug, { skills: listing.stack }).catch(() => []) : [];
+  const b = listing ? listingToDetail(listing, stats, seats) : remote;
   if (b === null) notFound();
   if (b === "unreachable") {
     return (
