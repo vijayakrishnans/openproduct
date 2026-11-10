@@ -315,6 +315,16 @@ export const MIGRATIONS: { version: number; name: string; statements: string[] }
       `CREATE INDEX IF NOT EXISTS listing_roles_slug ON listing_roles(slug, open)`,
     ],
   },
+  {
+    version: 11,
+    name: "listing team",
+    statements: [
+      // list-your-build LB4: a maintainer invite is a row with accepted_at NULL
+      // until the invitee accepts; contributors are the repo's GitHub logins.
+      `ALTER TABLE listing_maintainers ADD COLUMN invited_at TEXT`,
+      `ALTER TABLE listing_stats ADD COLUMN contributors TEXT NOT NULL DEFAULT '[]'`,
+    ],
+  },
 ];
 
 const applied = new WeakSet<object>();

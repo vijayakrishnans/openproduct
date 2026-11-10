@@ -11,7 +11,9 @@ import { builderOfAccount, MAX_BIO, MAX_DISPLAY_NAME } from "@/lib/auth/builders
 import { configuredProviders, PROVIDER_LABEL } from "@/lib/auth/providers";
 import { currentSession, safeNext } from "@/lib/auth/request";
 import { maintainedBuilds, supportLinksOf } from "@/lib/auth/support";
-import { loadDirectory, maintainsOf } from "@/lib/directory";
+import { maintainsOf } from "@/lib/directory";
+import { loadDirectoryHere } from "@/lib/server/directory-here";
+import { invitesFor } from "@/lib/auth/listing-team";
 import { followingOf } from "@/lib/auth/reactions";
 import { listingsOfAccount } from "@/lib/auth/listings";
 import { appEnv, database } from "@/lib/server/env";
@@ -19,7 +21,7 @@ import { appEnv, database } from "@/lib/server/env";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Your account", robots: { index: false } };
 
-type Search = Promise<{ welcome?: string; next?: string; added?: string; error?: string; provider?: string; message?: string; saved?: string; sent?: string }>;
+type Search = Promise<{ joined?: string; welcome?: string; next?: string; added?: string; error?: string; provider?: string; message?: string; saved?: string; sent?: string }>;
 
 export default async function AccountPage({ searchParams }: { searchParams: Search }) {
   const q = await searchParams;
@@ -32,11 +34,12 @@ export default async function AccountPage({ searchParams }: { searchParams: Sear
     ? await Promise.all([supportLinksOf(db, { kind: "builder", key: builder.handle }), maintainedBuilds(db, session.account.id, maintainsOf)])
     : [null, [] as string[]];
   // Drafts have no build page yet, so they get no link.
-  const listed = builds.length ? await loadDirectory().then((d) => new Set(d.ok ? d.builds.map((x) => x.slug) : [])) : new Set<string>();
+  const listed = builds.length ? await loadDirectoryHere().then((d) => new Set(d.ok ? d.builds.map((x) => x.slug) : [])) : new Set<string>();
   const buildLinks = await Promise.all(builds.map(async (slug) => ({ slug, ...(await supportLinksOf(db, { kind: "build", key: slug })) })));
-  const [following, listings] = await Promise.all([
+  const [following, listings, invites] = await Promise.all([
     followingOf(db, session.account.id).catch(() => []),
     listingsOfAccount(db, session.account.id).catch(() => []),
+    invitesFor(db, session.account.id).catch(() => []),
   ]);
   const linked = new Set(identities.map((i) => i.provider));
   const addable = configuredProviders(env, true).filter((p) => !linked.has(p));
@@ -54,6 +57,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Sear
             {next && next !== "/" ? <Link className="link" href={next}>Carry on where you were</Link> : null}
           </p>
         ) : null}
+        {q.joined ? <p className="auth-ok" role="status">You&apos;re a maintainer of {q.joined.slice(0, 40)} now. It shows on your profile.</p> : null}
         {q.sent ? <p className="auth-ok" role="status">Check your inbox. Open the link there, in this browser, to add email as a way in.</p> : null}
         {q.added ? <p className="auth-ok" role="status">{PROVIDER_LABEL[q.added as keyof typeof PROVIDER_LABEL] ?? "That provider"} is now a way into this account.</p> : null}
         {q.saved ? <p className="auth-ok" role="status">Saved.</p> : null}
@@ -135,6 +139,27 @@ export default async function AccountPage({ searchParams }: { searchParams: Sear
             <SupportForm kind="build" ownerKey={b.slug} links={b.links} label={b.slug} />
           </section>
         ))}
+
+        {invites.length ? (
+          <section className="panel account-section invite-box" id="invites">
+            <h2>{invites.length === 1 ? "You're invited to maintain a build" : `You're invited to maintain ${invites.length} builds`}</h2>
+            <ul className="invite-list">
+              {invites.map((i) => (
+                <li key={i.slug}>
+                  <span>
+                    <Link className="link" href={`/builds/${i.slug}`}><b>{i.slug}</b></Link>
+                    {i.tagline ? <span className="muted"> · {i.tagline}</span> : null}
+                  </span>
+                  <form method="post" action="/list/write" className="account-actions">
+                    <input type="hidden" name="slug" value={i.slug} />
+                    <button className="btn btn-dark" type="submit" name="action" value="invite-accept">Accept</button>
+                    <button className="btn btn-ghost" type="submit" name="action" value="invite-decline">Decline</button>
+                  </form>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
 
         <section className="panel account-section" id="listings">
           <div className="panel-head">

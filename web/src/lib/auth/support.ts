@@ -4,6 +4,7 @@
 import type { Db } from "../server/db";
 import { parseSupportLinks, storedSupportLinks, type SupportLink } from "../support-links";
 import { builderByHandle, builderOfAccount } from "./builders";
+import { listingsMaintainedBy } from "./listing-team";
 
 export type SupportOwner = { kind: "builder" | "build"; key: string };
 
@@ -41,8 +42,9 @@ export async function saveSupportLinks(
 
 /**
  * The builds an account may set support links for: those its CLAIMED
- * profile maintains on openproduct.live. `maintainsOf` reads the live
- * profile, so a maintainer who leaves a build loses the right with it.
+ * profile maintains on openproduct.live, and the published listings here it
+ * maintains (list-your-build LB4). Both are read live, so a maintainer who
+ * leaves a build loses the right with it.
  */
 export async function maintainedBuilds(
   db: Db,
@@ -50,8 +52,12 @@ export async function maintainedBuilds(
   maintainsOf: (handle: string) => Promise<string[] | null>,
 ): Promise<string[]> {
   const own = await builderOfAccount(db, accountId);
-  if (!own || own.kind !== "claimed") return [];
-  return (await maintainsOf(own.handle)) ?? [];
+  if (!own) return [];
+  const [there, here] = await Promise.all([
+    own.kind === "claimed" ? maintainsOf(own.handle).then((x) => x ?? []) : Promise.resolve([] as string[]),
+    listingsMaintainedBy(db, accountId).then((ls) => ls.map((l) => l.slug)),
+  ]);
+  return [...new Set([...there, ...here])];
 }
 
 /** May this account set links for `owner`? */

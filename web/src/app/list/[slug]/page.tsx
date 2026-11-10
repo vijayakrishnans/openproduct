@@ -9,13 +9,15 @@ import { viewer } from "@/lib/auth/viewer";
 import { loadDirectory } from "@/lib/directory";
 import { MAX_ROLE_COMMITMENT, MAX_ROLE_DESCRIPTION, MAX_ROLE_TITLE, MAX_ROLES, rolesOf, type ListingRole } from "@/lib/auth/listing-roles";
 import { ROLE_LABEL, ROLE_TYPES } from "@/lib/roles";
+import { MAX_MAINTAINERS, teamOf } from "@/lib/auth/listing-team";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Listing settings", robots: { index: false } };
 
 type Params = Promise<{ slug: string }>;
-type Search = Promise<{ error?: string; created?: string; saved?: string; verified?: string; unpublished?: string; seat?: string }>;
+type Search = Promise<{ error?: string; created?: string; saved?: string; verified?: string; unpublished?: string; seat?: string; team?: string }>;
 
+const TEAM_DONE: Record<string, string> = { invited: "Invite sent. It waits on their account page until they accept.", removed: "Removed from the team.", owner: "They're an owner now." };
 const SEAT_DONE: Record<string, string> = { added: "Seat added.", saved: "Seat saved.", closed: "Seat closed.", reopened: "Seat reopened." };
 
 /** The fields of a seat, for adding one or editing it. */
@@ -56,7 +58,8 @@ export default async function ListingSettings({ params, searchParams }: { params
   const dir = await loadDirectory();
   const topics = dir.ok ? dir.topics : [];
   const missing = missingForPublish(l);
-  const seats = v.db ? await rolesOf(v.db, l.slug, { withClosed: true }) : [];
+  const [seats, team] = v.db ? await Promise.all([rolesOf(v.db, l.slug, { withClosed: true }), teamOf(v.db, l.slug)]) : [[], []];
+  const meOwner = team.some((m) => m.accountId === v.session!.account.id && m.role === "owner" && !m.pending);
   const fileUrl = `https://github.com/${l.repo}/new/HEAD?filename=${encodeURIComponent(VERIFY_FILE)}&value=${encodeURIComponent(l.verifyCode)}`;
 
   return (
@@ -128,6 +131,59 @@ export default async function ListingSettings({ params, searchParams }: { params
             </label>
             <button className="btn btn-ghost" type="submit">Save</button>
           </form>
+        </section>
+
+        <section className="panel account-section" id="team">
+          <div className="panel-head">
+            <div>
+              <h2>Team</h2>
+              <p className="sub">Maintainers edit the listing, its seats and its support links, and the build shows on their profiles. Contributors come from the repo on GitHub by themselves.</p>
+            </div>
+          </div>
+          {q.team && TEAM_DONE[q.team] ? <p className="auth-ok" role="status">{TEAM_DONE[q.team]}</p> : null}
+          <ul className="team-list">
+            {team.map((m) => {
+              const self = m.accountId === v.session!.account.id;
+              return (
+                <li key={m.accountId}>
+                  <span>
+                    {m.handle ? <Link className="link" href={`/builders/${m.handle}`}>{m.name}</Link> : <span>Someone</span>}
+                    {self ? <span className="muted"> (you)</span> : null}
+                  </span>
+                  <span className={`pill${m.role === "owner" ? " live" : ""}`}>{m.pending ? "Invited" : m.role === "owner" ? "Owner" : "Maintainer"}</span>
+                  <span className="team-acts">
+                    {meOwner && !self && !m.pending && m.role !== "owner" ? (
+                      <form method="post" action="/list/write">
+                        <input type="hidden" name="action" value="make-owner" />
+                        <input type="hidden" name="slug" value={l.slug} />
+                        <input type="hidden" name="member" value={m.accountId} />
+                        <button className="text-btn" type="submit">Make owner</button>
+                      </form>
+                    ) : null}
+                    {self || meOwner ? (
+                      <form method="post" action="/list/write">
+                        <input type="hidden" name="action" value="remove" />
+                        <input type="hidden" name="slug" value={l.slug} />
+                        <input type="hidden" name="member" value={m.accountId} />
+                        <button className="text-btn danger" type="submit">{self ? "Leave" : m.pending ? "Cancel invite" : "Remove"}</button>
+                      </form>
+                    ) : null}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+          {team.length < MAX_MAINTAINERS ? (
+            <form method="post" action="/list/write" className="account-actions invite-form">
+              <input type="hidden" name="action" value="invite" />
+              <input type="hidden" name="slug" value={l.slug} />
+              <label>
+                <span className="sr-only">Builder handle</span>
+                <input name="handle" required maxLength={31} placeholder="@their-handle" />
+              </label>
+              <button className="btn btn-ghost" type="submit">Invite a maintainer</button>
+            </form>
+          ) : null}
         </section>
 
         <section className="panel account-section" id="seats">

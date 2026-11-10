@@ -38,6 +38,9 @@ if (!remove) {
     sql(`INSERT INTO listing_maintainers (slug, account_id, role, accepted_at) VALUES (${q(slug)}, ${q(`demo-${owner}`)}, 'owner', ${q(at(hoursAgo))});`);
     for (const o of others) sql(`INSERT INTO listing_maintainers (slug, account_id, role, accepted_at) VALUES (${q(slug)}, ${q(`demo-${o}`)}, 'maintainer', ${q(at(hoursAgo - 3))});`);
   }
+  // A waiting invite (LB4): sign in as Sam to accept or decline it.
+  sql(`INSERT INTO listing_maintainers (slug, account_id, role, accepted_at, invited_at) VALUES ('openproduct-web', 'demo-sam', 'maintainer', NULL, ${q(at(2))});`);
+
   // Open seats (LB3), with a couple of raised hands.
   const seats = [
     ["lr_demoOpWeb1", "openproduct-web", "Frontend engineer for the build pages", "engineering", "Own the build and builder pages: layout, dark mode, phone.", "A few hours a week"],

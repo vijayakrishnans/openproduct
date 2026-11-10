@@ -5,11 +5,12 @@
 // it's back. Every read shares BP7's backoff after a rate limit.
 import type { Db } from "../server/db";
 import { checkStack } from "./listings";
+import { isGithubLogin } from "../merged-prs";
 import { backOffGithub, githubBackedOff, githubHeaders, type Fetch, type GithubAuth } from "./github-prs";
 
 export const STATS_TTL_MS = 60 * 60 * 1000;
 const WEEK = 7 * 24 * 60 * 60 * 1000;
-/** Pages of 100 commits: past 300 in a week, "300" is plenty to rank by. */
+/** Pages of 100 commits: past 300 in a week, "300" is plenty to rank by. Each refresh is up to six calls. */
 const MAX_COMMIT_PAGES = 3;
 
 export type ListingStats = {
@@ -19,6 +20,8 @@ export type ListingStats = {
   lastCommitAt: string | null;
   languages: string[];
   archived: boolean;
+  /** The repo's contributors' GitHub logins, lowercased, bots left out (LB4). */
+  contributors: string[];
   fetchedAt: string;
 };
 
@@ -39,11 +42,11 @@ async function get<T>(url: string, deps: Deps): Promise<Read<T>> {
 export async function fetchRepoStats(repo: string, deps: Deps, now = Date.now()): Promise<Omit<ListingStats, "fetchedAt"> | "limited" | null> {
   const meta = await get<Record<string, unknown>>(`https://api.github.com/repos/${repo}`, deps);
   if (!meta.ok) {
-    if (meta.status === 404) return { status: "missing", changes7d: 0, licence: null, lastCommitAt: null, languages: [], archived: false };
+    if (meta.status === 404) return { status: "missing", changes7d: 0, licence: null, lastCommitAt: null, languages: [], archived: false, contributors: [] };
     return meta.status === 403 || meta.status === 429 ? "limited" : null;
   }
   const r = meta.value;
-  if (r.private === true) return { status: "missing", changes7d: 0, licence: null, lastCommitAt: null, languages: [], archived: false };
+  if (r.private === true) return { status: "missing", changes7d: 0, licence: null, lastCommitAt: null, languages: [], archived: false, contributors: [] };
 
   const since = new Date(now - WEEK).toISOString();
   let changes = 0;
@@ -66,6 +69,12 @@ export async function fetchRepoStats(repo: string, deps: Deps, now = Date.now())
   const languages = langs.ok
     ? checkStack(Object.entries(langs.value).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([name]) => name))
     : [];
+  // Up to 100 contributors, people only: enough to match builders here.
+  const people = await get<{ login?: unknown; type?: unknown }[]>(`https://api.github.com/repos/${repo}/contributors?per_page=100`, deps);
+  const contributors =
+    people.ok && Array.isArray(people.value)
+      ? [...new Set(people.value.filter((p) => p.type !== "Bot" && typeof p.login === "string" && isGithubLogin(p.login)).map((p) => (p.login as string).toLowerCase()))]
+      : [];
   const licence = (r.license as { spdx_id?: unknown } | null)?.spdx_id;
   return {
     status: "ok",
@@ -74,17 +83,23 @@ export async function fetchRepoStats(repo: string, deps: Deps, now = Date.now())
     lastCommitAt,
     languages,
     archived: r.archived === true,
+    contributors,
   };
 }
 
-type Row = { slug: string; status: "ok" | "missing"; changes_7d: number; licence: string | null; last_commit_at: string | null; languages: string; archived: number; fetched_at: string };
+type Row = { slug: string; status: "ok" | "missing"; changes_7d: number; licence: string | null; last_commit_at: string | null; languages: string; archived: number; contributors: string | null; fetched_at: string };
 
 function toStats(r: Row): ListingStats {
   let languages: string[] = [];
+  let contributors: string[] = [];
   try {
     languages = checkStack(JSON.parse(r.languages));
   } catch {}
-  return { status: r.status, changes7d: r.changes_7d, licence: r.licence, lastCommitAt: r.last_commit_at, languages, archived: r.archived === 1, fetchedAt: r.fetched_at };
+  try {
+    const c = JSON.parse(r.contributors ?? "[]");
+    contributors = Array.isArray(c) ? c.filter((x): x is string => typeof x === "string" && isGithubLogin(x)) : [];
+  } catch {}
+  return { status: r.status, changes7d: r.changes_7d, licence: r.licence, lastCommitAt: r.last_commit_at, languages, archived: r.archived === 1, contributors, fetchedAt: r.fetched_at };
 }
 
 /** Cached stats for every listing that has them. */
@@ -110,11 +125,12 @@ export async function refreshStats(db: Db, slug: string, repo: string, deps: Dep
   const at = new Date(now).toISOString();
   await db
     .prepare(
-      `INSERT INTO listing_stats (slug, status, changes_7d, licence, last_commit_at, languages, archived, fetched_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `INSERT INTO listing_stats (slug, status, changes_7d, licence, last_commit_at, languages, archived, contributors, fetched_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT(slug) DO UPDATE SET status = excluded.status, changes_7d = excluded.changes_7d, licence = excluded.licence,
-         last_commit_at = excluded.last_commit_at, languages = excluded.languages, archived = excluded.archived, fetched_at = excluded.fetched_at`,
+         last_commit_at = excluded.last_commit_at, languages = excluded.languages, archived = excluded.archived,
+         contributors = excluded.contributors, fetched_at = excluded.fetched_at`,
     )
-    .bind(slug, s.status, s.changes7d, s.licence, s.lastCommitAt, JSON.stringify(s.languages), s.archived ? 1 : 0, at)
+    .bind(slug, s.status, s.changes7d, s.licence, s.lastCommitAt, JSON.stringify(s.languages), s.archived ? 1 : 0, JSON.stringify(s.contributors), at)
     .run();
   return { ...s, fetchedAt: at };
 }

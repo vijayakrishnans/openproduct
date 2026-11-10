@@ -19,7 +19,10 @@ import { ArticleCard } from "@/components/article-card";
 import { SupportLinks } from "@/components/support-links";
 import type { Session } from "@/lib/auth/session";
 import { builderBadges } from "@/lib/badges";
-import { initials, loadBuildRepos, loadDirectory, loadPerson, type Build, type PersonDetail } from "@/lib/directory";
+import { initials, loadBuildRepos, loadPerson, type Build, type PersonDetail } from "@/lib/directory";
+import { loadDirectoryHere } from "@/lib/server/directory-here";
+import { listingsContributedBy, listingsMaintainedBy } from "@/lib/auth/listing-team";
+import type { Db } from "@/lib/server/db";
 import { followState } from "@/lib/auth/reactions";
 import { appEnv, database } from "@/lib/server/env";
 
@@ -105,6 +108,19 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   return { title: `@${handle}` };
 }
 
+/** A profile plus the published listings here its owner maintains or contributes to (list-your-build LB4). */
+async function withListingsHere(db: Db, person: PersonDetail, accountId: string): Promise<PersonDetail> {
+  const login = await githubLoginOf(db, accountId);
+  const [maint, contrib] = await Promise.all([listingsMaintainedBy(db, accountId), login ? listingsContributedBy(db, login) : Promise.resolve([])]);
+  const has = (list: { slug: string }[], slug: string) => list.some((b) => b.slug.toLowerCase() === slug.toLowerCase());
+  const maintainsBuilds = [...person.maintainsBuilds, ...maint.filter((l) => !has(person.maintainsBuilds, l.slug))];
+  const contributesToBuilds = [
+    ...person.contributesToBuilds,
+    ...contrib.filter((l) => !has(maintainsBuilds, l.slug) && !has(person.contributesToBuilds, l.slug)),
+  ];
+  return { ...person, maintainsBuilds, contributesToBuilds, maintains: maintainsBuilds.map((b) => b.slug) };
+}
+
 type Project = { slug: string; tagline: string; role: "Maintainer" | "Contributor"; build: Build | null };
 
 /** Public builds only: the API's maintains and contributesToListings never carry a private one. */
@@ -187,15 +203,18 @@ function Posts({ posts, total, name, isOwner }: { posts: Article[]; total: numbe
 export default async function PersonPage({ params, searchParams }: { params: Params; searchParams: Search }) {
   const { handle } = await params;
   const q = await searchParams;
-  const [remote, directory, session, db] = await Promise.all([loadPerson(handle), loadDirectory(), currentSession(), database()]);
+  const [remote, directory, session, db] = await Promise.all([loadPerson(handle), loadDirectoryHere(), currentSession(), database()]);
   const found = db ? await builderByHandle(db, handle).catch(() => null) : null;
   // A profile started here can't share a handle with an openproduct.live one;
   // if one ever does, the openproduct.live profile wins and the row is ignored.
   const owner = found && !(found.kind === "new" && remote !== null) ? found : null;
   // A profile started here has no openproduct.live page; render it from the database.
   const fromHere = remote === null && owner?.kind === "new";
-  const person = fromHere ? localPerson(owner!) : remote;
-  if (person === null) notFound();
+  const base = fromHere ? localPerson(owner!) : remote;
+  if (base === null) notFound();
+  // LB4: builds listed here count too, those they maintain, and those whose
+  // repo lists their GitHub login among its contributors.
+  const person = base !== "unreachable" && owner && db ? await withListingsHere(db, base, owner.accountId).catch(() => base) : base;
   const env = await appEnv();
   const [support, discussions, posts, postCount, merged] =
     db && person !== "unreachable"

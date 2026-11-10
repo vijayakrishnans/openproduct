@@ -3,6 +3,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createListing, setPublished, updateListing, verifyListing } from "@/lib/auth/listings";
 import { addRole, setRoleOpen, updateRole } from "@/lib/auth/listing-roles";
+import { answerInvite, inviteMaintainer, makeOwner, removeMaintainer } from "@/lib/auth/listing-team";
 import { sameOrigin } from "@/lib/auth/request";
 import { SESSION_COOKIE, validateSession } from "@/lib/auth/session";
 import { loadDirectory, slugTakenOnOpenproduct } from "@/lib/directory";
@@ -45,6 +46,24 @@ export async function POST(request: NextRequest) {
     const r = await verifyListing(db, slug, me, github);
     return go(back, r.ok ? { verified: "1" } : { error: r.message });
   }
+  // The team (LB4).
+  if (action === "invite") {
+    const r = await inviteMaintainer(db, slug, me, field("handle"));
+    return go(`${back}#team`, r.ok ? { team: "invited" } : { error: r.message });
+  }
+  if (action === "invite-accept" || action === "invite-decline") {
+    const r = await answerInvite(db, slug, me, action === "invite-accept");
+    if (!r.ok) return go("/account", { error: r.message });
+    return action === "invite-accept" ? go("/account", { joined: slug }) : go("/account");
+  }
+  if (action === "remove" || action === "make-owner") {
+    const target = field("member");
+    const r = action === "remove" ? await removeMaintainer(db, slug, me, target) : await makeOwner(db, slug, me, target);
+    if (!r.ok) return go(`${back}#team`, { error: r.message });
+    // Leaving a build means its settings are no longer yours to see.
+    return target === me && action === "remove" ? go("/account", { left: slug }) : go(`${back}#team`, { team: action === "remove" ? "removed" : "owner" });
+  }
+
   // Open seats (LB3).
   const seat = { title: field("title"), type: field("type"), description: field("description"), commitment: field("commitment") };
   if (action === "role-add") {

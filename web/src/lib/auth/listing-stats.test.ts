@@ -105,7 +105,7 @@ describe("the repo's licence wins once read", () => {
     await db.prepare(`UPDATE listings SET licence = 'MIT' WHERE slug = 'tool'`).run();
     const l = (await getListing(db, "tool"))!;
     expect(listingToBuild(l, null).licence).toBe("MIT");
-    const read = { status: "ok" as const, changes7d: 1, licence: null, lastCommitAt: null, languages: [], archived: false, fetchedAt: new Date(NOW).toISOString() };
+    const read = { status: "ok" as const, changes7d: 1, licence: null, lastCommitAt: null, languages: [], archived: false, contributors: [], fetchedAt: new Date(NOW).toISOString() };
     expect(listingToBuild(l, read).licence).toBeNull();
   });
 });
