@@ -4,12 +4,16 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { TabBar } from "@/components/tab-bar";
 import { ThreadRow, TrendingRow } from "@/components/thread-row";
-import { FORUM_ORDERS, TAG_LABELS, THREAD_TAGS, loadThreads, parseOrder, parseTag, type ForumOrder, type ThreadTag } from "@/lib/forum";
-import { COMMUNITY, OPENPRODUCT, type CommunityChannel } from "@/lib/links";
+import { listLocalThreads } from "@/lib/auth/discussions";
+import { FORUM_ORDERS, TAG_LABELS, THREAD_TAGS, loadThreads, mergeThreads, parseOrder, parseTag, type ForumOrder, type Thread, type ThreadTag } from "@/lib/forum";
+import { COMMUNITY, type CommunityChannel } from "@/lib/links";
+import { database } from "@/lib/server/env";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Community",
-  description: "Threads about the builds on openproduct, and where builders talk: Discord, Reddit, YouTube and X.",
+  description: "Discussions between builders, threads about the builds on openproduct, and where builders talk: Discord, Reddit, YouTube and X.",
 };
 
 type Search = Promise<{ order?: string; tag?: string }>;
@@ -54,12 +58,22 @@ export default async function CommunityPage({ searchParams }: { searchParams: Se
   // Trending is the most-replied list across every category; when that is
   // already the main list, it is not fetched twice.
   const sameList = order === "replied" && !tag;
-  const [threads, replied] = await Promise.all([
+  const db = await database();
+  const here = (o: ForumOrder, t: ThreadTag | null): Promise<Thread[]> => (db ? listLocalThreads(db, o, t).catch(() => []) : Promise.resolve([]));
+  const [remote, remoteReplied, local, localReplied] = await Promise.all([
     loadThreads(order, tag),
     sameList ? null : loadThreads("replied", null),
+    here(order, tag),
+    sameList ? null : here("replied", null),
   ]);
-  const trending = sameList ? threads : replied;
-  const hot = trending === "unreachable" || !trending ? [] : trending.filter((t) => t.replies > 0).slice(0, 5);
+  // Threads written here and threads from openproduct.live, as one list.
+  // If openproduct.live can't be reached, this site's threads still show.
+  const threads: Thread[] | "unreachable" =
+    remote === "unreachable" && local.length === 0 ? "unreachable" : mergeThreads(local, remote === "unreachable" ? [] : remote, order);
+  const trendingSource = sameList
+    ? threads === "unreachable" ? [] : threads
+    : mergeThreads(localReplied ?? [], remoteReplied === "unreachable" || !remoteReplied ? [] : remoteReplied, "replied");
+  const hot = trendingSource.filter((t) => t.replies > 1 || (!t.local && t.replies > 0)).slice(0, 5);
 
   return (
     <>
@@ -68,9 +82,9 @@ export default async function CommunityPage({ searchParams }: { searchParams: Se
         <div className="forum-head">
           <div>
             <h1>Community</h1>
-            <p className="sub">Threads about the builds here: questions, proposals and design notes.</p>
+            <p className="sub">Questions, proposals and design notes, between builders and about the builds here.</p>
           </div>
-          <a className="btn btn-dark" href={`${OPENPRODUCT}/threads`}>+ Start a thread</a>
+          <Link className="btn btn-dark" href="/community/new">+ Start a discussion</Link>
         </div>
         <div className="forum">
           <section className="forum-main" aria-label="Threads">
@@ -96,8 +110,8 @@ export default async function CommunityPage({ searchParams }: { searchParams: Se
             ) : (
               <div className="forum-empty">
                 <strong>{tag ? `No ${TAG_LABELS[tag].toLowerCase()} threads yet.` : "No threads yet."}</strong>
-                <p>A thread is a titled conversation about one build: a question, a proposal, a design note. Start the first one.</p>
-                <a className="btn btn-ghost" href={`${OPENPRODUCT}/threads`}>Start a thread</a>
+                <p>A question, a proposal, a design note, or a debate about tools. Start the first one.</p>
+                <Link className="btn btn-ghost" href="/community/new">Start a discussion</Link>
               </div>
             )}
           </section>

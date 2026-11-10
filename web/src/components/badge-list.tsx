@@ -8,6 +8,7 @@ const ICON: Record<BadgeKind, string> = {
   "contributor-tier": "M6 4v10a6 6 0 0 0 12 0V4M9 4v8m6-8v8",
   contributor: "M7 7h10v10H7zM7 12h10M12 7v10",
   since: "M5 5h14v15H5zM5 10h14M9 3v4m6-4v4",
+  discussion: "M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.6A8 8 0 1 1 21 12Z",
   support: "M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z",
 };
 

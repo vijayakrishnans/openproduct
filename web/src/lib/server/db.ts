@@ -92,6 +92,46 @@ export const MIGRATIONS: { version: number; name: string; statements: string[] }
        )`,
     ],
   },
+  {
+    version: 3,
+    name: "discussions",
+    statements: [
+      // builder-profiles BP5 (D6): threads written here, with no listing.
+      // The author is an account; deleting it keeps the words and shows
+      // "deleted builder" (D11), so the reference is SET NULL, not CASCADE.
+      `CREATE TABLE IF NOT EXISTS threads (
+         id TEXT PRIMARY KEY,
+         author_account_id TEXT REFERENCES accounts(id) ON DELETE SET NULL,
+         tag TEXT NOT NULL,
+         title TEXT NOT NULL CHECK (length(title) BETWEEN 1 AND 140),
+         created_at TEXT NOT NULL,
+         last_post_at TEXT NOT NULL,
+         post_count INTEGER NOT NULL DEFAULT 1,
+         hidden INTEGER NOT NULL DEFAULT 0
+       )`,
+      `CREATE INDEX IF NOT EXISTS threads_latest ON threads(hidden, last_post_at)`,
+      `CREATE INDEX IF NOT EXISTS threads_author ON threads(author_account_id)`,
+      `CREATE TABLE IF NOT EXISTS posts (
+         id TEXT PRIMARY KEY,
+         thread_id TEXT NOT NULL REFERENCES threads(id) ON DELETE CASCADE,
+         author_account_id TEXT REFERENCES accounts(id) ON DELETE SET NULL,
+         body TEXT NOT NULL CHECK (length(body) BETWEEN 1 AND 5000),
+         created_at TEXT NOT NULL,
+         hidden INTEGER NOT NULL DEFAULT 0
+       )`,
+      `CREATE INDEX IF NOT EXISTS posts_thread ON posts(thread_id, created_at)`,
+      `CREATE INDEX IF NOT EXISTS posts_author ON posts(author_account_id, created_at)`,
+      `CREATE TABLE IF NOT EXISTS reports (
+         target_kind TEXT NOT NULL CHECK (target_kind IN ('thread', 'post')),
+         target_id TEXT NOT NULL,
+         reporter_account_id TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+         reason TEXT,
+         created_at TEXT NOT NULL,
+         resolved INTEGER NOT NULL DEFAULT 0,
+         PRIMARY KEY (target_kind, target_id, reporter_account_id)
+       )`,
+    ],
+  },
 ];
 
 const applied = new WeakSet<object>();
