@@ -2,6 +2,7 @@
 // shapes into the app's own (design.md §1). Every read is tolerant: a missing
 // field is a blank, never a crash, and a failed read is an `unreachable`
 // result the page renders, never a 500.
+import { repoOf } from "./merged-prs";
 import { roleType, stackName, type RoleType } from "./roles";
 
 export const API_ORIGIN = "https://api.openproduct.live";
@@ -379,4 +380,22 @@ export async function loadPerson(handle: string): Promise<PersonDetail | null | 
 export async function maintainsOf(handle: string): Promise<string[] | null> {
   const person = await loadPerson(handle);
   return person && person !== "unreachable" ? person.maintainsBuilds.map((b) => b.slug) : null;
+}
+
+/**
+ * Repo → slug for every public build with a GitHub repo (BP7). The listing
+ * doesn't carry `repoUrl`, so each build's page is read; callers cache the
+ * result for a day. Null when the directory can't be read.
+ */
+export async function loadBuildRepos(): Promise<Record<string, string> | null> {
+  const dir = await loadDirectory();
+  if (!dir.ok) return null;
+  const details = await Promise.all(dir.builds.map((b) => loadBuild(b.slug).catch(() => null)));
+  const out: Record<string, string> = {};
+  for (const d of details) {
+    if (!d || d === "unreachable") continue;
+    const repo = repoOf(d.repoUrl);
+    if (repo && !out[repo]) out[repo] = d.slug;
+  }
+  return out;
 }

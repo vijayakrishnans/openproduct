@@ -10,8 +10,8 @@ What actually shipped, and every place the code departed from `design.md`.
 | BP3: Apple and email sign-in | ⏳ Not started | |
 | BP4: support links | ✅ Shipped | [#18](https://github.com/vijayakrishnans/openproduct/pull/18) |
 | BP5: community discussions | ✅ Shipped | [#20](https://github.com/vijayakrishnans/openproduct/pull/20), [#21](https://github.com/vijayakrishnans/openproduct/pull/21) |
-| BP6: builder posts | 🚧 In review | |
-| BP7: merged-PR badges | ⏳ Not started | |
+| BP6: builder posts | ✅ Shipped | [#22](https://github.com/vijayakrishnans/openproduct/pull/22) |
+| BP7: merged-PR badges | 🚧 In review | |
 
 ## Departures from the design
 
@@ -86,3 +86,18 @@ SQLite can't widen a `CHECK` in place, so migration 4 copies `reports` into a ne
 ### Demo data
 
 `web/scripts/seed-demo.mjs` prints SQL for four demo builders (bios start "Demo profile"), discussions with replies, five posts with YouTube and Vimeo videos, and one open report. Every row is marked (`demo-` accounts, `de300000-` ids), demo accounts have no way to sign in, and `--remove` prints the SQL that deletes them all. It's for stage and local; prod gets none.
+
+### Your own builds don't count (BP7)
+
+The plan counts merged PRs "to the public repos of openproduct builds". Today every merged PR to those repos was merged by the repo's owner into their own build, so a literal count would hand everyone a badge for merging their own work. The count leaves out repos the GitHub login owns and builds the profile maintains: the badge means a PR to *someone else's* build.
+
+### The count stops at 10, and links GitHub's search (BP7)
+
+"First PR merged", then "*N* PRs merged", then "10+ PRs merged", like the contribution tiers (D2). The badge links a GitHub search for exactly the PRs it counted, so anyone can check it (D1).
+
+### How GitHub is read (BP7)
+
+- The build listing doesn't carry `repoUrl`, so each build's page is read once a day for its repo, and the map is kept in `settings` (`build_repos`). If the refresh fails, yesterday's map is used.
+- Search queries OR the build repos (`repo:a repo:b …`), packed under GitHub's 256-character limit. Per-repo counts for each login are kept a day in `merged_prs`, keyed by the public login, not the account.
+- Requests authenticate with `GITHUB_TOKEN` if set, else the OAuth app's id and secret. A 403 or 429 backs off for 15 minutes and keeps the last good count; with none, there's no badge.
+- Only the builder page asks GitHub. Cards on the builders list don't, so one page view never fans out into dozens of searches.

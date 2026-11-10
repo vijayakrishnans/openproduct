@@ -4,7 +4,7 @@
 // was computed from, in words, so a reader can check it. Nothing here is
 // awarded, and no badge is a score — the contribution tiers stop at 10.
 
-export type BadgeKind = "since" | "open" | "launched" | "maintains" | "contributor-tier" | "contributor" | "support" | "discussion" | "writer";
+export type BadgeKind = "since" | "open" | "launched" | "maintains" | "contributor-tier" | "contributor" | "support" | "discussion" | "writer" | "merged-pr";
 
 export type Badge = {
   kind: BadgeKind;
@@ -30,6 +30,8 @@ export type BadgeInputs = {
   discussions?: number;
   /** How many visible posts they published here (BP6). */
   posts?: number;
+  /** Their merged PRs to other people's builds, read from GitHub (BP7); absent without GitHub. */
+  mergedPrs?: { login: string; total: number; builds: string[]; link: string } | null;
 };
 
 export const CONTRIBUTION_TIERS = [
@@ -68,6 +70,16 @@ export function builderBadges(i: BadgeInputs): Badge[] {
       kind: "contributor-tier",
       label: tier.label,
       from: `Listed as a contributor on ${plural(i.contributes, "public build", "public builds")}`,
+    });
+  }
+  if (i.mergedPrs && i.mergedPrs.total > 0) {
+    const m = i.mergedPrs;
+    out.push({
+      kind: "merged-pr",
+      // Like the contribution tiers, the count stops at 10: not a leaderboard.
+      label: m.total === 1 ? "First PR merged" : m.total >= 10 ? "10+ PRs merged" : `${m.total} PRs merged`,
+      from: `${plural(m.total, "pull request", "pull requests")} by @${m.login} merged into ${m.builds.join(", ")}, on GitHub`,
+      href: m.link,
     });
   }
   if (i.supportLinks && i.supportLinks > 0) {

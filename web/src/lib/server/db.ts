@@ -173,6 +173,20 @@ export const MIGRATIONS: { version: number; name: string; statements: string[] }
       `ALTER TABLE reports_v4 RENAME TO reports`,
     ],
   },
+  {
+    version: 5,
+    name: "merged prs",
+    statements: [
+      // builder-profiles BP7: a GitHub login's merged PRs per build repo,
+      // as read from GitHub's search, kept for a day. Public data, keyed by
+      // login rather than account, so nothing personal is stored.
+      `CREATE TABLE IF NOT EXISTS merged_prs (
+         login TEXT PRIMARY KEY COLLATE NOCASE,
+         by_repo TEXT NOT NULL,
+         fetched_at TEXT NOT NULL
+       )`,
+    ],
+  },
 ];
 
 const applied = new WeakSet<object>();
