@@ -414,3 +414,42 @@ export async function slugTakenOnOpenproduct(slug: string): Promise<boolean | "u
     return "unreachable";
   }
 }
+
+/* ── Searching and filtering Open builds (OP-37) ───────────────────── */
+
+export const BUILD_FILTERS = [
+  { key: "roles", label: "Has open roles", test: (b: Build) => b.roleCount > 0 },
+  { key: "active", label: "Changed this week", test: (b: Build) => b.changes7d > 0 },
+  { key: "here", label: "Listed here", test: (b: Build) => b.source === "here" },
+  { key: "licensed", label: "Open licence", test: (b: Build) => !!b.licence },
+] as const;
+export type BuildFilter = (typeof BUILD_FILTERS)[number]["key"];
+
+export function parseFilters(raw: string | string[] | undefined): BuildFilter[] {
+  const list = (Array.isArray(raw) ? raw : (raw ?? "").split(",")).map((s) => s.trim());
+  return BUILD_FILTERS.filter((f) => list.includes(f.key)).map((f) => f.key);
+}
+
+/** How many builds a page shows at first, and how many "Load more" adds. */
+export const PAGE_SIZE = 20;
+export const parseShow = (raw: string | undefined) => {
+  const n = Number(raw);
+  return Number.isFinite(n) && n > PAGE_SIZE ? Math.min(500, Math.ceil(n / PAGE_SIZE) * PAGE_SIZE) : PAGE_SIZE;
+};
+
+/**
+ * Builds matching every word of the search (in the name, tagline, stack or
+ * category), the category, and every filter chosen.
+ */
+export function filterBuilds(builds: Build[], opts: { q?: string; cat?: string | null; filters?: BuildFilter[]; topics?: Topic[] }): Build[] {
+  const words = (opts.q ?? "").toLowerCase().split(/\s+/).filter(Boolean).slice(0, 8);
+  const label = (b: Build) => opts.topics?.find((t) => t.value === b.category)?.label ?? b.category ?? "";
+  const tests = BUILD_FILTERS.filter((f) => opts.filters?.includes(f.key)).map((f) => f.test);
+  return builds.filter((b) => {
+    if (opts.cat && b.category !== opts.cat) return false;
+    if (!tests.every((t) => t(b))) return false;
+    if (!words.length) return true;
+    const hay = [b.slug, b.tagline, label(b), ...b.stack].join(" ").toLowerCase();
+    return words.every((w) => hay.includes(w));
+  });
+}

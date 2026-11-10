@@ -826,3 +826,26 @@ a.channel-row .channel-text span { color: var(--link); font-weight: 600; }
 .listing-report form { margin: 0; }
 .danger-zone { border-color: var(--err-line); }
 .danger-zone .account-form { margin-top: 10px; }
+
+/* Open builds: search, filters, load more (OP-37) */
+.builds-search { display: flex; gap: 8px; margin: 4px 0 12px; max-width: 640px; }
+.builds-search .search { flex: 1; min-width: 0; display: flex; }
+.builds-search .search input { flex: 1; min-width: 0; border: 0; background: transparent; font: inherit; color: var(--ink); outline: none; }
+.builds-filters { margin-bottom: 8px; }
+.builds-filters a[aria-current="true"] { border-color: var(--ink-2); }
+.builds-meta { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: space-between; }
+.builds-count { font-size: 13px; }
+.card.is-quiet { opacity: .82; }
+.card.is-quiet:hover { opacity: 1; }
+.badge.quiet-tag { color: var(--ink-3); border-style: dashed; }
+.load-more { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 20px 0 6px; }
+.load-more .muted { font-size: 13px; }
+.card[id] { scroll-margin-top: 90px; }
+@media (max-width: 860px) {
+  .builds-search { max-width: none; }
+  .builds-meta .formula { display: none; }
+}
+@media (max-width: 860px) {
+  .cats.builds-filters { display: flex; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; }
+  .cats.builds-filters a { flex: none; }
+}
