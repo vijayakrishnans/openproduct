@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArticleMeta, VideoEmbed } from "@/components/article-card";
 import { PostBody } from "@/components/post-body";
+import { TopicChips } from "@/components/topic-chips";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { TabBar } from "@/components/tab-bar";
@@ -73,6 +74,7 @@ export default async function ArticlePage({ params, searchParams }: { params: Pa
         <header className="article-header">
           <h1>{a.title}</h1>
           <ArticleMeta a={a} withAuthor />
+          <TopicChips topics={a.topics} />
           {edited ? <span className="muted article-edited">edited</span> : null}
           {a.hidden ? <span className="pill">Hidden</span> : null}
           <Actions a={a} v={v} />

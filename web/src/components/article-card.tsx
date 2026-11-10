@@ -3,6 +3,7 @@ import type { Article } from "@/lib/auth/articles";
 import { ago } from "@/lib/directory";
 import { VIDEO_PROVIDER_LABEL, embedUrl, watchUrl, type Video } from "@/lib/video";
 import { Avatar } from "./person-card";
+import { TopicChips } from "./topic-chips";
 
 /**
  * A video player built from a provider and id (design D7). The iframe is
@@ -58,6 +59,7 @@ export function ArticleCard({ article: a, withAuthor = true }: { article: Articl
           <Link href={`/posts/${a.id}`}>{a.title}</Link>
         </h3>
         <Meta a={a} withAuthor={withAuthor} />
+        <TopicChips topics={a.topics} small />
         {a.excerpt ? <p className="article-excerpt">{a.excerpt}</p> : null}
         <Link className="link" href={`/posts/${a.id}`}>Read the post →</Link>
       </div>

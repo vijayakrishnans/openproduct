@@ -134,11 +134,20 @@ function toLocalThread(r: ThreadRow): LocalThread {
 }
 
 /** Visible threads written here, in the forum's order. */
-export async function listLocalThreads(db: Db, order: ForumOrder, tag: ThreadTag | null, limit = 50): Promise<LocalThread[]> {
-  const where = tag ? `WHERE t.hidden = 0 AND t.remote = 0 AND t.tag = ?` : `WHERE t.hidden = 0 AND t.remote = 0`;
+export async function listLocalThreads(db: Db, order: ForumOrder, tag: ThreadTag | null, limit = 50, topic?: string): Promise<LocalThread[]> {
+  const where = ["t.hidden = 0", "t.remote = 0"];
+  const binds: unknown[] = [];
+  if (tag) {
+    where.push("t.tag = ?");
+    binds.push(tag);
+  }
+  // TC1: only threads carrying this topic.
+  if (topic) {
+    where.push("t.id IN (SELECT content_id FROM content_topics WHERE content_kind = 'thread' AND topic = ?)");
+    binds.push(topic);
+  }
   const by = order === "replied" ? `t.post_count DESC, t.last_post_at DESC` : `t.last_post_at DESC`;
-  const stmt = db.prepare(`${THREAD_SELECT} ${where} ORDER BY ${by} LIMIT ?`);
-  const rows = await (tag ? stmt.bind(tag, limit) : stmt.bind(limit)).all<ThreadRow>();
+  const rows = await db.prepare(`${THREAD_SELECT} WHERE ${where.join(" AND ")} ORDER BY ${by} LIMIT ?`).bind(...binds, limit).all<ThreadRow>();
   return rows.results.map(toLocalThread);
 }
 
