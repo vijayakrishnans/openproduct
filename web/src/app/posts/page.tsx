@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArticleCard } from "@/components/article-card";
+import { KindTabs, parseKindTab } from "@/components/kind-tabs";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { TabBar } from "@/components/tab-bar";
@@ -13,9 +14,10 @@ export const metadata: Metadata = {
   description: "Build logs, demos and lessons, written by the builders on openproduct.",
 };
 
-export default async function PostsPage() {
+export default async function PostsPage({ searchParams }: { searchParams: Promise<{ kind?: string }> }) {
+  const tab = parseKindTab((await searchParams).kind, false);
   const db = await database();
-  const articles = db ? await listArticles(db, { limit: 50 }).catch(() => []) : [];
+  const articles = db ? await listArticles(db, { limit: 50, kind: tab && tab !== "discussions" ? tab : undefined }).catch(() => []) : [];
   return (
     <>
       <SiteHeader current="/community" />
@@ -28,6 +30,7 @@ export default async function PostsPage() {
           </div>
           <Link className="btn btn-dark" href="/posts/new">+ Write a post</Link>
         </div>
+        <KindTabs base="/posts" current={tab} />
         {articles.length ? (
           <div className="article-grid">{articles.map((a) => <ArticleCard key={a.id} article={a} />)}</div>
         ) : (

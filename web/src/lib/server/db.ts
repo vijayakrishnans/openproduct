@@ -386,6 +386,18 @@ export const MIGRATIONS: { version: number; name: string; statements: string[] }
       `CREATE INDEX IF NOT EXISTS content_topics_topic ON content_topics(topic, created_at)`,
     ],
   },
+  {
+    version: 15,
+    name: "kinds of writing",
+    statements: [
+      // topics-and-community TC2 (D2): blog, tutorial, doc, baseline, launch.
+      `ALTER TABLE articles ADD COLUMN kind TEXT NOT NULL DEFAULT 'blog' CHECK (kind IN ('blog', 'tutorial', 'doc', 'baseline', 'launch'))`,
+      `ALTER TABLE articles ADD COLUMN repo_url TEXT`,
+      `ALTER TABLE articles ADD COLUMN minutes INTEGER`,
+      `ALTER TABLE articles ADD COLUMN reviewed_at TEXT`,
+      `CREATE INDEX IF NOT EXISTS articles_kind ON articles(kind, hidden, created_at)`,
+    ],
+  },
 ];
 
 const applied = new WeakSet<object>();

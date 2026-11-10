@@ -9,6 +9,8 @@ import type { Db } from "../server/db";
 import { parseVideoUrl, storedVideo, type Video } from "../video";
 import { builderOfAccount } from "./builders";
 import { topicsFor } from "./topics";
+import { isPostKind, type PostKind } from "../post-kinds";
+import { parseRepo } from "./listings";
 import { newId } from "./crypto";
 
 export const MAX_ARTICLE_TITLE = 140;
@@ -24,6 +26,11 @@ export type Article = {
   title: string;
   /** TC1: the topics it carries. */
   topics: string[];
+  /** TC2: what kind of writing, and what that kind adds. */
+  kind: PostKind;
+  repoUrl: string | null;
+  minutes: number | null;
+  reviewedAt: string | null;
   body: RenderNode[];
   /** The source, for the edit form; only filled for its author. */
   source: string | null;
@@ -38,11 +45,24 @@ export type Article = {
   mine: boolean;
 };
 
-export type ArticleInput = { title: string; body: string; video: string; build: string };
-type Checked = { title: string; body: string; video: Video | null; buildSlug: string | null };
+export type ArticleInput = {
+  title: string;
+  body: string;
+  video: string;
+  build: string;
+  /** TC2: the kind of writing, and what some kinds need. */
+  kind?: string;
+  repo?: string;
+  minutes?: string;
+};
+type Checked = { title: string; body: string; video: Video | null; buildSlug: string | null; kind: PostKind; repoUrl: string | null; minutes: number | null };
 export type ArticleWrite = { ok: true; id: string } | { ok: false; message: string };
 
-export function checkArticle(input: ArticleInput): { ok: true; value: Checked } | { ok: false; message: string } {
+/**
+ * `maintained`: the builds the author maintains, when known, so a launch can
+ * only name one of theirs (TC2).
+ */
+export function checkArticle(input: ArticleInput, maintained?: string[]): { ok: true; value: Checked } | { ok: false; message: string } {
   const title = input.title.trim().replace(/\s+/g, " ");
   const body = input.body.trim();
   if (!title) return { ok: false, message: "Give the post a title." };
@@ -57,41 +77,62 @@ export function checkArticle(input: ArticleInput): { ok: true; value: Checked } 
   }
   const build = input.build.trim().toLowerCase();
   if (build && !SLUG.test(build)) return { ok: false, message: "That isn't a build's name. Use the part after /builds/ in its link." };
-  return { ok: true, value: { title, body, video, buildSlug: build || null } };
+  const kind: PostKind = input.kind && isPostKind(input.kind) ? input.kind : "blog";
+  let repoUrl: string | null = null;
+  const repoRaw = (input.repo ?? "").trim();
+  if (repoRaw) {
+    const repo = parseRepo(repoRaw);
+    if (!repo) return { ok: false, message: "The repo must be a GitHub repo, like github.com/you/starter." };
+    repoUrl = `https://github.com/${repo}`;
+  }
+  if (kind === "baseline" && !repoUrl) return { ok: false, message: "A baseline needs the repo people copy." };
+  let minutes: number | null = null;
+  const m = (input.minutes ?? "").trim();
+  if (m) {
+    minutes = Number(m);
+    if (!Number.isInteger(minutes) || minutes < 1 || minutes > 600) return { ok: false, message: "Time to complete is a number of minutes, 1 to 600." };
+  }
+  if (kind === "launch") {
+    if (!build) return { ok: false, message: "A launch names the build you shipped." };
+    if (maintained && !maintained.some((x) => x.toLowerCase() === build)) return { ok: false, message: "A launch has to be of a build you maintain." };
+  }
+  return { ok: true, value: { title, body, video, buildSlug: build || null, kind, repoUrl, minutes: kind === "tutorial" ? minutes : null } };
 }
 
-export async function createArticle(db: Db, accountId: string, input: ArticleInput, now = Date.now()): Promise<ArticleWrite> {
+export async function createArticle(db: Db, accountId: string, input: ArticleInput, now = Date.now(), maintained?: string[]): Promise<ArticleWrite> {
   if (!(await builderOfAccount(db, accountId))) return { ok: false, message: "Start or claim your builder profile first; posts live on it." };
-  const checked = checkArticle(input);
+  const checked = checkArticle(input, maintained);
   if (!checked.ok) return checked;
   const recent = await db
     .prepare(`SELECT count(*) AS n FROM articles WHERE author_account_id = ? AND created_at > ?`)
     .bind(accountId, new Date(now - DAY).toISOString())
     .first<{ n: number }>();
   if ((recent?.n ?? 0) >= ARTICLES_PER_DAY) return { ok: false, message: `You can publish ${ARTICLES_PER_DAY} posts a day. Try again tomorrow.` };
-  const { title, body, video, buildSlug } = checked.value;
+  const { title, body, video, buildSlug, kind, repoUrl, minutes } = checked.value;
   const id = newId();
   const at = new Date(now).toISOString();
   await db
     .prepare(
-      `INSERT INTO articles (id, author_account_id, title, body, video_provider, video_id, build_slug, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO articles (id, author_account_id, title, body, video_provider, video_id, build_slug, created_at, updated_at, kind, repo_url, minutes, reviewed_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
-    .bind(id, accountId, title, body, video?.provider ?? null, video?.id ?? null, buildSlug, at, at)
+    .bind(id, accountId, title, body, video?.provider ?? null, video?.id ?? null, buildSlug, at, at, kind, repoUrl, minutes, kind === "doc" ? at : null)
     .run();
   return { ok: true, id };
 }
 
 /** Only the author edits. A hidden post stays hidden after an edit. */
-export async function updateArticle(db: Db, accountId: string, id: string, input: ArticleInput, now = Date.now()): Promise<ArticleWrite> {
+export async function updateArticle(db: Db, accountId: string, id: string, input: ArticleInput, now = Date.now(), maintained?: string[]): Promise<ArticleWrite> {
   const row = await db.prepare(`SELECT author_account_id FROM articles WHERE id = ?`).bind(id).first<{ author_account_id: string }>();
   if (!row || row.author_account_id !== accountId) return { ok: false, message: "That post isn't yours to edit." };
-  const checked = checkArticle(input);
+  const checked = checkArticle(input, maintained);
   if (!checked.ok) return checked;
-  const { title, body, video, buildSlug } = checked.value;
+  const { title, body, video, buildSlug, kind, repoUrl, minutes } = checked.value;
+  const at = new Date(now).toISOString();
+  // A doc's "last reviewed" is its last save by its author.
   await db
-    .prepare(`UPDATE articles SET title = ?, body = ?, video_provider = ?, video_id = ?, build_slug = ?, updated_at = ? WHERE id = ?`)
-    .bind(title, body, video?.provider ?? null, video?.id ?? null, buildSlug, new Date(now).toISOString(), id)
+    .prepare(`UPDATE articles SET title = ?, body = ?, video_provider = ?, video_id = ?, build_slug = ?, updated_at = ?, kind = ?, repo_url = ?, minutes = ?, reviewed_at = ? WHERE id = ?`)
+    .bind(title, body, video?.provider ?? null, video?.id ?? null, buildSlug, at, kind, repoUrl, minutes, kind === "doc" ? at : null, id)
     .run();
   return { ok: true, id };
 }
@@ -120,11 +161,15 @@ type Row = {
   hidden: number;
   handle: string;
   display_name: string | null;
+  kind?: string | null;
+  repo_url?: string | null;
+  minutes?: number | null;
+  reviewed_at?: string | null;
 };
 
 // INNER JOIN: a post is shown only while its author has a builder profile.
 const SELECT = `SELECT a.id, a.author_account_id, a.title, a.body, a.video_provider, a.video_id, a.build_slug,
-       a.created_at, a.updated_at, a.hidden, b.handle, b.display_name
+       a.created_at, a.updated_at, a.hidden, a.kind, a.repo_url, a.minutes, a.reviewed_at, b.handle, b.display_name
   FROM articles a JOIN builders b ON b.account_id = a.author_account_id`;
 
 function text(nodes: RenderNode[]): string {
@@ -160,6 +205,10 @@ function toArticle(r: Row, accountId: string | null): Article {
     hidden: r.hidden === 1,
     mine,
     topics: [],
+    kind: r.kind && isPostKind(r.kind) ? r.kind : "blog",
+    repoUrl: r.repo_url && /^https:\/\/github\.com\/[^/]+\/[^/]+$/.test(r.repo_url) ? r.repo_url : null,
+    minutes: r.minutes ?? null,
+    reviewedAt: r.reviewed_at ?? null,
   };
 }
 
@@ -176,10 +225,14 @@ export async function getArticle(db: Db, id: string, viewer: { accountId: string
 /** Visible posts, newest first: everyone's, one builder's, or about one build. */
 export async function listArticles(
   db: Db,
-  opts: { handle?: string; build?: string; topic?: string; limit?: number; accountId?: string | null } = {},
+  opts: { handle?: string; build?: string; topic?: string; kind?: PostKind; limit?: number; accountId?: string | null } = {},
 ): Promise<Article[]> {
   const where = ["a.hidden = 0"];
   const binds: unknown[] = [];
+  if (opts.kind) {
+    where.push("a.kind = ?");
+    binds.push(opts.kind);
+  }
   if (opts.topic) {
     where.push("a.id IN (SELECT content_id FROM content_topics WHERE content_kind = 'article' AND topic = ?)");
     binds.push(opts.topic);

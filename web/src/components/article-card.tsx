@@ -4,6 +4,7 @@ import { ago } from "@/lib/directory";
 import { VIDEO_PROVIDER_LABEL, embedUrl, watchUrl, type Video } from "@/lib/video";
 import { Avatar } from "./person-card";
 import { TopicChips } from "./topic-chips";
+import { POST_KIND } from "@/lib/post-kinds";
 
 /**
  * A video player built from a provider and id (design D7). The iframe is
@@ -55,6 +56,7 @@ export function ArticleCard({ article: a, withAuthor = true }: { article: Articl
     <article className="article-card">
       {a.video ? <VideoEmbed video={a.video} title={a.title} /> : null}
       <div className="article-card-body">
+        {a.kind !== "blog" ? <span className={`kind-tag k-${a.kind}`}>{POST_KIND[a.kind].label}{a.kind === "tutorial" && a.minutes ? ` · ${a.minutes} min` : ""}</span> : null}
         <h3>
           <Link href={`/posts/${a.id}`}>{a.title}</Link>
         </h3>

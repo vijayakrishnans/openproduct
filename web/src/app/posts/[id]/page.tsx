@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import { ArticleMeta, VideoEmbed } from "@/components/article-card";
 import { PostBody } from "@/components/post-body";
 import { TopicChips } from "@/components/topic-chips";
+import { POST_KIND } from "@/lib/post-kinds";
+import { ORUNBASE } from "@/lib/links";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { TabBar } from "@/components/tab-bar";
@@ -21,6 +23,31 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   const db = await database();
   const a = db ? await getArticle(db, id, { accountId: null, moderator: false }).catch(() => null) : null;
   return a ? { title: a.title, description: a.excerpt } : { title: "Post" };
+}
+
+/** What a kind of writing adds (TC2). */
+function KindFacts({ a }: { a: Article }) {
+  if (a.kind === "blog") return null;
+  return (
+    <div className={`kind-facts k-${a.kind}`}>
+      <span className={`kind-tag k-${a.kind}`}>{POST_KIND[a.kind].label}</span>
+      {a.kind === "tutorial" && a.minutes ? <span>About {a.minutes} minutes to complete</span> : null}
+      {a.kind === "doc" && a.reviewedAt ? <span>Last reviewed {new Date(a.reviewedAt).toISOString().slice(0, 10)}</span> : null}
+      {a.kind === "launch" && a.buildSlug ? (
+        <span>
+          Launch of <Link className="link" href={`/builds/${a.buildSlug}`}>{a.buildSlug}</Link>
+        </span>
+      ) : null}
+      {a.repoUrl ? (
+        <a className="link" href={a.repoUrl} target="_blank" rel="noopener noreferrer">
+          {a.repoUrl.replace(/^https:\/\//, "")}
+        </a>
+      ) : null}
+      {a.kind === "baseline" && a.repoUrl ? (
+        <a className="btn btn-dark" href={ORUNBASE}>Use this baseline</a>
+      ) : null}
+    </div>
+  );
 }
 
 /** Edit and delete for the author; report for others; hide or restore for moderators. */
@@ -75,6 +102,7 @@ export default async function ArticlePage({ params, searchParams }: { params: Pa
           <h1>{a.title}</h1>
           <ArticleMeta a={a} withAuthor />
           <TopicChips topics={a.topics} />
+          <KindFacts a={a} />
           {edited ? <span className="muted article-edited">edited</span> : null}
           {a.hidden ? <span className="pill">Hidden</span> : null}
           <Actions a={a} v={v} />

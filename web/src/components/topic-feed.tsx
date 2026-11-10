@@ -3,6 +3,7 @@ import type { Article } from "@/lib/auth/articles";
 import { ago } from "@/lib/directory";
 import type { Thread } from "@/lib/forum";
 import { TAG_LABELS } from "@/lib/forum";
+import { POST_KIND } from "@/lib/post-kinds";
 
 export type FeedItem = { kind: "post"; at: string; post: Article } | { kind: "thread"; at: string; thread: Thread };
 
@@ -13,7 +14,11 @@ export function TopicFeed({ items }: { items: FeedItem[] }) {
       {items.map((i) =>
         i.kind === "post" ? (
           <li key={`p-${i.post.id}`}>
-            <span className="feed-kind">{i.post.video ? "▶ Post" : "Post"}</span>
+            <span className="feed-kind">
+              {i.post.video ? "▶ " : ""}
+              {POST_KIND[i.post.kind].label}
+              {i.post.kind === "tutorial" && i.post.minutes ? ` · ${i.post.minutes} min` : ""}
+            </span>
             <Link className="feed-title" href={`/posts/${i.post.id}`}>{i.post.title}</Link>
             {i.post.excerpt ? <p className="feed-excerpt">{i.post.excerpt}</p> : null}
             <span className="feed-meta">
