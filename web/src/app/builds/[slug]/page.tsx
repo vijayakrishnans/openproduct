@@ -16,6 +16,9 @@ import { parseTopics } from "@/lib/topics";
 import { parseBody } from "@/lib/body";
 import { buildersByGithubLogins } from "@/lib/auth/listing-team";
 import { redirectFor } from "@/lib/auth/listing-lifecycle";
+import { listComments, type BuildComment } from "@/lib/auth/build-comments";
+import { builderOfAccount } from "@/lib/auth/builders";
+import { BuildComments } from "@/components/build-comments";
 import { isModerator, moderatorsFor } from "@/lib/auth/discussions";
 import { githubDepsFor } from "@/lib/auth/github-prs";
 import { appEnv } from "@/lib/server/env";
@@ -28,7 +31,7 @@ import { ROLE_GUIDE, ROLE_LABEL } from "@/lib/roles";
 export const dynamic = "force-dynamic";
 
 type Params = Promise<{ slug: string }>;
-type Search = Promise<{ error?: string; from?: string; reported?: string }>;
+type Search = Promise<{ error?: string; from?: string; reported?: string; comment_error?: string; comment_reported?: string }>;
 
 /** A small same-origin form for a toggle on this page; signed-out visitors go to sign in first. */
 function Act({ action, fields, next, className, children, label }: { action: string; fields: Record<string, string>; next: string; className: string; children: React.ReactNode; label?: string }) {
@@ -136,6 +139,14 @@ export default async function BuildPage({ params, searchParams }: { params: Para
         handsFor(db, b.slug, me).catch(() => new Map<string, Hand[]>()),
       ])
     : [[], none, none, new Map<string, Hand[]>()];
+  // OP-46: comments, for every build page. Moderators see hidden ones.
+  if (db && session && !listing) moderator = await isModerator(db, session.account.id, moderatorsFor(await appEnv())).catch(() => false);
+  const [comments, commenter] = db
+    ? await Promise.all([
+        listComments(db, b.slug, { accountId: me, moderator }).catch((): BuildComment[] => []),
+        me ? builderOfAccount(db, me).catch(() => null) : Promise.resolve(null),
+      ])
+    : [[] as BuildComment[], null];
   const label = dir.ok ? (dir.topics.find((t) => t.value === b.category)?.label ?? b.category) : b.category;
   const here = `/builds/${b.slug}`;
   return (
@@ -271,6 +282,16 @@ export default async function BuildPage({ params, searchParams }: { params: Para
                 )}
               </details>
             ) : null}
+
+            <BuildComments
+              slug={b.slug}
+              comments={comments}
+              signedIn={!!session}
+              builderHandle={commenter?.handle ?? null}
+              moderator={moderator}
+              error={q.comment_error}
+              reported={!!q.comment_reported}
+            />
           </div>
 
           <aside className="build-side">

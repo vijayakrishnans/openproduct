@@ -446,6 +446,38 @@ export const MIGRATIONS: { version: number; name: string; statements: string[] }
       `CREATE INDEX IF NOT EXISTS helpful_target ON helpful(target_kind, target_id)`,
     ],
   },
+  {
+    version: 19,
+    name: "build comments",
+    statements: [
+      // OP-46: comments under a build, keyed by its slug, for builds listed
+      // here and builds from the directory alike. Like discussion replies,
+      // deleting the account keeps the words (SET NULL).
+      `CREATE TABLE IF NOT EXISTS build_comments (
+         id TEXT PRIMARY KEY,
+         slug TEXT NOT NULL COLLATE NOCASE,
+         author_account_id TEXT REFERENCES accounts(id) ON DELETE SET NULL,
+         body TEXT NOT NULL CHECK (length(body) BETWEEN 1 AND 2000),
+         created_at TEXT NOT NULL,
+         hidden INTEGER NOT NULL DEFAULT 0
+       )`,
+      `CREATE INDEX IF NOT EXISTS build_comments_slug ON build_comments(slug, created_at)`,
+      `CREATE INDEX IF NOT EXISTS build_comments_author ON build_comments(author_account_id, created_at)`,
+      // Reports cover comments too: the CHECK is widened by rebuilding, as in v4 and v13.
+      `CREATE TABLE IF NOT EXISTS reports_v19 (
+         target_kind TEXT NOT NULL CHECK (target_kind IN ('thread', 'post', 'article', 'listing', 'comment')),
+         target_id TEXT NOT NULL,
+         reporter_account_id TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+         reason TEXT,
+         created_at TEXT NOT NULL,
+         resolved INTEGER NOT NULL DEFAULT 0,
+         PRIMARY KEY (target_kind, target_id, reporter_account_id)
+       )`,
+      `INSERT OR IGNORE INTO reports_v19 SELECT target_kind, target_id, reporter_account_id, reason, created_at, resolved FROM reports`,
+      `DROP TABLE reports`,
+      `ALTER TABLE reports_v19 RENAME TO reports`,
+    ],
+  },
 ];
 
 const applied = new WeakSet<object>();

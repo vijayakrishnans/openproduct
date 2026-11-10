@@ -34,17 +34,17 @@ export default async function ModerationPage() {
                     <Link href={r.href}>{r.title || "(untitled)"}</Link>
                   </h2>
                   <p className="sub">
-                    {r.kind === "thread" ? "The whole thread" : r.kind === "article" ? "A builder's post" : r.kind === "listing" ? "A build listed here" : "A reply"} · {r.reports} {r.reports === 1 ? "report" : "reports"}
+                    {r.kind === "thread" ? "The whole thread" : r.kind === "article" ? "A builder's post" : r.kind === "listing" ? "A build listed here" : r.kind === "comment" ? "A comment on a build" : "A reply"} · {r.reports} {r.reports === 1 ? "report" : "reports"}
                     {r.hidden ? " · hidden" : ""}
                   </p>
                 </div>
               </div>
               {r.excerpt ? <p className="mod-excerpt">{r.excerpt}</p> : null}
               {r.reasons.length ? <ul className="mod-reasons">{r.reasons.map((x, i) => <li key={i}>{x}</li>)}</ul> : null}
-              <form method="post" action={r.kind === "article" ? "/posts/write" : r.kind === "listing" ? "/list/write" : "/community/post"} className="account-actions">
+              <form method="post" action={r.kind === "article" ? "/posts/write" : r.kind === "listing" ? "/list/write" : r.kind === "comment" ? "/builds/comment" : "/community/post"} className="account-actions">
                 {r.kind === "listing" ? (
                   <input type="hidden" name="slug" value={r.id} />
-                ) : r.kind === "article" ? (
+                ) : r.kind === "article" || r.kind === "comment" ? (
                   <input type="hidden" name="id" value={r.id} />
                 ) : (
                   <>

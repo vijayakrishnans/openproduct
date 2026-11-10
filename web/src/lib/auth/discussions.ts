@@ -39,13 +39,13 @@ export function parseModerators(raw: string | undefined): string[] {
   return list.length ? list : DEFAULT_MODERATORS;
 }
 
-async function authorOf(db: Db, accountId: string): Promise<{ handle: string } | { message: string }> {
+export async function authorOf(db: Db, accountId: string): Promise<{ handle: string } | { message: string }> {
   const builder = await builderOfAccount(db, accountId);
   if (!builder) return { message: "Start or claim your builder profile first, so people know who's talking." };
   return { handle: builder.handle };
 }
 
-async function recentCount(db: Db, sql: string, accountId: string, now: number): Promise<number> {
+export async function recentCount(db: Db, sql: string, accountId: string, now: number): Promise<number> {
   const row = await db.prepare(sql).bind(accountId, new Date(now - HOUR).toISOString()).first<{ n: number }>();
   return row?.n ?? 0;
 }
@@ -276,8 +276,8 @@ export async function createRemoteReply(
 }
 
 /** What can be reported and hidden: a thread, a reply, or a builder post (BP6). */
-export type ReportKind = "thread" | "post" | "article";
-const TABLE: Record<ReportKind, string> = { thread: "threads", post: "posts", article: "articles" };
+export type ReportKind = "thread" | "post" | "article" | "comment";
+const TABLE: Record<ReportKind, string> = { thread: "threads", post: "posts", article: "articles", comment: "build_comments" };
 
 export async function reportContent(
   db: Db,
@@ -328,34 +328,38 @@ export async function openReports(db: Db): Promise<OpenReport[]> {
       `SELECT r.target_kind AS kind, r.target_id AS id, count(*) AS n, group_concat(coalesce(r.reason, ''), '\u001f') AS reasons,
               coalesce(t.id, p.thread_id) AS thread_id, coalesce(t.title, pt.title, a.title) AS title, coalesce(p.body, a.body) AS body,
               coalesce(t.hidden, p.hidden, a.hidden, ls.state = 'hidden') AS hidden, a.id AS article_id,
-              ls.slug AS listing_slug, ls.tagline AS listing_tagline
+              ls.slug AS listing_slug, ls.tagline AS listing_tagline,
+              c.slug AS comment_slug, c.body AS comment_body, c.hidden AS comment_hidden
          FROM reports r
          LEFT JOIN threads t ON r.target_kind = 'thread' AND t.id = r.target_id
          LEFT JOIN posts p ON r.target_kind = 'post' AND p.id = r.target_id
          LEFT JOIN threads pt ON pt.id = p.thread_id
          LEFT JOIN articles a ON r.target_kind = 'article' AND a.id = r.target_id
          LEFT JOIN listings ls ON r.target_kind = 'listing' AND ls.slug = r.target_id
+         LEFT JOIN build_comments c ON r.target_kind = 'comment' AND c.id = r.target_id
         WHERE r.resolved = 0
         GROUP BY r.target_kind, r.target_id
         ORDER BY n DESC`,
     )
-    .all<{ kind: ReportKind | "listing"; id: string; n: number; reasons: string | null; thread_id: string | null; title: string | null; body: string | null; hidden: number | null; article_id: string | null; listing_slug: string | null; listing_tagline: string | null }>();
+    .all<{ kind: ReportKind | "listing"; id: string; n: number; reasons: string | null; thread_id: string | null; title: string | null; body: string | null; hidden: number | null; article_id: string | null; listing_slug: string | null; listing_tagline: string | null; comment_slug: string | null; comment_body: string | null; comment_hidden: number | null }>();
   return rows.results
-    .filter((r) => r.thread_id || r.article_id || r.listing_slug)
+    .filter((r) => r.thread_id || r.article_id || r.listing_slug || r.comment_slug)
     .map((r) => ({
       kind: r.kind,
       id: r.id,
       threadId: r.thread_id,
-      href: r.listing_slug
+      href: r.comment_slug
+        ? `/builds/${r.comment_slug}#c-${r.id}`
+        : r.listing_slug
         ? `/builds/${r.listing_slug}`
         : r.article_id
           ? `/posts/${r.article_id}`
           : `/community/t/${r.thread_id}${r.kind === "post" ? `#p-${r.id}` : ""}`,
-      title: r.listing_slug ? `Build: ${r.listing_slug}` : (r.title ?? ""),
-      excerpt: (r.listing_tagline ?? r.body ?? "").slice(0, 200),
+      title: r.comment_slug ? `Comment on ${r.comment_slug}` : r.listing_slug ? `Build: ${r.listing_slug}` : (r.title ?? ""),
+      excerpt: (r.comment_body ?? r.listing_tagline ?? r.body ?? "").slice(0, 200),
       reports: r.n,
       reasons: (r.reasons ?? "").split("\u001f").filter(Boolean),
-      hidden: r.hidden === 1,
+      hidden: r.hidden === 1 || r.comment_hidden === 1,
     }));
 }
 

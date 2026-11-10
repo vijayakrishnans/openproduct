@@ -55,6 +55,8 @@ export async function deleteListing(db: Db, bucket: CoverBucket | undefined, slu
     db.prepare(`DELETE FROM seat_hands WHERE slug = ?`).bind(l.slug),
     db.prepare(`DELETE FROM support_links WHERE owner_kind = 'build' AND owner_key = ?`).bind(l.slug),
     db.prepare(`DELETE FROM reports WHERE target_kind = 'listing' AND target_id = ?`).bind(l.slug),
+    db.prepare(`DELETE FROM reports WHERE target_kind = 'comment' AND target_id IN (SELECT id FROM build_comments WHERE slug = ?)`).bind(l.slug),
+    db.prepare(`DELETE FROM build_comments WHERE slug = ?`).bind(l.slug),
     db.prepare(`DELETE FROM listing_redirects WHERE new_slug = ?`).bind(l.slug),
     db.prepare(`DELETE FROM listings WHERE slug = ?`).bind(l.slug),
   ]);
@@ -65,7 +67,7 @@ export async function deleteListing(db: Db, bucket: CoverBucket | undefined, slu
 /**
  * Give a listing a new slug. Owners only; the new one must be free here and
  * on openproduct.live. Votes, follows, raised hands, support links, reports
- * and posts about the build move with it, and the old slug redirects.
+ * posts and comments about the build move with it, and the old slug redirects.
  */
 export async function renameListing(
   db: Db,
@@ -100,6 +102,7 @@ export async function renameListing(
     db.prepare(`UPDATE support_links SET owner_key = ? WHERE owner_kind = 'build' AND owner_key = ?`).bind(next, l.slug),
     db.prepare(`UPDATE reports SET target_id = ? WHERE target_kind = 'listing' AND target_id = ?`).bind(next, l.slug),
     db.prepare(`UPDATE articles SET build_slug = ? WHERE build_slug = ?`).bind(next, l.slug),
+    db.prepare(`UPDATE build_comments SET slug = ? WHERE slug = ?`).bind(next, l.slug),
     // Earlier names now point at the newest one, so redirects never chain.
     db.prepare(`UPDATE listing_redirects SET new_slug = ? WHERE new_slug = ?`).bind(next, l.slug),
     db.prepare(`DELETE FROM listing_redirects WHERE old_slug = ?`).bind(next),
