@@ -72,8 +72,20 @@ if (!remove) {
       since: 24 * 3,
       support: [],
     },
+    {
+      key: "mod",
+      handle: "demo-moderator",
+      name: "Demo Moderator",
+      bio: "Demo profile. Sign in as me on stage to see the reports queue and the Hide buttons.",
+      since: 24 * 50,
+      support: [],
+    },
   ];
   const acc = (key) => `demo-${key}`;
+  // The moderator is a moderator by GitHub login, as on the real site; the
+  // login "demo-moderator" counts only while DEMO_SIGNIN is on (stage).
+  const modIdentity = () =>
+    sql(`INSERT INTO identities (provider, provider_user_id, account_id, login, created_at) VALUES ('github', 'demo-moderator', 'demo-mod', 'demo-moderator', ${q(at(24 * 50))});`);
 
   for (const b of builders) {
     sql(`INSERT INTO accounts (id, display_name, created_at) VALUES (${q(acc(b.key))}, ${q(b.name)}, ${q(at(b.since))});`);
@@ -88,6 +100,8 @@ if (!remove) {
   }
 
   // Discussions: [author, tag, title, hoursAgo, body, replies: [author, hoursAgo, body]]
+  modIdentity();
+
   const threads = [
     [
       "tomas",
@@ -205,6 +219,25 @@ if (!remove) {
       `INSERT INTO articles (id, author_account_id, title, body, video_provider, video_id, build_slug, created_at, updated_at) VALUES (${q(id("8002"))}, ${q(acc(author))}, ${q(title)}, ${q(body)}, ${q(provider)}, ${q(videoId)}, ${q(build)}, ${q(at(hoursAgo))}, ${q(at(hoursAgo))});`,
     );
   }
+
+  // Upvotes, follows and raised hands (OP-25), so builds and seats have some.
+  const votes = { mira: ["rateboard", "flakeless", "ackstack"], tomas: ["rateboard", "aitally"], priya: ["rateboard", "grantwell", "ackstack"], sam: ["ackstack"] };
+  for (const [who, slugs] of Object.entries(votes)) {
+    for (const slug of slugs) sql(`INSERT INTO votes (account_id, slug, created_at) VALUES (${q(acc(who))}, ${q(slug)}, ${q(at(30))});`);
+  }
+  const follows = [["mira", "build", "rateboard"], ["sam", "build", "ackstack"], ["sam", "builder", "tomas-lind"], ["priya", "builder", "mira-okafor"], ["tomas", "builder", "priya-raman"]];
+  for (const [who, kind, key] of follows) sql(`INSERT INTO follows (account_id, kind, key, created_at) VALUES (${q(acc(who))}, ${q(kind)}, ${q(key)}, ${q(at(20))});`);
+  // Raised hands need real seat ids: read the first seats of a few builds.
+  const handsOn = [["ackstack", ["sam", "priya"]], ["aitally", ["priya"]], ["grantwell", ["sam"]]];
+  for (const [slug, who] of handsOn) {
+    const res = await fetch(`https://api.openproduct.live/v1/products/${slug}`).catch(() => null);
+    const p = res?.ok ? (await res.json()).data?.product : null;
+    const seat = Array.isArray(p?.openings) ? p.openings[0]?.id : null;
+    if (typeof seat !== "string" || !/^[A-Za-z0-9_-]{1,64}$/.test(seat)) continue;
+    for (const w of who) sql(`INSERT INTO seat_hands (account_id, slug, role_id, created_at) VALUES (${q(acc(w))}, ${q(slug)}, ${q(seat)}, ${q(at(10))});`);
+  }
+  // A builder post reported too, so the moderation queue shows both kinds.
+  sql(`INSERT INTO reports (target_kind, target_id, reporter_account_id, reason, created_at) SELECT 'article', id, 'demo-sam', 'Demo report: is this an ad?', ${q(at(1))} FROM articles WHERE id LIKE 'de300000-%' AND author_account_id = 'demo-tomas' ORDER BY created_at DESC LIMIT 1;`);
 }
 
 process.stdout.write(out.join("\n") + "\n");

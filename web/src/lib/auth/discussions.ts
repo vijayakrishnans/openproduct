@@ -25,6 +25,15 @@ export async function isModerator(db: Db, accountId: string, moderators: string[
   return !!login && moderators.some((m) => m.toLowerCase() === login.toLowerCase());
 }
 
+/** The demo moderator's GitHub login, a moderator only while demo sign-in is on (OP-34). */
+export const DEMO_MODERATOR = "demo-moderator";
+
+/** Who moderates in this environment: the MODERATORS list, plus the demo moderator on stage. */
+export function moderatorsFor(env: { MODERATORS?: string; DEMO_SIGNIN?: string }): string[] {
+  const list = parseModerators(env.MODERATORS);
+  return env.DEMO_SIGNIN === "on" ? [...list, DEMO_MODERATOR] : list;
+}
+
 export function parseModerators(raw: string | undefined): string[] {
   const list = (raw ?? "").split(",").map((s) => s.trim()).filter(Boolean);
   return list.length ? list : DEFAULT_MODERATORS;

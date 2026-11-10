@@ -10,5 +10,8 @@
   "d1_databases": [
     { "binding": "DB", "database_name": "openproduct-web-stage", "database_id": "c15aee01-e621-4cc1-98ae-d0b0cf399555" }
   ],
+  // Demo sign-in (OP-34): on for stage and local; scripts/select-env.mjs
+  // turns it off for prod, so prod never signs anyone in without a provider.
+  "vars": { "DEMO_SIGNIN": "on" },
   "observability": { "enabled": true }
 }

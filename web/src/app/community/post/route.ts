@@ -1,7 +1,7 @@
 // POST /community/post — every write in the community: start a thread,
 // reply, report, and (moderators) hide or restore. Same-origin forms only.
 import { NextResponse, type NextRequest } from "next/server";
-import { REMOTE_THREAD_ID, createRemoteReply, createReply, createThread, isModerator, parseModerators, reportContent, setHidden } from "@/lib/auth/discussions";
+import { REMOTE_THREAD_ID, createRemoteReply, createReply, createThread, isModerator, moderatorsFor, reportContent, setHidden } from "@/lib/auth/discussions";
 import { loadThread } from "@/lib/forum";
 import { sameOrigin } from "@/lib/auth/request";
 import { SESSION_COOKIE, validateSession } from "@/lib/auth/session";
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     return go(`${back}?reported=1`);
   }
   if (action === "hide" || action === "restore") {
-    if (!(await isModerator(db, me, parseModerators(env.MODERATORS)))) return new NextResponse("Forbidden", { status: 403 });
+    if (!(await isModerator(db, me, moderatorsFor(env)))) return new NextResponse("Forbidden", { status: 403 });
     await setHidden(db, kind, target, action === "hide");
     return go(field("from") === "moderation" ? "/community/moderation" : kind === "thread" && action === "hide" ? "/community" : back);
   }

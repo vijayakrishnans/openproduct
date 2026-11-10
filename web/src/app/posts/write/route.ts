@@ -3,7 +3,7 @@
 // moderators. Same-origin forms only.
 import { NextResponse, type NextRequest } from "next/server";
 import { createArticle, deleteArticle, updateArticle } from "@/lib/auth/articles";
-import { isModerator, parseModerators, reportContent, setHidden } from "@/lib/auth/discussions";
+import { isModerator, moderatorsFor, reportContent, setHidden } from "@/lib/auth/discussions";
 import { sameOrigin } from "@/lib/auth/request";
 import { SESSION_COOKIE, validateSession } from "@/lib/auth/session";
 import { builderOfAccount } from "@/lib/auth/builders";
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
     return go(`${back}?reported=1`);
   }
   if (action === "hide" || action === "restore") {
-    if (!(await isModerator(db, me, parseModerators(env.MODERATORS)))) return new NextResponse("Forbidden", { status: 403 });
+    if (!(await isModerator(db, me, moderatorsFor(env)))) return new NextResponse("Forbidden", { status: 403 });
     await setHidden(db, "article", id, action === "hide");
     return go(field("from") === "moderation" ? "/community/moderation" : back);
   }
