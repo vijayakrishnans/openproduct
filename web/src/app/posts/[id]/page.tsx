@@ -11,6 +11,8 @@ import { SiteHeader } from "@/components/site-header";
 import { TabBar } from "@/components/tab-bar";
 import { getArticle, type Article } from "@/lib/auth/articles";
 import { viewer, type Viewer } from "@/lib/auth/viewer";
+import { helpfulState } from "@/lib/auth/rankings";
+import { HelpfulButton } from "@/components/helpful-button";
 import { database } from "@/lib/server/env";
 
 export const dynamic = "force-dynamic";
@@ -89,6 +91,7 @@ export default async function ArticlePage({ params, searchParams }: { params: Pa
   const a = v.db ? await getArticle(v.db, id, { accountId: v.session?.account.id ?? null, moderator: v.moderator }).catch(() => null) : null;
   if (!a) notFound();
   const edited = a.updatedAt !== a.createdAt;
+  const helpful = v.db ? (await helpfulState(v.db, "article", [a.id], v.session?.account.id ?? null).catch(() => new Map())).get(a.id) : undefined;
 
   return (
     <>
@@ -110,6 +113,9 @@ export default async function ArticlePage({ params, searchParams }: { params: Pa
         {a.video ? <VideoEmbed video={a.video} title={a.title} /> : null}
         <div className="article-body">
           <PostBody nodes={a.body} />
+        </div>
+        <div className="article-foot">
+          <HelpfulButton kind="article" id={a.id} state={helpful} mine={!!a.mine} next={`/posts/${a.id}`} />
         </div>
       </main>
       <SiteFooter />

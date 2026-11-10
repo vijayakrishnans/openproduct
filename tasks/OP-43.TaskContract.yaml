@@ -3,13 +3,13 @@ kind: TaskContract
 metadata:
   name: OP-43
 spec:
-  goal: "Rankings (TC5): helpful votes, top contributors and top builds per topic, formulas shown."
+  goal: "Rankings (TC5): helpful votes, top contributors and top builds per topic, each with its formula, and Known for on profiles."
   affects:
     - default/openproduct/web
     - web/**
     - tasks/**
     - specs/**
   doneWhen:
-    - "A topic page names its top three contributors, each with what earned the place."
-    - "Every ranking shows its formula; one helpful vote per account."
+    - "A topic page names its top three contributors, each with what earned the place, and the formula is on the page."
+    - "Helpful is one per account, never on your own writing, and an accepted solution counts as 5."
   gates: []

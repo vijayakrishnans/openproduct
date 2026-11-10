@@ -28,6 +28,9 @@ export function buildTopics(b: Build): string[] {
   return [...new Set([b.category, ...b.stack].map((x) => (x ? normalizeTopic(x) : null)).filter((x): x is string => !!x))];
 }
 
+/** Build slug → its topics, for counting merged PRs per topic (TC5). */
+export const buildTopicMap = (builds: Build[]) => new Map(builds.map((b) => [b.slug, buildTopics(b)]));
+
 export const buildsInTopic = (builds: Build[], slug: string) => sortBuilds(builds.filter((b) => buildTopics(b).includes(slug)), "active");
 
 export async function loadTopics(): Promise<{ topics: TopicSummary[]; builds: Build[]; categories: Topic[] }> {

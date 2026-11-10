@@ -14,6 +14,9 @@ import { builderSupportLinks } from "@/lib/auth/support";
 import { threadsStartedBy } from "@/lib/auth/discussions";
 import { articlesBy, listArticles, type Article } from "@/lib/auth/articles";
 import { mergedPrsOfAccount } from "@/lib/auth/github-prs";
+import { MIN_RANKED, earnedLine, knownFor, topContributors, type KnownFor } from "@/lib/auth/rankings";
+import { buildTopicMap, loadTopics } from "@/lib/server/topics-here";
+import { topicLabel } from "@/lib/topics";
 import { searchLink, type MergedPrs } from "@/lib/merged-prs";
 import { ArticleCard } from "@/components/article-card";
 import { SupportLinks } from "@/components/support-links";
@@ -234,6 +237,25 @@ export default async function PersonPage({ params, searchParams }: { params: Par
         ])
       : [[], 0, [] as Article[], 0, null];
   const isOwner = !!owner && !!session && owner.accountId === session.account.id;
+  // TC5: the topics this builder is known for, by the topic ranking's score,
+  // with their place where the topic has enough contributors to rank.
+  const known: (KnownFor & { label: string; place: number | null })[] =
+    db && owner
+      ? await (async () => {
+          const { topics, builds } = await loadTopics();
+          const buildTopics = buildTopicMap(builds);
+          const mine = await knownFor(db, owner.accountId, { buildTopics });
+          return Promise.all(
+            mine.map(async (k) => {
+              const top = await topContributors(db, k.topic, { buildTopics }).catch(() => []);
+              const i = top.findIndex((c) => c.accountId === owner.accountId);
+              // A place only in the top three, and only once the topic ranks (three or more).
+              const place = i >= 0 && i < 3 && top.length >= MIN_RANKED ? i + 1 : null;
+              return { ...k, label: topics.find((t) => t.slug === k.topic)?.label ?? topicLabel(k.topic), place };
+            }),
+          );
+        })().catch(() => [])
+      : [];
   const follow =
     db && person !== "unreachable"
       ? await followState(db, "builder", person.handle, session?.account.id ?? null).catch(() => ({ count: 0, mine: false }))
@@ -270,6 +292,17 @@ export default async function PersonPage({ params, searchParams }: { params: Par
                 <h1>{person.displayName}</h1>
                 <span className="mono handle">@{person.handle}</span>
                 {person.bio ? <p>{person.bio}</p> : null}
+                {known.length ? (
+                  <p className="known-for">
+                    <span className="known-label">Known for</span>
+                    {known.map((k) => (
+                      <Link key={k.topic} className="known-topic" href={`/topics/${k.topic}`} title={earnedLine(k)}>
+                        {k.place ? <span className="mono">#{k.place} in </span> : null}#{k.label}
+                        <span className="known-why">{earnedLine(k)}</span>
+                      </Link>
+                    ))}
+                  </p>
+                ) : null}
                 <div className="card-badges">
                   {fromHere ? <span className="badge">Started on this site</span> : null}
                   {person.followers + follow.count > 0 ? (

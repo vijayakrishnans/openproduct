@@ -430,6 +430,22 @@ export const MIGRATIONS: { version: number; name: string; statements: string[] }
        )`,
     ],
   },
+  {
+    version: 18,
+    name: "helpful",
+    statements: [
+      // topics-and-community TC5 (D4): "helpful" on a post or a reply, one
+      // per account. Counts are public, who voted isn't.
+      `CREATE TABLE IF NOT EXISTS helpful (
+         account_id TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+         target_kind TEXT NOT NULL CHECK (target_kind IN ('article', 'post')),
+         target_id TEXT NOT NULL,
+         created_at TEXT NOT NULL,
+         PRIMARY KEY (account_id, target_kind, target_id)
+       )`,
+      `CREATE INDEX IF NOT EXISTS helpful_target ON helpful(target_kind, target_id)`,
+    ],
+  },
 ];
 
 const applied = new WeakSet<object>();
