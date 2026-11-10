@@ -1,0 +1,15 @@
+apiVersion: orun.io/v1
+kind: TaskContract
+metadata:
+  name: OP-39
+spec:
+  goal: "Topics as tags (TC1): writing and discussions carry topics, and topic pages show writing, not builds."
+  affects:
+    - default/openproduct/web
+    - web/**
+    - tasks/**
+    - specs/**
+  doneWhen:
+    - "A tutorial tagged cloudflare-workers shows on that topic's page, and the topic is on the topics index."
+    - "Topic pages list the topic's builds in a side panel; tests cover parsing and aliases."
+  gates: []

@@ -1,0 +1,13 @@
+apiVersion: orun.io/v1
+kind: TaskContract
+metadata:
+  name: OP-38
+spec:
+  goal: "The topics-and-community spec (TC0)."
+  affects:
+    - default/openproduct/web
+    - specs/**
+    - tasks/**
+  doneWhen:
+    - "The doc set is merged, with the milestones, rankings and their formulas, the rejected alternatives, and Q1-Q3."
+  gates: []
