@@ -98,11 +98,12 @@ type ThreadRow = {
   last_post_at: string;
   post_count: number;
   hidden: number;
+  remote: number;
   handle: string | null;
   display_name: string | null;
 };
 
-const THREAD_SELECT = `SELECT t.id, t.tag, t.title, t.created_at, t.last_post_at, t.post_count, t.hidden, b.handle, b.display_name
+const THREAD_SELECT = `SELECT t.id, t.tag, t.title, t.created_at, t.last_post_at, t.post_count, t.hidden, t.remote, b.handle, b.display_name
   FROM threads t LEFT JOIN builders b ON b.account_id = t.author_account_id`;
 
 function toLocalThread(r: ThreadRow): LocalThread {
@@ -125,7 +126,7 @@ function toLocalThread(r: ThreadRow): LocalThread {
 
 /** Visible threads written here, in the forum's order. */
 export async function listLocalThreads(db: Db, order: ForumOrder, tag: ThreadTag | null, limit = 50): Promise<LocalThread[]> {
-  const where = tag ? `WHERE t.hidden = 0 AND t.tag = ?` : `WHERE t.hidden = 0`;
+  const where = tag ? `WHERE t.hidden = 0 AND t.remote = 0 AND t.tag = ?` : `WHERE t.hidden = 0 AND t.remote = 0`;
   const by = order === "replied" ? `t.post_count DESC, t.last_post_at DESC` : `t.last_post_at DESC`;
   const stmt = db.prepare(`${THREAD_SELECT} ${where} ORDER BY ${by} LIMIT ?`);
   const rows = await (tag ? stmt.bind(tag, limit) : stmt.bind(limit)).all<ThreadRow>();
@@ -140,7 +141,12 @@ export async function getLocalThread(
 ): Promise<{ thread: LocalThread; posts: LocalPost[] } | null> {
   if (!/^[0-9a-f-]{36}$/.test(id)) return null;
   const row = await db.prepare(`${THREAD_SELECT} WHERE t.id = ?`).bind(id).first<ThreadRow>();
-  if (!row || (row.hidden && !viewer.moderator)) return null;
+  // A remote row only carries replies to an openproduct.live thread; that thread is read from there.
+  if (!row || row.remote || (row.hidden && !viewer.moderator)) return null;
+  return { thread: toLocalThread(row), posts: await postsOf(db, id, viewer) };
+}
+
+async function postsOf(db: Db, id: string, viewer: { accountId: string | null; moderator: boolean }): Promise<LocalPost[]> {
   const posts = await db
     .prepare(
       `SELECT p.id, p.body, p.created_at, p.hidden, p.author_account_id, b.handle, b.display_name
@@ -149,21 +155,53 @@ export async function getLocalThread(
     )
     .bind(id)
     .all<{ id: string; body: string; created_at: string; hidden: number; author_account_id: string | null; handle: string | null; display_name: string | null }>();
-  return {
-    thread: toLocalThread(row),
-    posts: posts.results
-      .filter((p) => !p.hidden || viewer.moderator)
-      .map((p) => ({
-        id: p.id,
-        parentId: null,
-        author: p.handle ? (p.display_name ?? p.handle) : "deleted builder",
-        authorHandle: p.handle,
-        createdAt: p.created_at,
-        body: parseBody(p.body),
-        hidden: p.hidden === 1,
-        mine: !!viewer.accountId && p.author_account_id === viewer.accountId,
-      })),
-  };
+  return posts.results
+    .filter((p) => !p.hidden || viewer.moderator)
+    .map((p) => ({
+      id: p.id,
+      parentId: null,
+      author: p.handle ? (p.display_name ?? p.handle) : "deleted builder",
+      authorHandle: p.handle,
+      createdAt: p.created_at,
+      body: parseBody(p.body),
+      hidden: p.hidden === 1,
+      mine: !!viewer.accountId && p.author_account_id === viewer.accountId,
+    }));
+}
+
+/** An openproduct.live thread's id: whatever the API uses, kept to safe characters. */
+export const REMOTE_THREAD_ID = /^[A-Za-z0-9_-]{1,64}$/;
+
+/** Replies written here to an openproduct.live thread (OP-25). */
+export async function remoteReplies(db: Db, remoteId: string, viewer: { accountId: string | null; moderator: boolean }): Promise<LocalPost[]> {
+  if (!REMOTE_THREAD_ID.test(remoteId)) return [];
+  const row = await db.prepare(`SELECT remote FROM threads WHERE id = ?`).bind(remoteId).first<{ remote: number }>();
+  return row?.remote ? postsOf(db, remoteId, viewer) : [];
+}
+
+/**
+ * Reply here to an openproduct.live thread. The first reply creates the
+ * remote stand-in row that carries replies; the thread itself stays there.
+ */
+export async function createRemoteReply(
+  db: Db,
+  accountId: string,
+  remote: { id: string; title: string; tag: string },
+  body: string,
+  now = Date.now(),
+): Promise<WriteResult> {
+  if (!REMOTE_THREAD_ID.test(remote.id)) return { ok: false, message: "That thread isn't open for replies." };
+  const clash = await db.prepare(`SELECT remote FROM threads WHERE id = ?`).bind(remote.id).first<{ remote: number }>();
+  if (clash && !clash.remote) return { ok: false, message: "That thread isn't open for replies." };
+  if (!clash) {
+    const at = new Date(now).toISOString();
+    const title = remote.title.trim().slice(0, MAX_THREAD_TITLE) || "Thread";
+    await db
+      .prepare(`INSERT OR IGNORE INTO threads (id, author_account_id, tag, title, created_at, last_post_at, post_count, remote) VALUES (?, NULL, ?, ?, ?, ?, 0, 1)`)
+      .bind(remote.id, remote.tag, title, at, at)
+      .run();
+  }
+  return createReply(db, accountId, remote.id, body, now);
 }
 
 /** What can be reported and hidden: a thread, a reply, or a builder post (BP6). */
@@ -246,7 +284,7 @@ export async function openReports(db: Db): Promise<OpenReport[]> {
 /** How many visible threads a builder has started here — the "Started a discussion" badge. */
 export async function threadsStartedBy(db: Db, handle: string): Promise<number> {
   const row = await db
-    .prepare(`SELECT count(*) AS n FROM threads t JOIN builders b ON b.account_id = t.author_account_id WHERE b.handle = ? AND t.hidden = 0`)
+    .prepare(`SELECT count(*) AS n FROM threads t JOIN builders b ON b.account_id = t.author_account_id WHERE b.handle = ? AND t.hidden = 0 AND t.remote = 0`)
     .bind(handle)
     .first<{ n: number }>();
   return row?.n ?? 0;

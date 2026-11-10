@@ -1,7 +1,8 @@
 // POST /community/post — every write in the community: start a thread,
 // reply, report, and (moderators) hide or restore. Same-origin forms only.
 import { NextResponse, type NextRequest } from "next/server";
-import { createReply, createThread, isModerator, parseModerators, reportContent, setHidden } from "@/lib/auth/discussions";
+import { REMOTE_THREAD_ID, createRemoteReply, createReply, createThread, isModerator, parseModerators, reportContent, setHidden } from "@/lib/auth/discussions";
+import { loadThread } from "@/lib/forum";
 import { sameOrigin } from "@/lib/auth/request";
 import { SESSION_COOKIE, validateSession } from "@/lib/auth/session";
 import { appEnv, database } from "@/lib/server/env";
@@ -14,7 +15,8 @@ export async function POST(request: NextRequest) {
   const field = (k: string) => (typeof form?.get(k) === "string" ? (form!.get(k) as string) : "");
   const action = field("action");
   const threadId = field("thread");
-  const back = ID.test(threadId) ? `/community/t/${threadId}` : "/community";
+  // A thread written here has a UUID; one from openproduct.live has the API's id.
+  const back = ID.test(threadId) || REMOTE_THREAD_ID.test(threadId) ? `/community/t/${encodeURIComponent(threadId)}` : "/community";
   const go = (path: string) => NextResponse.redirect(new URL(path, request.url), 303);
 
   const [db, env] = await Promise.all([database(), appEnv()]);
@@ -28,12 +30,24 @@ export async function POST(request: NextRequest) {
     const q = new URLSearchParams({ error: r.message, tag: field("tag"), title: field("title").slice(0, 140) });
     return go(`/community/new?${q}`);
   }
-  if (!ID.test(threadId)) return go("/community");
+  if (back === "/community") return go("/community");
 
   if (action === "reply") {
-    const r = await createReply(db, me, threadId, field("body"));
+    const local = ID.test(threadId) ? await db.prepare(`SELECT remote FROM threads WHERE id = ?`).bind(threadId).first<{ remote: number }>() : null;
+    let r;
+    if (local && !local.remote) {
+      r = await createReply(db, me, threadId, field("body"));
+    } else {
+      // Not written here: reply to the openproduct.live thread, if it's there and open.
+      const remote = await loadThread(threadId);
+      r =
+        remote && remote !== "unreachable" && remote.thread.state !== "locked"
+          ? await createRemoteReply(db, me, { id: threadId, title: remote.thread.title, tag: remote.thread.tag }, field("body"))
+          : { ok: false as const, message: remote === "unreachable" ? "That thread couldn't be read just now. Try again in a minute." : "That thread isn't open for replies." };
+    }
     return go(r.ok ? `${back}#p-${r.id}` : `${back}?error=${encodeURIComponent(r.message)}#reply`);
   }
+  if (!ID.test(threadId) && field("kind") !== "post") return go(back);
   const kind = field("kind") === "post" ? "post" : "thread";
   const target = kind === "post" ? field("post") : threadId;
   if (!ID.test(target)) return go(back);

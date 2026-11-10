@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import type { OpenRole } from "@/lib/directory";
 import { initials } from "@/lib/directory";
-import { OPENPRODUCT } from "@/lib/links";
 import { ROLE_GUIDE, ROLE_LABEL, ROLE_TYPES, type RoleType } from "@/lib/roles";
 
 const key = (r: OpenRole) => `${r.slug}/${r.id}`;
@@ -26,7 +25,7 @@ function FirstPrIn({ skills }: { skills: string[] }) {
 function claim(r: OpenRole) {
   return r.repoUrl
     ? { href: r.repoUrl, label: "Claim with a PR" }
-    : { href: `${OPENPRODUCT}/${r.slug}`, label: "Claim this seat" };
+    : { href: `/builds/${r.slug}#roles`, label: "Raise your hand" };
 }
 
 function Detail({ role, siblings, onPick, onClose }: { role: OpenRole; siblings: OpenRole[]; onPick: (k: string) => void; onClose: () => void }) {
@@ -50,7 +49,11 @@ function Detail({ role, siblings, onPick, onClose }: { role: OpenRole; siblings:
         {role.commitment ? <div><dt>Time</dt><dd>{role.commitment}</dd></div> : null}
         {role.skills.length ? <div><dt>Where the code is</dt><dd><FirstPrIn skills={role.skills} /></dd></div> : null}
       </dl>
-      <a className="btn btn-dark seat-claim" href={c.href} target="_blank" rel="noopener noreferrer">{c.label} →</a>
+      {c.href.startsWith("/") ? (
+        <Link className="btn btn-dark seat-claim" href={c.href}>{c.label} →</Link>
+      ) : (
+        <a className="btn btn-dark seat-claim" href={c.href} target="_blank" rel="noopener noreferrer">{c.label} →</a>
+      )}
       {siblings.length ? (
         <div className="seat-more">
           <h3>More roles at {role.slug}</h3>

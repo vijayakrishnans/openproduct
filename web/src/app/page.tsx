@@ -7,10 +7,11 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { listArticles, type Article } from "@/lib/auth/articles";
 import { listLocalThreads } from "@/lib/auth/discussions";
-import { SORTS, type Sort, loadDirectory, loadRoles } from "@/lib/directory";
+import { SORTS, type Sort, loadRoles } from "@/lib/directory";
 import { loadThreads, mergeThreads, type Thread } from "@/lib/forum";
 import { database } from "@/lib/server/env";
-import { OPENPRODUCT, SOURCE } from "@/lib/links";
+import { loadDirectoryHere } from "@/lib/server/directory-here";
+import { ORUNBASE, SOURCE } from "@/lib/links";
 
 // The directory is read per request: it is the live list, not a snapshot.
 export const dynamic = "force-dynamic";
@@ -20,7 +21,7 @@ type Search = Promise<{ sort?: string; cat?: string }>;
 export default async function Home({ searchParams }: { searchParams: Search }) {
   const q = await searchParams;
   const sort: Sort = SORTS.some((s) => s.key === q.sort) ? (q.sort as Sort) : "active";
-  const [dir, db] = await Promise.all([loadDirectory(), database()]);
+  const [dir, db] = await Promise.all([loadDirectoryHere(), database()]);
   const cat = dir.ok && dir.topics.some((t) => t.value === q.cat) ? q.cat! : null;
   // The sidebar: open seats, and the community's latest, from here and openproduct.live.
   const [roles, remoteThreads, localThreads, articles] = await Promise.all([
@@ -48,7 +49,7 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
               build with, and fork anything you like. The directory itself is open source too.
             </p>
             <div className="hero-actions">
-              <a className="btn btn-accent" href={OPENPRODUCT}>List your build</a>
+              <a className="btn btn-accent" href={ORUNBASE}>List your build</a>
               <a className="btn btn-ghost" href={SOURCE}>&lt;&gt; Read this site&apos;s source</a>
             </div>
           </div>

@@ -101,3 +101,15 @@ The plan counts merged PRs "to the public repos of openproduct builds". Today ev
 - Search queries OR the build repos (`repo:a repo:b …`), packed under GitHub's 256-character limit. Per-repo counts for each login are kept a day in `merged_prs`, keyed by the public login, not the account.
 - Requests authenticate with `GITHUB_TOKEN` if set, else the OAuth app's id and secret. A 403 or 429 backs off for 15 minutes and keeps the last good count; with none, there's no badge.
 - Only the builder page asks GitHub. Cards on the builders list don't, so one page view never fans out into dozens of searches.
+
+### Nothing sends people to openproduct.live (OP-25, outside the ladder)
+
+The owner asked that no button leave for openproduct.live. Its data is still read from its public API, but every action now happens here:
+
+- **Upvote** and **Follow** on a build, and **Follow** on a builder, are stored here (`votes`, `follows`). Counts show openproduct.live's number plus the ones made here, on cards, sorting and build pages alike.
+- **Claim this seat** on a build with no repo becomes **Raise your hand** (`seat_hands`): only a builder can raise one, and the build page lists who did, linked to their profiles. A build with a repo still offers "Claim with a PR" too.
+- **Replying to an openproduct.live thread** is written here, under a stand-in thread row with the same id marked `remote`; it carries the replies, reports and hiding, and is never listed on its own.
+- **List your build** goes to Orunbase, where builds are made. Listing a build *on this site* would be a new milestone.
+- Drafts, the footer, the ranking note and every error message no longer link out. A test fails if any source file links to the openproduct.live site again.
+
+Migration 6 adds a column with `ALTER TABLE`, which can't be repeated, so `ensureSchema` now tolerates another isolate having applied a migration first: the failed batch changed nothing, and if the version is recorded it moves on.

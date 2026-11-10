@@ -5,22 +5,53 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { SupportLinks } from "@/components/support-links";
 import { buildSupportLinks } from "@/lib/auth/support";
+import { followState, handsFor, voteState, type Hand } from "@/lib/auth/reactions";
+import { currentSession } from "@/lib/auth/request";
 import { database } from "@/lib/server/env";
 import { initials, loadBuild, loadDirectory, maintainsOf } from "@/lib/directory";
-import { OPENPRODUCT, ORUNBASE } from "@/lib/links";
+import { ORUNBASE } from "@/lib/links";
 import { ROLE_GUIDE, ROLE_LABEL } from "@/lib/roles";
 
 export const dynamic = "force-dynamic";
 
 type Params = Promise<{ slug: string }>;
+type Search = Promise<{ error?: string }>;
+
+/** A small same-origin form for a toggle on this page; signed-out visitors go to sign in first. */
+function Act({ action, fields, next, className, children, label }: { action: string; fields: Record<string, string>; next: string; className: string; children: React.ReactNode; label?: string }) {
+  return (
+    <form method="post" action="/act" className="act-form">
+      <input type="hidden" name="action" value={action} />
+      {Object.entries(fields).map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />)}
+      <input type="hidden" name="next" value={next} />
+      <button type="submit" className={className} aria-label={label}>{children}</button>
+    </form>
+  );
+}
+
+function Hands({ hands }: { hands: Hand[] }) {
+  if (!hands.length) return null;
+  return (
+    <p className="hands">
+      <span className="muted">Raised a hand:</span>{" "}
+      {hands.map((h, i) => (
+        <span key={h.handle}>
+          {i ? ", " : ""}
+          <a className="link" href={`/builders/${encodeURIComponent(h.handle)}`}>{h.mine ? "you" : h.name}</a>
+        </span>
+      ))}
+    </p>
+  );
+}
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { slug } = await params;
   return { title: slug };
 }
 
-export default async function BuildPage({ params }: { params: Params }) {
+export default async function BuildPage({ params, searchParams }: { params: Params; searchParams: Search }) {
   const { slug } = await params;
+  const q = await searchParams;
   const b = await loadBuild(slug);
   if (b === null) notFound();
   if (b === "unreachable") {
@@ -29,18 +60,26 @@ export default async function BuildPage({ params }: { params: Params }) {
         <SiteHeader current="/" />
         <main className="wrap section">
           <div className="unreachable">
-            This build could not be read just now. It is listed at{" "}
-            <a className="link" href={`${OPENPRODUCT}/${slug}`}>openproduct.live/{slug}</a>.
+            This build could not be read just now. Try again in a minute.
           </div>
         </main>
         <SiteFooter />
       </>
     );
   }
-  const [dir, db] = await Promise.all([loadDirectory(), database()]);
-  const support = db ? await buildSupportLinks(db, b.slug, maintainsOf).catch(() => []) : [];
+  const [dir, db, session] = await Promise.all([loadDirectory(), database(), currentSession()]);
+  const me = session?.account.id ?? null;
+  const none = { count: 0, mine: false };
+  const [support, votes, follows, hands] = db
+    ? await Promise.all([
+        buildSupportLinks(db, b.slug, maintainsOf).catch(() => []),
+        voteState(db, b.slug, me).catch(() => none),
+        followState(db, "build", b.slug, me).catch(() => none),
+        handsFor(db, b.slug, me).catch(() => new Map<string, Hand[]>()),
+      ])
+    : [[], none, none, new Map<string, Hand[]>()];
   const label = dir.ok ? (dir.topics.find((t) => t.value === b.category)?.label ?? b.category) : b.category;
-  const listing = `${OPENPRODUCT}/${b.slug}`;
+  const here = `/builds/${b.slug}`;
   return (
     <>
       <SiteHeader current="/" />
@@ -60,13 +99,16 @@ export default async function BuildPage({ params }: { params: Params }) {
             <p className="build-tag">{b.tagline}</p>
             <div className="build-links">
               {b.repoUrl ? <a className="link" href={b.repoUrl}>{b.repoUrl.replace(/^https?:\/\//, "")}</a> : <span className="muted">No public repo linked yet</span>}
-              <a className="link" href={listing}>Public listing on openproduct.live</a>
               {b.publishedAt ? <span className="muted">listed {new Date(b.publishedAt).toISOString().slice(0, 10)}</span> : null}
             </div>
           </div>
           <div className="build-actions">
-            <a className="btn btn-ghost" href={listing}>⌃ Upvote · {b.upvotes}</a>
-            <a className="btn btn-ghost" href={listing}>Follow</a>
+            <Act action="vote" fields={{ slug: b.slug }} next={here} className={`btn btn-ghost${votes.mine ? " is-on" : ""}`} label={votes.mine ? "Remove your upvote" : "Upvote"}>
+              ⌃ {votes.mine ? "Upvoted" : "Upvote"} · {b.upvotes + votes.count}
+            </Act>
+            <Act action="follow" fields={{ kind: "build", key: b.slug }} next={here} className={`btn btn-ghost${follows.mine ? " is-on" : ""}`}>
+              {follows.mine ? "✓ Following" : "Follow"}{follows.count ? ` · ${follows.count}` : ""}
+            </Act>
             <a className="btn btn-accent" href={ORUNBASE}>Fork &amp; deploy</a>
           </div>
         </section>
@@ -127,6 +169,7 @@ export default async function BuildPage({ params }: { params: Params }) {
                 <h2>Open roles</h2>
                 {b.roles.length ? <span className="count">{b.roles.length} open</span> : null}
               </div>
+              {q.error ? <p className="auth-error" role="alert">{q.error.slice(0, 200)}</p> : null}
               {b.roles.length ? (
                 <div className="roles">
                   {b.roles.map((r) => (
@@ -139,9 +182,20 @@ export default async function BuildPage({ params }: { params: Params }) {
                         <div className="skills"><span className="muted">First PR in</span>{r.skills.map((s) => <span key={s} className="skill mono">{s}</span>)}</div>
                       ) : null}
                       {r.commitment ? <span className="muted" style={{ fontSize: 13 }}>{r.commitment}</span> : null}
-                      <a className="btn btn-dark role-claim" href={b.repoUrl ?? listing} target="_blank" rel="noopener noreferrer">
-                        {b.repoUrl ? "Claim with a PR" : "Claim this seat"} →
-                      </a>
+                      <Hands hands={hands.get(r.id) ?? []} />
+                      <div className="role-acts">
+                        {b.repoUrl ? (
+                          <a className="btn btn-dark role-claim" href={b.repoUrl} target="_blank" rel="noopener noreferrer">Claim with a PR →</a>
+                        ) : null}
+                        <Act
+                          action="hand"
+                          fields={{ slug: b.slug, role: r.id }}
+                          next={`${here}#roles`}
+                          className={`btn ${b.repoUrl ? "btn-ghost" : "btn-dark"} role-claim${(hands.get(r.id) ?? []).some((h) => h.mine) ? " is-on" : ""}`}
+                        >
+                          {(hands.get(r.id) ?? []).some((h) => h.mine) ? "✓ Hand raised" : "✋ Raise your hand"}
+                        </Act>
+                      </div>
                     </div>
                   ))}
                 </div>

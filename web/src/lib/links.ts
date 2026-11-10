@@ -1,6 +1,5 @@
-// Where the buttons this sample does not implement go: the real directory,
-// and the platform the builds run on.
-export const OPENPRODUCT = "https://openproduct.live";
+// Where builds come from: the platform they run on. Nothing on this site
+// sends people to openproduct.live (OP-25); its data is read from the API.
 export const ORUNBASE = "https://app.orunbase.com";
 export const SOURCE = "https://github.com/vijayakrishnans/openproduct";
 

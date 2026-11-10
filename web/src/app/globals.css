@@ -744,3 +744,16 @@ a.channel-row .channel-text span { color: var(--link); font-weight: 600; }
 @media (max-width: 700px) {
   .home-main .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+/* Upvote, follow and raised hands, done here (OP-25) */
+.act-form { display: inline-flex; margin: 0; }
+.btn.is-on { border-color: var(--ink-2); background: var(--sunken); }
+.btn-dark.is-on { background: var(--ok-bg, var(--sunken)); color: var(--ink); border-color: var(--line-2); }
+.role-acts { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.role-acts .role-claim { margin: 0; }
+.hands { margin: 0; font-size: 13px; }
+.person-follow { margin-top: 12px; }
+.following-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.following-list li { display: flex; gap: 10px; align-items: baseline; }
+.following-list .muted { font-size: 13px; }
+.project-card.is-draft { cursor: default; }
+.formula-note { font-family: var(--font-sans); color: var(--ink-3); margin-left: 8px; }
