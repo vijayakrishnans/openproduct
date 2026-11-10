@@ -22,7 +22,7 @@ export default async function ModerationPage() {
       <main className="wrap section account-page">
         <Link className="link" href="/community">← Community</Link>
         <h1>Moderation</h1>
-        <p className="sub">Open reports, most reported first. Hiding resolves a report; a hidden post can be restored from its thread.</p>
+        <p className="sub">Open reports on threads, replies and builder posts, most reported first. Hiding resolves a report; a hidden post can be restored from its thread.</p>
         {reports.length === 0 ? (
           <div className="unreachable">No open reports.</div>
         ) : (
@@ -31,20 +31,26 @@ export default async function ModerationPage() {
               <div className="panel-head">
                 <div>
                   <h2>
-                    <Link href={`/community/t/${r.threadId}${r.kind === "post" ? `#p-${r.id}` : ""}`}>{r.title || "(untitled)"}</Link>
+                    <Link href={r.href}>{r.title || "(untitled)"}</Link>
                   </h2>
                   <p className="sub">
-                    {r.kind === "thread" ? "The whole thread" : "A post"} · {r.reports} {r.reports === 1 ? "report" : "reports"}
+                    {r.kind === "thread" ? "The whole thread" : r.kind === "article" ? "A builder's post" : "A reply"} · {r.reports} {r.reports === 1 ? "report" : "reports"}
                     {r.hidden ? " · hidden" : ""}
                   </p>
                 </div>
               </div>
               {r.excerpt ? <p className="mod-excerpt">{r.excerpt}</p> : null}
               {r.reasons.length ? <ul className="mod-reasons">{r.reasons.map((x, i) => <li key={i}>{x}</li>)}</ul> : null}
-              <form method="post" action="/community/post" className="account-actions">
-                <input type="hidden" name="thread" value={r.threadId} />
-                <input type="hidden" name="kind" value={r.kind} />
-                {r.kind === "post" ? <input type="hidden" name="post" value={r.id} /> : null}
+              <form method="post" action={r.kind === "article" ? "/posts/write" : "/community/post"} className="account-actions">
+                {r.kind === "article" ? (
+                  <input type="hidden" name="id" value={r.id} />
+                ) : (
+                  <>
+                    <input type="hidden" name="thread" value={r.threadId ?? ""} />
+                    <input type="hidden" name="kind" value={r.kind} />
+                    {r.kind === "post" ? <input type="hidden" name="post" value={r.id} /> : null}
+                  </>
+                )}
                 <input type="hidden" name="from" value="moderation" />
                 <button className="btn btn-danger" type="submit" name="action" value="hide">Hide</button>
                 <button className="btn btn-ghost" type="submit" name="action" value="restore">Keep it up</button>

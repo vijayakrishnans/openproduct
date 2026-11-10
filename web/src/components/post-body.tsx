@@ -37,6 +37,8 @@ function draw(n: RenderNode, i: number): ReactNode {
         <span key={i}>{n.children.map(draw)}</span>
       );
     }
+    case "heading":
+      return n.level === 2 ? <h2 key={i}>{n.children.map(draw)}</h2> : <h3 key={i}>{n.children.map(draw)}</h3>;
     case "mention":
       return n.claimed ? (
         <Link key={i} className="link" href={`/builders/${encodeURIComponent(n.handle)}`}>@{n.handle}</Link>

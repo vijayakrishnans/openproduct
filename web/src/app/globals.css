@@ -581,8 +581,9 @@ a.channel-row .channel-text span { color: var(--link); font-weight: 600; }
 .account-chip { display: inline-flex; align-items: center; gap: 8px; text-decoration: none; color: var(--ink); font-weight: 500; font-size: 14px; max-width: 180px; }
 .account-chip img, .account-initial { width: 26px; height: 26px; border-radius: 999px; flex: none; }
 .account-initial { display: grid; place-items: center; background: var(--role-bg); color: var(--role-ink); font-weight: 700; font-size: 13px; }
-.account-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-@media (max-width: 1180px) { .account-name { display: none; } }
+.account-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 140px; }
+/* The name needs the room the search box takes; below this, the initial alone. */
+@media (max-width: 1360px) { .account-name { display: none; } }
 .auth-page { display: grid; place-items: start center; }
 .auth-card { width: min(440px, 100%); box-sizing: border-box; padding: 28px; display: grid; gap: 14px; }
 .auth-card h1 { margin: 0; font-size: 26px; letter-spacing: -0.02em; }
@@ -658,3 +659,49 @@ a.channel-row .channel-text span { color: var(--link); font-weight: 600; }
 .reply-box .account-form { margin-top: 0; }
 .mod-excerpt { font-style: italic; }
 .mod-reasons { margin: 0; padding-left: 18px; color: var(--ink-2); font-size: 14px; }
+
+/* Builder posts (BP6) */
+.forum-head-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.from-builders { margin: 22px 0 6px; }
+.from-builders .section-head h2 { font-size: 20px; }
+.from-builders .section-head .link { margin-left: auto; font-size: 14px; }
+.person-section .section-head { align-items: center; margin-bottom: 10px; }
+.person-section .section-head h2 { margin: 0; font-size: 18px; letter-spacing: 0; }
+.person-section .section-head .btn { margin-left: auto; }
+.article-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; margin-top: 14px; align-items: start; }
+.from-builders .article-grid, .person-section .article-grid { margin-top: 0; }
+.article-card { display: flex; flex-direction: column; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; min-width: 0; }
+.article-card .video-embed { margin: 0; border-bottom: 1px solid var(--line); }
+.article-card .video-embed figcaption { display: none; }
+.article-card .video-frame { border-radius: 0; }
+.article-card-body { padding: 14px 16px 16px; display: grid; gap: 8px; align-content: start; }
+.article-card h3 { margin: 0; font-size: 17px; line-height: 1.3; letter-spacing: -0.01em; }
+.article-card h3 a { text-decoration: none; color: var(--ink); }
+.article-card h3 a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.article-card .link { font-size: 14px; }
+.article-excerpt { margin: 0; color: var(--ink-2); font-size: 14px; line-height: 1.5; }
+.article-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; font-size: 13px; color: var(--ink-3); }
+.article-meta a { color: var(--ink-2); text-decoration: none; }
+.article-meta a:hover { text-decoration: underline; }
+.article-author { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
+.article-kind { font-size: 12px; border: 1px solid var(--line-2); border-radius: 999px; padding: 1px 8px; }
+.video-embed { margin: 18px 0; }
+.video-frame { position: relative; aspect-ratio: 16 / 9; background: #000; border-radius: 12px; overflow: hidden; }
+.video-frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.video-embed figcaption { margin-top: 6px; font-size: 13px; }
+.article-page { max-width: 780px; }
+.article-header { margin: 18px 0 4px; display: grid; gap: 8px; justify-items: start; }
+.article-header h1 { margin: 0; font-size: 34px; letter-spacing: -0.02em; line-height: 1.15; }
+.article-edited { font-size: 13px; }
+.article-body .post-body { font-size: 17px; line-height: 1.7; }
+.article-body .post-body p { margin-bottom: 16px; }
+.article-body .post-body pre { margin: 0 0 16px; }
+.text-btn.danger { color: var(--danger); }
+@media (max-width: 720px) {
+  .article-grid { grid-template-columns: 1fr; }
+  .article-header h1 { font-size: 27px; }
+  .article-body .post-body { font-size: 16px; }
+}
+.post-body h2 { font-size: 1.35em; letter-spacing: -0.01em; margin: 26px 0 10px; line-height: 1.25; }
+.post-body h3 { font-size: 1.12em; margin: 20px 0 8px; }
+.post-body > h2:first-child, .post-body > h3:first-child { margin-top: 0; }

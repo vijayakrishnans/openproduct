@@ -10,7 +10,7 @@ What actually shipped, and every place the code departed from `design.md`.
 | BP3: Apple and email sign-in | ⏳ Not started | |
 | BP4: support links | ✅ Shipped | [#18](https://github.com/vijayakrishnans/openproduct/pull/18) |
 | BP5: community discussions | ✅ Shipped | [#20](https://github.com/vijayakrishnans/openproduct/pull/20), [#21](https://github.com/vijayakrishnans/openproduct/pull/21) |
-| BP6: builder posts | ⏳ Not started | |
+| BP6: builder posts | 🚧 In review | |
 | BP7: merged-PR badges | ⏳ Not started | |
 
 ## Departures from the design
@@ -62,3 +62,27 @@ Posting and replying need a builder profile (claimed or started here), so every 
 ### BP5 landed in two pull requests
 
 #20 was stacked on the dark-mode branch (#19, OP-23, outside this epic) and merged into that branch after #19 had already merged, so it never reached `main`. #21 carries the same commit to `main` unchanged.
+
+### Posts are stored as "articles" (BP6)
+
+The `posts` table already holds discussion replies, so builder posts live in `articles`. The site calls them posts everywhere a person reads. A video is two columns, `video_provider` and `video_id`, and `storedVideo` re-checks them on every read.
+
+### Posts get headings; discussions don't (BP6)
+
+A blog post needs sections, so the post body adds `##` and `###` to the render subset. Discussions keep the subset openproduct.live's API uses, so a thread here reads the same as one from there.
+
+### Deleting an account deletes its posts (BP6)
+
+A discussion reply outlives its author as "deleted builder" (D11), because other replies answer it. A post is the builder's own page, so it goes with the account (`ON DELETE CASCADE`).
+
+### Reports cover posts; the table was rebuilt (BP6)
+
+SQLite can't widen a `CHECK` in place, so migration 4 copies `reports` into a new table that also accepts `article`, inside one transaction. Running it twice copies the already-rebuilt table, so racing isolates lose nothing; a test covers reports made before it.
+
+### Also added: an index of posts and a limit per day (BP6)
+
+`/posts` lists every post, and the community page shows the latest three under "From the builders". A builder can publish five posts a day.
+
+### Demo data
+
+`web/scripts/seed-demo.mjs` prints SQL for four demo builders (bios start "Demo profile"), discussions with replies, five posts with YouTube and Vimeo videos, and one open report. Every row is marked (`demo-` accounts, `de300000-` ids), demo accounts have no way to sign in, and `--remove` prints the SQL that deletes them all. It's for stage and local; prod gets none.
