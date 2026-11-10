@@ -13,6 +13,7 @@ import { currentSession, safeNext } from "@/lib/auth/request";
 import { maintainedBuilds, supportLinksOf } from "@/lib/auth/support";
 import { loadDirectory, maintainsOf } from "@/lib/directory";
 import { followingOf } from "@/lib/auth/reactions";
+import { listingsOfAccount } from "@/lib/auth/listings";
 import { appEnv, database } from "@/lib/server/env";
 
 export const dynamic = "force-dynamic";
@@ -33,7 +34,10 @@ export default async function AccountPage({ searchParams }: { searchParams: Sear
   // Drafts have no build page yet, so they get no link.
   const listed = builds.length ? await loadDirectory().then((d) => new Set(d.ok ? d.builds.map((x) => x.slug) : [])) : new Set<string>();
   const buildLinks = await Promise.all(builds.map(async (slug) => ({ slug, ...(await supportLinksOf(db, { kind: "build", key: slug })) })));
-  const following = await followingOf(db, session.account.id).catch(() => []);
+  const [following, listings] = await Promise.all([
+    followingOf(db, session.account.id).catch(() => []),
+    listingsOfAccount(db, session.account.id).catch(() => []),
+  ]);
   const linked = new Set(identities.map((i) => i.provider));
   const addable = configuredProviders(env, true).filter((p) => !linked.has(p));
   const addEmail = emailConfigured(env) && !linked.has("email");
@@ -131,6 +135,29 @@ export default async function AccountPage({ searchParams }: { searchParams: Sear
             <SupportForm kind="build" ownerKey={b.slug} links={b.links} label={b.slug} />
           </section>
         ))}
+
+        <section className="panel account-section" id="listings">
+          <div className="panel-head">
+            <div>
+              <h2>Your listings</h2>
+              <p className="sub">Builds you list and maintain on this site.</p>
+            </div>
+            <Link className="btn btn-dark" href="/list">+ List a build</Link>
+          </div>
+          {listings.length ? (
+            <ul className="following-list">
+              {listings.map((l) => (
+                <li key={l.slug}>
+                  <Link className="link" href={`/list/${l.slug}`}>{l.slug}</Link>
+                  <span className={`pill${l.state === "published" ? " live" : ""}`}>{l.state === "published" ? "Published" : "Draft"}</span>
+                  <span className="muted">{l.repo}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="muted" style={{ margin: 0 }}>None yet.</p>
+          )}
+        </section>
 
         <section className="panel account-section" id="following">
           <div className="panel-head">

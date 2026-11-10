@@ -11,7 +11,7 @@ import { SORTS, type Sort, loadRoles } from "@/lib/directory";
 import { loadThreads, mergeThreads, type Thread } from "@/lib/forum";
 import { database } from "@/lib/server/env";
 import { loadDirectoryHere } from "@/lib/server/directory-here";
-import { ORUNBASE, SOURCE } from "@/lib/links";
+import { SOURCE } from "@/lib/links";
 
 // The directory is read per request: it is the live list, not a snapshot.
 export const dynamic = "force-dynamic";
@@ -49,7 +49,7 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
               build with, and fork anything you like. The directory itself is open source too.
             </p>
             <div className="hero-actions">
-              <a className="btn btn-accent" href={ORUNBASE}>List your build</a>
+              <a className="btn btn-accent" href="/list">List your build</a>
               <a className="btn btn-ghost" href={SOURCE}>&lt;&gt; Read this site&apos;s source</a>
             </div>
           </div>

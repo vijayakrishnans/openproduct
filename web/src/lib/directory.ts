@@ -26,6 +26,8 @@ export type Build = {
   cover: { src: string; alt: string } | null;
   /** Which values on this build are sample, not from the API. */
   sample: string[];
+  /** "here" for a build listed on this site (list-your-build); absent for openproduct.live's. */
+  source?: "here";
 };
 
 export type Topic = { value: string; label: string; products: number };
@@ -398,4 +400,15 @@ export async function loadBuildRepos(): Promise<Record<string, string> | null> {
     if (repo && !out[repo]) out[repo] = d.slug;
   }
   return out;
+}
+
+/** Is this slug a build on openproduct.live, drafts included? (list-your-build D1: one slug namespace.) */
+export async function slugTakenOnOpenproduct(slug: string): Promise<boolean | "unreachable"> {
+  try {
+    const res = await fetch(`${API_ORIGIN}/v1/products/${encodeURIComponent(slug)}`, { headers: { accept: "application/json" }, cache: "no-store" });
+    if (res.status === 404) return false;
+    return res.ok ? true : "unreachable";
+  } catch {
+    return "unreachable";
+  }
 }
