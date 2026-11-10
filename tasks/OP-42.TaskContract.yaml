@@ -3,7 +3,7 @@ kind: TaskContract
 metadata:
   name: OP-42
 spec:
-  goal: "Personal topics (TC4): follow topics, a For you feed, and Trending ranked by searches and activity."
+  goal: "Personal topics (TC4): follow topics, a For you feed, and Trending that counts searches and follows."
   affects:
     - default/openproduct/web
     - web/**
@@ -11,5 +11,6 @@ spec:
     - specs/**
   doneWhen:
     - "After following two topics, For you shows only their writing, newest first."
-    - "A topic searched for often climbs Trending; only per-day counts are stored."
+    - "A topic searched for often climbs Trending, and the Trending formula is on the page."
+    - "Searches are stored only as a count per topic per day."
   gates: []
