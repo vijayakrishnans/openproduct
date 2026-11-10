@@ -3,9 +3,9 @@
 // merged by matching email.
 import type { Db } from "../server/db";
 import { newId } from "./crypto";
-import type { ProviderId, ProviderProfile } from "./providers";
+import type { IdentityProvider, ProviderProfile } from "./providers";
 
-export type Identity = { provider: ProviderId; login: string | null; createdAt: string };
+export type Identity = { provider: IdentityProvider; login: string | null; createdAt: string };
 
 export type SignInOutcome =
   | { kind: "signed-in"; accountId: string; created: boolean }
@@ -25,7 +25,7 @@ export type SignInOutcome =
  */
 export async function resolveSignIn(
   db: Db,
-  provider: ProviderId,
+  provider: IdentityProvider,
   profile: ProviderProfile,
   currentAccountId: string | null,
   now = new Date(),
@@ -74,7 +74,7 @@ export async function identitiesOf(db: Db, accountId: string): Promise<Identity[
   const rows = await db
     .prepare(`SELECT provider, login, created_at FROM identities WHERE account_id = ? ORDER BY created_at`)
     .bind(accountId)
-    .all<{ provider: ProviderId; login: string | null; created_at: string }>();
+    .all<{ provider: IdentityProvider; login: string | null; created_at: string }>();
   return rows.results.map((r) => ({ provider: r.provider, login: r.login, createdAt: r.created_at }));
 }
 

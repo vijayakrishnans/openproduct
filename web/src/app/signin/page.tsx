@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { ProviderMark } from "@/components/provider-mark";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { emailConfigured } from "@/lib/auth/email-link";
 import { configuredProviders, PROVIDER_LABEL } from "@/lib/auth/providers";
 import { currentSession, safeNext } from "@/lib/auth/request";
 import { appEnv, database } from "@/lib/server/env";
@@ -15,16 +16,20 @@ const ERRORS: Record<string, string> = {
   expired: "That sign-in took too long or was opened in another browser. Start again.",
   unavailable: "That way of signing in isn't available right now.",
   provider_down: "We couldn't reach that provider. Try again in a minute, or use another way in.",
+  bad_email: "That doesn't look like an email address.",
+  email_down: "We couldn't send the email just now. Try again in a minute, or use another way in.",
+  link_used: "That sign-in link has been used or has expired. Ask for a new one.",
 };
 
-type Search = Promise<{ next?: string; error?: string }>;
+type Search = Promise<{ next?: string; error?: string; sent?: string }>;
 
 export default async function SignInPage({ searchParams }: { searchParams: Search }) {
-  const { next: rawNext, error } = await searchParams;
+  const { next: rawNext, error, sent } = await searchParams;
   const next = safeNext(rawNext);
   if (await currentSession()) redirect(next);
   const [env, db] = await Promise.all([appEnv(), database()]);
   const providers = configuredProviders(env, !!db);
+  const byEmail = !!db && emailConfigured(env);
 
   return (
     <>
@@ -34,7 +39,10 @@ export default async function SignInPage({ searchParams }: { searchParams: Searc
           <h1>Sign in to openproduct</h1>
           <p className="sub">Claim your builder profile, add support links, and join the discussions.</p>
           {error && ERRORS[error] ? <p className="auth-error" role="alert">{ERRORS[error]}</p> : null}
-          {providers.length === 0 ? (
+          {sent ? (
+            <p className="auth-ok" role="status">Check your inbox. If that address can get mail, a sign-in link is on its way; it works once, for 15 minutes.</p>
+          ) : null}
+          {providers.length === 0 && !byEmail ? (
             <p className="unreachable">Sign-in isn&apos;t switched on yet. Check back soon.</p>
           ) : (
             <div className="auth-buttons">
@@ -44,10 +52,20 @@ export default async function SignInPage({ searchParams }: { searchParams: Searc
                   Continue with {PROVIDER_LABEL[p]}
                 </a>
               ))}
+              {byEmail ? (
+                <form method="post" action="/auth/email" className="auth-email">
+                  <input type="hidden" name="next" value={next} />
+                  <label>
+                    <span>Or get a sign-in link by email</span>
+                    <input type="email" name="email" required autoComplete="email" maxLength={254} placeholder="you@example.com" />
+                  </label>
+                  <button className="btn btn-dark" type="submit">Email me a link</button>
+                </form>
+              ) : null}
             </div>
           )}
           <p className="auth-fine">
-            We keep your provider&apos;s account id, name and picture, and never show your email. You can delete your account at any time.
+            We keep your provider&apos;s account id, name and picture, and never show your email. An email link signs you in with that address alone; we never match it to other accounts. You can delete your account at any time.
           </p>
         </div>
       </main>
