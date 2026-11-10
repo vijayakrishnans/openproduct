@@ -7,7 +7,7 @@
 | TC2: kinds of writing | ✅ Shipped | [#41](https://github.com/vijayakrishnans/openproduct/pull/41) |
 | TC3: Community as the public square | ✅ Shipped | [#42](https://github.com/vijayakrishnans/openproduct/pull/42) |
 | TC4: personal topics | ✅ Shipped | [#43](https://github.com/vijayakrishnans/openproduct/pull/43) |
-| TC5: rankings | 🚧 In review | |
+| TC5: rankings | ✅ Shipped | [#45](https://github.com/vijayakrishnans/openproduct/pull/45) |
 
 ## Departures from the design
 
