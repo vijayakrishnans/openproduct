@@ -12,6 +12,8 @@ import { builderByHandle, builderOfAccount, canClaim, githubLoginFromUrl, type O
 import { currentSession } from "@/lib/auth/request";
 import { builderSupportLinks } from "@/lib/auth/support";
 import { threadsStartedBy } from "@/lib/auth/discussions";
+import { articlesBy, listArticles, type Article } from "@/lib/auth/articles";
+import { ArticleCard } from "@/components/article-card";
 import { SupportLinks } from "@/components/support-links";
 import type { Session } from "@/lib/auth/session";
 import { builderBadges } from "@/lib/badges";
@@ -22,7 +24,7 @@ import { database } from "@/lib/server/env";
 export const dynamic = "force-dynamic";
 
 type Params = Promise<{ handle: string }>;
-type Search = Promise<{ claim?: string; message?: string; started?: string }>;
+type Search = Promise<{ claim?: string; message?: string; started?: string; deleted?: string }>;
 
 const CLAIM_MESSAGES: Record<string, string> = {
   done: "Claimed. This profile is yours on openproduct now.",
@@ -148,6 +150,24 @@ function Projects({ projects }: { projects: Project[] }) {
   );
 }
 
+/** Their posts (BP6), newest first; videos play in place. */
+function Posts({ posts, total, name, isOwner }: { posts: Article[]; total: number; name: string; isOwner: boolean }) {
+  if (!posts.length && !isOwner) return null;
+  return (
+    <section className="person-section" id="posts">
+      <div className="section-head">
+        <h2>Posts <span className="count">{total}</span></h2>
+        {isOwner ? <Link className="btn btn-dark" href="/posts/new">+ Write a post</Link> : null}
+      </div>
+      {posts.length ? (
+        <div className="article-grid">{posts.map((a) => <ArticleCard key={a.id} article={a} withAuthor={false} />)}</div>
+      ) : (
+        <p className="sample-note">{isOwner ? "Nothing yet. A build log or a demo video is a good first post." : `${name} hasn't posted yet.`}</p>
+      )}
+    </section>
+  );
+}
+
 export default async function PersonPage({ params, searchParams }: { params: Params; searchParams: Search }) {
   const { handle } = await params;
   const q = await searchParams;
@@ -160,10 +180,16 @@ export default async function PersonPage({ params, searchParams }: { params: Par
   const fromHere = remote === null && owner?.kind === "new";
   const person = fromHere ? localPerson(owner!) : remote;
   if (person === null) notFound();
-  const [support, discussions] =
+  const [support, discussions, posts, postCount] =
     db && person !== "unreachable"
-      ? await Promise.all([builderSupportLinks(db, person.handle).catch(() => []), threadsStartedBy(db, person.handle).catch(() => 0)])
-      : [[], 0];
+      ? await Promise.all([
+          builderSupportLinks(db, person.handle).catch(() => []),
+          threadsStartedBy(db, person.handle).catch(() => 0),
+          listArticles(db, { handle: person.handle, limit: 12, accountId: session?.account.id ?? null }).catch((): Article[] => []),
+          articlesBy(db, person.handle).catch(() => 0),
+        ])
+      : [[], 0, [] as Article[], 0];
+  const isOwner = !!owner && !!session && owner.accountId === session.account.id;
   const badges =
     person === "unreachable"
       ? []
@@ -176,6 +202,7 @@ export default async function PersonPage({ params, searchParams }: { params: Par
           contributesTo: person.contributesToBuilds.map((b) => b.slug),
           supportLinks: support.length,
           discussions,
+          posts: postCount,
         });
   return (
     <>
@@ -205,6 +232,7 @@ export default async function PersonPage({ params, searchParams }: { params: Par
               <p className="auth-error" role="status">{q.message.slice(0, 200)}</p>
             ) : null}
             {q.started ? <p className="auth-ok" role="status">Your builder profile is live.</p> : null}
+            {q.deleted ? <p className="auth-ok" role="status">Post deleted.</p> : null}
             <OwnerBar person={person} owner={owner} session={session} fromHere={fromHere} />
             <SupportLinks links={support} title={`Support ${person.displayName}`} />
             <section className="person-section">
@@ -219,6 +247,7 @@ export default async function PersonPage({ params, searchParams }: { params: Par
               )}
             </section>
             <Projects projects={projectsOf(person, directory.ok ? directory.builds : [])} />
+            <Posts posts={posts} total={postCount} name={person.displayName} isOwner={isOwner} />
           </>
         )}
       </main>

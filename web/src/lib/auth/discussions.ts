@@ -166,15 +166,19 @@ export async function getLocalThread(
   };
 }
 
+/** What can be reported and hidden: a thread, a reply, or a builder post (BP6). */
+export type ReportKind = "thread" | "post" | "article";
+const TABLE: Record<ReportKind, string> = { thread: "threads", post: "posts", article: "articles" };
+
 export async function reportContent(
   db: Db,
   accountId: string,
-  kind: "thread" | "post",
+  kind: ReportKind,
   id: string,
   reason: string,
   now = new Date(),
 ): Promise<boolean> {
-  const table = kind === "thread" ? "threads" : "posts";
+  const table = TABLE[kind];
   const exists = await db.prepare(`SELECT 1 AS x FROM ${table} WHERE id = ?`).bind(id).first();
   if (!exists) return false;
   await db
@@ -185,38 +189,52 @@ export async function reportContent(
 }
 
 /** Hide or restore a thread or post, and resolve its reports. Moderators only; the caller checks. */
-export async function setHidden(db: Db, kind: "thread" | "post", id: string, hidden: boolean): Promise<void> {
-  const table = kind === "thread" ? "threads" : "posts";
+export async function setHidden(db: Db, kind: ReportKind, id: string, hidden: boolean): Promise<void> {
+  const table = TABLE[kind];
   await db.batch([
     db.prepare(`UPDATE ${table} SET hidden = ? WHERE id = ?`).bind(hidden ? 1 : 0, id),
     db.prepare(`UPDATE reports SET resolved = 1 WHERE target_kind = ? AND target_id = ?`).bind(kind, id),
   ]);
 }
 
-export type OpenReport = { kind: "thread" | "post"; id: string; threadId: string; title: string; excerpt: string; reports: number; reasons: string[]; hidden: boolean };
+export type OpenReport = {
+  kind: ReportKind;
+  id: string;
+  /** The thread it's in; null for a builder post. */
+  threadId: string | null;
+  /** Where a moderator reads it in context. */
+  href: string;
+  title: string;
+  excerpt: string;
+  reports: number;
+  reasons: string[];
+  hidden: boolean;
+};
 
-/** Unresolved reports, grouped per thread or post, most reported first. */
+/** Unresolved reports, grouped per thread, reply or builder post, most reported first. */
 export async function openReports(db: Db): Promise<OpenReport[]> {
   const rows = await db
     .prepare(
       `SELECT r.target_kind AS kind, r.target_id AS id, count(*) AS n, group_concat(coalesce(r.reason, ''), '\u001f') AS reasons,
-              coalesce(t.id, p.thread_id) AS thread_id, coalesce(t.title, pt.title) AS title, p.body AS body,
-              coalesce(t.hidden, p.hidden) AS hidden
+              coalesce(t.id, p.thread_id) AS thread_id, coalesce(t.title, pt.title, a.title) AS title, coalesce(p.body, a.body) AS body,
+              coalesce(t.hidden, p.hidden, a.hidden) AS hidden, a.id AS article_id
          FROM reports r
          LEFT JOIN threads t ON r.target_kind = 'thread' AND t.id = r.target_id
          LEFT JOIN posts p ON r.target_kind = 'post' AND p.id = r.target_id
          LEFT JOIN threads pt ON pt.id = p.thread_id
+         LEFT JOIN articles a ON r.target_kind = 'article' AND a.id = r.target_id
         WHERE r.resolved = 0
         GROUP BY r.target_kind, r.target_id
         ORDER BY n DESC`,
     )
-    .all<{ kind: "thread" | "post"; id: string; n: number; reasons: string | null; thread_id: string | null; title: string | null; body: string | null; hidden: number | null }>();
+    .all<{ kind: ReportKind; id: string; n: number; reasons: string | null; thread_id: string | null; title: string | null; body: string | null; hidden: number | null; article_id: string | null }>();
   return rows.results
-    .filter((r) => r.thread_id)
+    .filter((r) => r.thread_id || r.article_id)
     .map((r) => ({
       kind: r.kind,
       id: r.id,
-      threadId: r.thread_id!,
+      threadId: r.thread_id,
+      href: r.article_id ? `/posts/${r.article_id}` : `/community/t/${r.thread_id}${r.kind === "post" ? `#p-${r.id}` : ""}`,
       title: r.title ?? "",
       excerpt: (r.body ?? "").slice(0, 200),
       reports: r.n,

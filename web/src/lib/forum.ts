@@ -40,7 +40,9 @@ export type RenderNode =
   | { kind: "emphasis" | "strong" | "paragraph" | "quote" | "listitem"; children: RenderNode[] }
   | { kind: "list"; ordered: boolean; children: RenderNode[] }
   | { kind: "link"; href: string; children: RenderNode[] }
-  | { kind: "mention"; handle: string; claimed: boolean };
+  | { kind: "mention"; handle: string; claimed: boolean }
+  /** Builder posts only (BP6): `##` and `###`. */
+  | { kind: "heading"; level: 2 | 3; children: RenderNode[] };
 
 export type Post = {
   id: string;

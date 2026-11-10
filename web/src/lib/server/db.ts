@@ -132,6 +132,47 @@ export const MIGRATIONS: { version: number; name: string; statements: string[] }
        )`,
     ],
   },
+  {
+    version: 4,
+    name: "builder posts",
+    statements: [
+      // builder-profiles BP6 (D7): a builder's own writing. Called "articles"
+      // here because `posts` already holds discussion replies; the site calls
+      // them posts. A post belongs to its author's page, so deleting the
+      // account deletes the posts (CASCADE), unlike discussion replies.
+      // A video is stored as provider and id only, never as a URL or HTML.
+      `CREATE TABLE IF NOT EXISTS articles (
+         id TEXT PRIMARY KEY,
+         author_account_id TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+         title TEXT NOT NULL CHECK (length(title) BETWEEN 1 AND 140),
+         body TEXT NOT NULL CHECK (length(body) BETWEEN 1 AND 20000),
+         video_provider TEXT CHECK (video_provider IN ('youtube', 'vimeo', 'loom')),
+         video_id TEXT,
+         build_slug TEXT,
+         created_at TEXT NOT NULL,
+         updated_at TEXT NOT NULL,
+         hidden INTEGER NOT NULL DEFAULT 0
+       )`,
+      `CREATE INDEX IF NOT EXISTS articles_latest ON articles(hidden, created_at)`,
+      `CREATE INDEX IF NOT EXISTS articles_author ON articles(author_account_id, created_at)`,
+      // Reports now cover posts too. SQLite can't widen a CHECK in place, so
+      // the table is rebuilt with its rows. The batch is one transaction, and
+      // running it twice copies the already-rebuilt table, so a second isolate
+      // racing the first loses nothing.
+      `CREATE TABLE IF NOT EXISTS reports_v4 (
+         target_kind TEXT NOT NULL CHECK (target_kind IN ('thread', 'post', 'article')),
+         target_id TEXT NOT NULL,
+         reporter_account_id TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+         reason TEXT,
+         created_at TEXT NOT NULL,
+         resolved INTEGER NOT NULL DEFAULT 0,
+         PRIMARY KEY (target_kind, target_id, reporter_account_id)
+       )`,
+      `INSERT OR IGNORE INTO reports_v4 SELECT target_kind, target_id, reporter_account_id, reason, created_at, resolved FROM reports`,
+      `DROP TABLE reports`,
+      `ALTER TABLE reports_v4 RENAME TO reports`,
+    ],
+  },
 ];
 
 const applied = new WeakSet<object>();

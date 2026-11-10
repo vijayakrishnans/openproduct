@@ -8,7 +8,8 @@ import { safeHref, type RenderNode } from "./forum";
 export const MAX_POST_BODY = 5000;
 export const MAX_THREAD_TITLE = 140;
 
-export function parseBody(source: string): RenderNode[] {
+/** `headings` turns on `##` and `###`, for builder posts; discussions keep the API's subset. */
+export function parseBody(source: string, opts: { headings?: boolean } = {}): RenderNode[] {
   const lines = source.replace(/\r\n?/g, "\n").split("\n");
   const out: RenderNode[] = [];
   let i = 0;
@@ -24,6 +25,12 @@ export function parseBody(source: string): RenderNode[] {
       while (i < lines.length && !lines[i]!.trim().startsWith("```")) code.push(lines[i++]!);
       i++; // the closing fence, if any
       out.push({ kind: "codeblock", value: code.join("\n") });
+      continue;
+    }
+    const heading = opts.headings ? /^(#{2,3})\s+(.+?)\s*#*\s*$/.exec(line) : null;
+    if (heading) {
+      out.push({ kind: "heading", level: heading[1]!.length as 2 | 3, children: inline(heading[2]!) });
+      i++;
       continue;
     }
     if (/^>\s?/.test(line)) {
@@ -45,7 +52,7 @@ export function parseBody(source: string): RenderNode[] {
       continue;
     }
     const para: string[] = [];
-    while (i < lines.length && lines[i]!.trim() !== "" && !/^(```|>|\s*[-*]\s|\s*\d+[.)]\s)/.test(lines[i]!)) para.push(lines[i++]!.trim());
+    while (i < lines.length && lines[i]!.trim() !== "" && !/^(```|>|\s*[-*]\s|\s*\d+[.)]\s)/.test(lines[i]!) && !(opts.headings && /^#{2,3}\s/.test(lines[i]!))) para.push(lines[i++]!.trim());
     out.push({ kind: "paragraph", children: inline(para.join(" ")) });
   }
   return out;

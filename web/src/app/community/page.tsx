@@ -4,6 +4,8 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { TabBar } from "@/components/tab-bar";
 import { ThreadRow, TrendingRow } from "@/components/thread-row";
+import { ArticleCard } from "@/components/article-card";
+import { listArticles, type Article } from "@/lib/auth/articles";
 import { listLocalThreads } from "@/lib/auth/discussions";
 import { FORUM_ORDERS, TAG_LABELS, THREAD_TAGS, loadThreads, mergeThreads, parseOrder, parseTag, type ForumOrder, type Thread, type ThreadTag } from "@/lib/forum";
 import { COMMUNITY, type CommunityChannel } from "@/lib/links";
@@ -60,11 +62,12 @@ export default async function CommunityPage({ searchParams }: { searchParams: Se
   const sameList = order === "replied" && !tag;
   const db = await database();
   const here = (o: ForumOrder, t: ThreadTag | null): Promise<Thread[]> => (db ? listLocalThreads(db, o, t).catch(() => []) : Promise.resolve([]));
-  const [remote, remoteReplied, local, localReplied] = await Promise.all([
+  const [remote, remoteReplied, local, localReplied, articles] = await Promise.all([
     loadThreads(order, tag),
     sameList ? null : loadThreads("replied", null),
     here(order, tag),
     sameList ? null : here("replied", null),
+    db ? listArticles(db, { limit: 3 }).catch((): Article[] => []) : Promise.resolve([] as Article[]),
   ]);
   // Threads written here and threads from openproduct.live, as one list.
   // If openproduct.live can't be reached, this site's threads still show.
@@ -84,8 +87,20 @@ export default async function CommunityPage({ searchParams }: { searchParams: Se
             <h1>Community</h1>
             <p className="sub">Questions, proposals and design notes, between builders and about the builds here.</p>
           </div>
-          <Link className="btn btn-dark" href="/community/new">+ Start a discussion</Link>
+          <div className="forum-head-actions">
+            <Link className="btn btn-ghost" href="/posts/new">Write a post</Link>
+            <Link className="btn btn-dark" href="/community/new">+ Start a discussion</Link>
+          </div>
         </div>
+        {articles.length ? (
+          <section className="from-builders" aria-labelledby="from-builders">
+            <div className="section-head">
+              <h2 id="from-builders">From the builders</h2>
+              <Link className="link" href="/posts">All posts →</Link>
+            </div>
+            <div className="article-grid">{articles.map((a) => <ArticleCard key={a.id} article={a} />)}</div>
+          </section>
+        ) : null}
         <div className="forum">
           <section className="forum-main" aria-label="Threads">
             <div className="forum-tools">
