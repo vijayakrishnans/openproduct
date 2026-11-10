@@ -1,0 +1,15 @@
+apiVersion: orun.io/v1
+kind: TaskContract
+metadata:
+  name: OP-26
+spec:
+  goal: The "Raise your hand" button draws its icon instead of relying on an emoji font, and the builder-profiles epic records that everything is built with two items waiting on the owner.
+  affects:
+    - default/openproduct/web
+    - web/**
+    - tasks/**
+    - specs/**
+  doneWhen:
+    - The raise-your-hand button shows a drawn hand icon in a browser with no emoji font.
+    - The epic README and status file say what is built and what waits on the owner (starter threads, Apple and email setup, GitHub secrets).
+  gates: []

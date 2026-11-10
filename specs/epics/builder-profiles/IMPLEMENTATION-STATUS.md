@@ -131,3 +131,11 @@ Both are built and tested, and each appears on the sign-in page only once its se
 3. Set `EMAIL_FROM` (for example `signin@<domain>`) as a variable on both workers.
 
 The binding isn't in `wrangler.jsonc` yet, so the deploy can't fail on an account that hasn't onboarded a domain.
+
+## What waits on the owner (2026-11-10)
+
+All eight milestones are built and deployed to stage and prod, with migrations 1–7 applied on both databases. Three things finish the epic, and each needs the owner:
+
+1. **BP5's starter threads.** The five drafts are written. The owner signs in on prod, starts or claims a builder profile, and approves them; they are then posted under that account.
+2. **BP3 setup.** Apple: a Services ID, a key and four secrets. Email: a domain on Cloudflare onboarded to Email Sending, the `send_email` binding, and `EMAIL_FROM`. The steps are in "Apple and email sign-in ship switched off" above.
+3. **GitHub sign-in secrets** (`GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`) on both workers. Without them only Orunbase sign-in shows, and BP7's merged-PR badge can't appear for anyone on the live site.
