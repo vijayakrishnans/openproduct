@@ -1,0 +1,15 @@
+apiVersion: orun.io/v1
+kind: TaskContract
+metadata:
+  name: OP-25
+spec:
+  goal: Nothing on this site sends people to openproduct.live — upvote, follow, claiming a seat and replying to openproduct.live threads happen here, and every other link points to a page here or to Orunbase.
+  affects:
+    - default/openproduct/web
+    - web/**
+    - tasks/**
+    - specs/**
+  doneWhen:
+    - No rendered page links to openproduct.live (a test scans the source for the old link constant).
+    - Upvote and Follow on a build, Follow on a builder, raising a hand for a seat, and replying to an openproduct.live thread all work here for a signed-in builder and are stored in D1.
+  gates: []

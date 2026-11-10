@@ -66,10 +66,11 @@ function Detail({ role, siblings, onPick, onClose }: { role: OpenRole; siblings:
   );
 }
 
-export function RolesBoard({ roles }: { roles: OpenRole[] }) {
+export function RolesBoard({ roles, initialSeat = null }: { roles: OpenRole[]; initialSeat?: string | null }) {
   const [type, setType] = useState<RoleType | null>(null);
   const [query, setQuery] = useState("");
-  const [picked, setPicked] = useState<string | null>(null);
+  // A link straight to one seat (`/roles?seat=<slug>/<id>`, e.g. from the home page) opens it.
+  const [picked, setPicked] = useState<string | null>(initialSeat && roles.some((r) => key(r) === initialSeat) ? initialSeat : null);
 
   const counts = useMemo(() => {
     const c = new Map<RoleType, number>();

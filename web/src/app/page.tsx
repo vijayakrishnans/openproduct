@@ -1,11 +1,15 @@
 import { HowItWorks } from "@/components/how-it-works";
 import { LivePulse, PulseTicker } from "@/components/live-pulse";
 import { OpenBuilds } from "@/components/open-builds";
-import { RolesRow } from "@/components/roles-row";
+import { HomeSide } from "@/components/home-side";
 import { TabBar } from "@/components/tab-bar";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { listArticles, type Article } from "@/lib/auth/articles";
+import { listLocalThreads } from "@/lib/auth/discussions";
 import { SORTS, type Sort, loadDirectory, loadRoles } from "@/lib/directory";
+import { loadThreads, mergeThreads, type Thread } from "@/lib/forum";
+import { database } from "@/lib/server/env";
 import { OPENPRODUCT, SOURCE } from "@/lib/links";
 
 // The directory is read per request: it is the live list, not a snapshot.
@@ -16,9 +20,16 @@ type Search = Promise<{ sort?: string; cat?: string }>;
 export default async function Home({ searchParams }: { searchParams: Search }) {
   const q = await searchParams;
   const sort: Sort = SORTS.some((s) => s.key === q.sort) ? (q.sort as Sort) : "active";
-  const dir = await loadDirectory();
+  const [dir, db] = await Promise.all([loadDirectory(), database()]);
   const cat = dir.ok && dir.topics.some((t) => t.value === q.cat) ? q.cat! : null;
-  const roles = dir.ok ? (await loadRoles(dir.builds, 8)).slice(0, 8) : [];
+  // The sidebar: open seats, and the community's latest, from here and openproduct.live.
+  const [roles, remoteThreads, localThreads, articles] = await Promise.all([
+    dir.ok ? loadRoles(dir.builds, 6).then((r) => r.slice(0, 6)) : Promise.resolve([]),
+    loadThreads("latest", null).catch(() => "unreachable" as const),
+    db ? listLocalThreads(db, "latest", null, 4).catch((): Thread[] => []) : Promise.resolve([] as Thread[]),
+    db ? listArticles(db, { limit: 2 }).catch((): Article[] => []) : Promise.resolve([] as Article[]),
+  ]);
+  const threads = mergeThreads(localThreads, remoteThreads === "unreachable" ? [] : remoteThreads, "latest", 4);
   return (
     <>
       <SiteHeader current="/" />
@@ -44,15 +55,18 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
           {dir.ok ? <LivePulse builds={dir.builds} topics={dir.topics} /> : null}
         </section>
         {dir.ok ? <PulseTicker builds={dir.builds} /> : null}
-        <RolesRow roles={roles} />
-        {dir.ok ? (
-          <OpenBuilds builds={dir.builds} topics={dir.topics} sort={sort} cat={cat} />
-        ) : (
-          <div className="unreachable">
-            The directory could not be reached just now ({dir.reason}). The listings live at{" "}
-            <a className="link" href={OPENPRODUCT}>openproduct.live</a>.
+        <div className="home-cols">
+          <div className="home-main">
+            {dir.ok ? (
+              <OpenBuilds builds={dir.builds} topics={dir.topics} sort={sort} cat={cat} />
+            ) : (
+              <div className="unreachable section">
+                The directory could not be reached just now ({dir.reason}). Try again in a minute.
+              </div>
+            )}
           </div>
-        )}
+          <HomeSide roles={roles} topics={dir.ok ? dir.topics : []} threads={threads} articles={articles} />
+        </div>
         <HowItWorks />
       </main>
       <SiteFooter />
