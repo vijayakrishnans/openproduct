@@ -10,6 +10,14 @@ export type AppEnv = {
   GITHUB_CLIENT_SECRET?: string;
   GOOGLE_CLIENT_ID?: string;
   GOOGLE_CLIENT_SECRET?: string;
+  /** Sign in with Apple (BP3): the Services ID, team, key id, and the .p8 key's PEM text. */
+  APPLE_CLIENT_ID?: string;
+  APPLE_TEAM_ID?: string;
+  APPLE_KEY_ID?: string;
+  APPLE_PRIVATE_KEY?: string;
+  /** Email links (BP3): Cloudflare Email Service's send binding, and the address mail comes from. */
+  EMAIL?: { send(message: { from: string | { email: string; name?: string }; to: string; subject: string; html: string; text: string }): Promise<{ messageId?: string }> };
+  EMAIL_FROM?: string;
   /** Optional: a GitHub token for reading merged PRs (BP7); otherwise the OAuth app's id and secret are used. */
   GITHUB_TOKEN?: string;
   /** Comma-separated GitHub logins who may hide posts; defaults to the site owner. */

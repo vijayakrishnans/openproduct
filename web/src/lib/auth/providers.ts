@@ -4,15 +4,20 @@
 // few `fetch` calls, and it keeps the sign-in path free of dependencies.
 import type { Db } from "../server/db";
 import type { AppEnv } from "../server/env";
+import { appleClientSecret, appleNonce, readAppleIdToken } from "./apple";
 import { pkceChallenge } from "./crypto";
 
-export const PROVIDERS = ["github", "google", "orunbase"] as const;
+export const PROVIDERS = ["github", "google", "apple", "orunbase"] as const;
 export type ProviderId = (typeof PROVIDERS)[number];
+/** Every kind of identity an account can hold: the OAuth providers, and an email link (BP3). */
+export type IdentityProvider = ProviderId | "email";
 
-export const PROVIDER_LABEL: Record<ProviderId, string> = {
+export const PROVIDER_LABEL: Record<IdentityProvider, string> = {
   github: "GitHub",
   google: "Google",
+  apple: "Apple",
   orunbase: "Orunbase",
+  email: "Email",
 };
 
 export function isProvider(value: string): value is ProviderId {
@@ -34,6 +39,7 @@ export function configuredProviders(env: AppEnv, hasDb: boolean): ProviderId[] {
   return PROVIDERS.filter((p) => {
     if (p === "github") return !!(env.GITHUB_CLIENT_ID && env.GITHUB_CLIENT_SECRET);
     if (p === "google") return !!(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET);
+    if (p === "apple") return !!(env.APPLE_CLIENT_ID && env.APPLE_TEAM_ID && env.APPLE_KEY_ID && env.APPLE_PRIVATE_KEY);
     return true;
   });
 }
@@ -141,6 +147,20 @@ export async function authorizationUrl(
       prompt: "select_account",
     })}`;
   }
+  if (provider === "apple") {
+    // No scopes: the site doesn't need a name or an email from Apple, and
+    // without them Apple returns to a plain GET (response_mode=query), the
+    // same callback as everyone else. Apple doesn't take PKCE; a nonce bound
+    // to this flow's verifier, checked in the ID token, does that job.
+    return `https://appleid.apple.com/auth/authorize?${new URLSearchParams({
+      response_type: "code",
+      response_mode: "query",
+      client_id: opts.env.APPLE_CLIENT_ID!,
+      redirect_uri: opts.redirectUri,
+      state: opts.state,
+      nonce: await appleNonce(opts.verifier),
+    })}`;
+  }
   const meta = await orunbaseDiscovery(opts.fetch ?? fetch);
   const clientId = await orunbaseClientId(opts.db, opts.redirectUri, opts.fetch ?? fetch);
   // `identity`: a token that can only say who this is (Orunbase's narrow scope).
@@ -203,6 +223,25 @@ export async function completeSignIn(
       avatarUrl: str(u.picture),
       email: u.email_verified === true ? str(u.email) : null,
     };
+  }
+
+  if (provider === "apple") {
+    const env = opts.env;
+    const secret = await appleClientSecret({ teamId: env.APPLE_TEAM_ID!, keyId: env.APPLE_KEY_ID!, clientId: env.APPLE_CLIENT_ID!, privateKey: env.APPLE_PRIVATE_KEY! });
+    const body = new URLSearchParams({
+      grant_type: "authorization_code",
+      code: opts.code,
+      redirect_uri: opts.redirectUri,
+      client_id: env.APPLE_CLIENT_ID!,
+      client_secret: secret,
+    });
+    const tok = await json(await post("https://appleid.apple.com/auth/token", body), "Apple token");
+    const idToken = str(tok.id_token);
+    if (!idToken) throw new Error("Apple returned no ID token");
+    // The token came straight from Apple over TLS in exchange for our code,
+    // so its claims are checked rather than its signature (OIDC 3.1.3.7).
+    const claims = readAppleIdToken(idToken, { clientId: env.APPLE_CLIENT_ID!, nonce: await appleNonce(opts.verifier) });
+    return { providerUserId: claims.sub, login: null, displayName: null, avatarUrl: null, email: null };
   }
 
   const meta = await orunbaseDiscovery(f);

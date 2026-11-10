@@ -224,6 +224,23 @@ export const MIGRATIONS: { version: number; name: string; statements: string[] }
       `ALTER TABLE threads ADD COLUMN remote INTEGER NOT NULL DEFAULT 0`,
     ],
   },
+  {
+    version: 7,
+    name: "email links",
+    statements: [
+      // builder-profiles BP3: one-time sign-in links. Only the token's
+      // SHA-256 is stored; a link works once, within 15 minutes.
+      `CREATE TABLE IF NOT EXISTS email_links (
+         id_hash TEXT PRIMARY KEY,
+         email TEXT NOT NULL COLLATE NOCASE,
+         next TEXT NOT NULL,
+         created_at INTEGER NOT NULL,
+         expires_at INTEGER NOT NULL,
+         used_at INTEGER
+       )`,
+      `CREATE INDEX IF NOT EXISTS email_links_email ON email_links(email, created_at)`,
+    ],
+  },
 ];
 
 const applied = new WeakSet<object>();

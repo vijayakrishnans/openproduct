@@ -6,6 +6,7 @@ import { SupportForm } from "@/components/support-form";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { identitiesOf } from "@/lib/auth/accounts";
+import { emailConfigured } from "@/lib/auth/email-link";
 import { builderOfAccount, MAX_BIO, MAX_DISPLAY_NAME } from "@/lib/auth/builders";
 import { configuredProviders, PROVIDER_LABEL } from "@/lib/auth/providers";
 import { currentSession, safeNext } from "@/lib/auth/request";
@@ -17,7 +18,7 @@ import { appEnv, database } from "@/lib/server/env";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Your account", robots: { index: false } };
 
-type Search = Promise<{ welcome?: string; next?: string; added?: string; error?: string; provider?: string; message?: string; saved?: string }>;
+type Search = Promise<{ welcome?: string; next?: string; added?: string; error?: string; provider?: string; message?: string; saved?: string; sent?: string }>;
 
 export default async function AccountPage({ searchParams }: { searchParams: Search }) {
   const q = await searchParams;
@@ -35,6 +36,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Sear
   const following = await followingOf(db, session.account.id).catch(() => []);
   const linked = new Set(identities.map((i) => i.provider));
   const addable = configuredProviders(env, true).filter((p) => !linked.has(p));
+  const addEmail = emailConfigured(env) && !linked.has("email");
   const next = q.next ? safeNext(q.next) : null;
 
   return (
@@ -48,6 +50,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Sear
             {next && next !== "/" ? <Link className="link" href={next}>Carry on where you were</Link> : null}
           </p>
         ) : null}
+        {q.sent ? <p className="auth-ok" role="status">Check your inbox. Open the link there, in this browser, to add email as a way in.</p> : null}
         {q.added ? <p className="auth-ok" role="status">{PROVIDER_LABEL[q.added as keyof typeof PROVIDER_LABEL] ?? "That provider"} is now a way into this account.</p> : null}
         {q.saved ? <p className="auth-ok" role="status">Saved.</p> : null}
         {q.error === "taken" ? (
@@ -178,6 +181,17 @@ export default async function AccountPage({ searchParams }: { searchParams: Sear
                 </a>
               ))}
             </div>
+          ) : null}
+          {addEmail ? (
+            <form method="post" action="/auth/email" className="auth-email account-email">
+              <input type="hidden" name="next" value="/account" />
+              <input type="hidden" name="from" value="account" />
+              <label>
+                <span>Add an email sign-in link</span>
+                <input type="email" name="email" required autoComplete="email" maxLength={254} placeholder="you@example.com" />
+              </label>
+              <button className="btn btn-ghost" type="submit">Send a link</button>
+            </form>
           ) : null}
         </section>
 

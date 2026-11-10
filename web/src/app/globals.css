@@ -757,3 +757,12 @@ a.channel-row .channel-text span { color: var(--link); font-weight: 600; }
 .following-list .muted { font-size: 13px; }
 .project-card.is-draft { cursor: default; }
 .formula-note { font-family: var(--font-sans); color: var(--ink-3); margin-left: 8px; }
+
+
+/* Email sign-in link (BP3) */
+.auth-email { display: grid; gap: 8px; margin-top: 8px; padding-top: 14px; border-top: 1px solid var(--line); }
+.auth-email label { display: grid; gap: 6px; font-size: 14px; color: var(--ink-2); }
+.auth-email input { font: inherit; padding: 10px 12px; border: 1px solid var(--line-2); border-radius: 10px; background: var(--card); color: var(--ink); }
+.account-email { max-width: 420px; }
+.provider-mark.apple { background: var(--ink); color: var(--on-ink); }
+.provider-mark.email { background: var(--sunken); color: var(--ink); }

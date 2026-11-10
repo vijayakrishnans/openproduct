@@ -7,11 +7,11 @@ What actually shipped, and every place the code departed from `design.md`.
 | BP0: the spec | ✅ Shipped | [#14](https://github.com/vijayakrishnans/openproduct/pull/14), [#16](https://github.com/vijayakrishnans/openproduct/pull/16) |
 | BP1: badges and projects | ✅ Shipped | [#15](https://github.com/vijayakrishnans/openproduct/pull/15) |
 | BP2: accounts | ✅ Shipped | [#17](https://github.com/vijayakrishnans/openproduct/pull/17) |
-| BP3: Apple and email sign-in | ⏳ Not started | |
+| BP3: Apple and email sign-in | 🚧 Built, off until configured | [#26](https://github.com/vijayakrishnans/openproduct/pull/26) |
 | BP4: support links | ✅ Shipped | [#18](https://github.com/vijayakrishnans/openproduct/pull/18) |
 | BP5: community discussions | ✅ Shipped | [#20](https://github.com/vijayakrishnans/openproduct/pull/20), [#21](https://github.com/vijayakrishnans/openproduct/pull/21) |
 | BP6: builder posts | ✅ Shipped | [#22](https://github.com/vijayakrishnans/openproduct/pull/22) |
-| BP7: merged-PR badges | 🚧 In review | |
+| BP7: merged-PR badges | ✅ Shipped | [#23](https://github.com/vijayakrishnans/openproduct/pull/23) |
 
 ## Departures from the design
 
@@ -113,3 +113,21 @@ The owner asked that no button leave for openproduct.live. Its data is still rea
 - Drafts, the footer, the ranking note and every error message no longer link out. A test fails if any source file links to the openproduct.live site again.
 
 Migration 6 adds a column with `ALTER TABLE`, which can't be repeated, so `ensureSchema` now tolerates another isolate having applied a migration first: the failed batch changed nothing, and if the version is recorded it moves on.
+
+### Apple and email sign-in ship switched off (BP3)
+
+Both are built and tested, and each appears on the sign-in page only once its setup exists, like GitHub and Google (D12). Neither needs a code change to switch on.
+
+**Sign in with Apple** asks Apple for no name or email. Without scopes Apple returns by a plain GET (`response_mode=query`) to the same callback as the other providers, so no cross-site POST or relaxed cookie is needed. Apple doesn't take PKCE, so the flow's secret verifier is hashed into a nonce, and the ID token must carry it back. The token is read for its subject after checking issuer, audience, expiry and nonce; it comes straight from Apple in exchange for the code, so its signature isn't checked (OIDC Core 3.1.3.7). To switch it on:
+
+1. In Apple Developer, create a Services ID with Sign in with Apple, and add the return URL `https://<host>/auth/apple/callback` for each environment.
+2. Create a key with Sign in with Apple enabled and download the `.p8`.
+3. Set four Worker secrets on `openproduct-web-stage` and `openproduct-web-prod`: `APPLE_CLIENT_ID` (the Services ID), `APPLE_TEAM_ID`, `APPLE_KEY_ID`, and `APPLE_PRIVATE_KEY` (the `.p8` file's text).
+
+**Email links** go through Cloudflare Email Service. The link lands on a page with a "Sign in" button rather than signing in on open, because mail scanners open links and would use them up. It works once (a single `UPDATE … RETURNING`) and expires after 15 minutes. Only the token's SHA-256 is stored, and three links per address per 15 minutes is the most. The form answers "check your inbox" whether or not the address has an account. An email identity is the address alone and is never merged with another account by address (D9). To switch it on:
+
+1. Put a domain on Cloudflare DNS, and onboard it in Email Service → Email Sending. This needs the Workers Paid plan.
+2. Add `"send_email": [{ "name": "EMAIL" }]` to `web/wrangler.jsonc`.
+3. Set `EMAIL_FROM` (for example `signin@<domain>`) as a variable on both workers.
+
+The binding isn't in `wrangler.jsonc` yet, so the deploy can't fail on an account that hasn't onboarded a domain.

@@ -116,6 +116,6 @@ describe("migration 6", () => {
           : real.prepare(sql),
     };
     await expect(ensureSchema(stale)).resolves.toBeUndefined();
-    expect(MIGRATIONS.at(-1)!.version).toBe(6);
+    expect(MIGRATIONS.some((m) => m.version === 6)).toBe(true);
   });
 });
