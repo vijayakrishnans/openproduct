@@ -11,7 +11,7 @@ import { watchUrl } from "@/lib/video";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Write a post", robots: { index: false } };
 
-type Search = Promise<{ edit?: string; error?: string; title?: string; body?: string; video?: string; build?: string }>;
+type Search = Promise<{ edit?: string; error?: string; title?: string; body?: string; video?: string; build?: string; topics?: string }>;
 
 // The browser's first check; the server checks again (parseVideoUrl).
 const VIDEO_PATTERN = String.raw`https?://(www\.|m\.)?(youtube\.com|youtu\.be|youtube-nocookie\.com|vimeo\.com|player\.vimeo\.com|loom\.com)/.+`;
@@ -30,6 +30,7 @@ export default async function WritePostPage({ searchParams }: { searchParams: Se
     body: q.body ?? editing?.source ?? "",
     video: q.video ?? (editing?.video ? watchUrl(editing.video) : ""),
     build: q.build ?? editing?.buildSlug ?? "",
+    topics: q.topics ?? editing?.topics.join(", ") ?? "",
   };
 
   return (

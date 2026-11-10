@@ -3,6 +3,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { REMOTE_THREAD_ID, createRemoteReply, createReply, createThread, isModerator, moderatorsFor, reportContent, setHidden } from "@/lib/auth/discussions";
 import { loadThread } from "@/lib/forum";
+import { setTopics } from "@/lib/auth/topics";
+import { parseTopics } from "@/lib/topics";
 import { sameOrigin } from "@/lib/auth/request";
 import { SESSION_COOKIE, validateSession } from "@/lib/auth/session";
 import { appEnv, database } from "@/lib/server/env";
@@ -26,8 +28,11 @@ export async function POST(request: NextRequest) {
 
   if (action === "thread") {
     const r = await createThread(db, me, { tag: field("tag"), title: field("title"), body: field("body") });
-    if (r.ok) return go(`/community/t/${r.id}`);
-    const q = new URLSearchParams({ error: r.message, tag: field("tag"), title: field("title").slice(0, 140) });
+    if (r.ok) {
+      await setTopics(db, "thread", r.id, parseTopics(field("topics")));
+      return go(`/community/t/${r.id}`);
+    }
+    const q = new URLSearchParams({ error: r.message, tag: field("tag"), title: field("title").slice(0, 140), topics: field("topics").slice(0, 200) });
     return go(`/community/new?${q}`);
   }
   if (back === "/community") return go("/community");

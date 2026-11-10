@@ -364,6 +364,28 @@ export const MIGRATIONS: { version: number; name: string; statements: string[] }
        )`,
     ],
   },
+  {
+    version: 14,
+    name: "topics",
+    statements: [
+      // topics-and-community TC1 (D1): topics are tags that writing carries.
+      `CREATE TABLE IF NOT EXISTS topics (
+         slug TEXT PRIMARY KEY,
+         label TEXT NOT NULL,
+         created_at TEXT NOT NULL,
+         hidden INTEGER NOT NULL DEFAULT 0,
+         merged_into TEXT
+       )`,
+      `CREATE TABLE IF NOT EXISTS content_topics (
+         content_kind TEXT NOT NULL CHECK (content_kind IN ('article', 'thread')),
+         content_id TEXT NOT NULL,
+         topic TEXT NOT NULL REFERENCES topics(slug) ON DELETE CASCADE,
+         created_at TEXT NOT NULL,
+         PRIMARY KEY (content_kind, content_id, topic)
+       )`,
+      `CREATE INDEX IF NOT EXISTS content_topics_topic ON content_topics(topic, created_at)`,
+    ],
+  },
 ];
 
 const applied = new WeakSet<object>();

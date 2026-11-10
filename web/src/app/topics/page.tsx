@@ -3,43 +3,57 @@ import Link from "next/link";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { TabBar } from "@/components/tab-bar";
-import { loadDirectory } from "@/lib/directory";
+import { loadTopics, type TopicSummary } from "@/lib/server/topics-here";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Topics", description: "Browse openproduct builds by what kind of product they are." };
+export const metadata: Metadata = {
+  title: "Topics",
+  description: "What builders write about: tutorials, build logs and discussions by topic, with the builds in each.",
+};
 
+function TopicCard({ t, rank }: { t: TopicSummary; rank?: number }) {
+  return (
+    <Link href={`/topics/${t.slug}`} className="topic-card">
+      <strong>
+        {rank ? <span className="topic-rank mono">#{rank}</span> : null}
+        {t.label}
+      </strong>
+      <span className="mono muted">
+        {t.writing} {t.writing === 1 ? "piece of writing" : "pieces of writing"} · {t.builds} {t.builds === 1 ? "build" : "builds"}
+      </span>
+      {t.thisWeek ? <span className="topic-week">+{t.thisWeek} this week</span> : null}
+    </Link>
+  );
+}
+
+/** Topics (TC1): what builders write about, trending first. */
 export default async function TopicsPage() {
-  const dir = await loadDirectory();
+  const { topics } = await loadTopics();
+  const trending = [...topics].filter((t) => t.thisWeek > 0).sort((a, b) => b.thisWeek - a.thisWeek || b.writing - a.writing).slice(0, 6);
+  const all = [...topics].sort((a, b) => b.writing * 3 + b.builds - (a.writing * 3 + a.builds) || a.label.localeCompare(b.label));
   return (
     <>
       <SiteHeader current="/topics" />
       <main className="wrap section">
         <div className="section-head">
           <h1 style={{ margin: 0, fontSize: 34, letterSpacing: "-0.02em" }}>Topics</h1>
-          <span className="sub">What kind of product each build is. One per build, picked by its maintainers.</span>
+          <span className="sub">What builders write about: tutorials, build logs and discussions, with the builds in each topic.</span>
         </div>
-        {dir.ok ? (
-          <div className="topic-grid">
-            {[...dir.topics]
-              .sort((a, b) => b.products - a.products || a.label.localeCompare(b.label))
-              .map((t) => {
-                const builds = dir.builds.filter((b) => b.category === t.value);
-                return (
-                  <Link key={t.value} href={`/topics/${t.value}`} className="topic-card">
-                    <strong>{t.label}</strong>
-                    <span className="mono">
-                      {builds.length} {builds.length === 1 ? "build" : "builds"}
-                    </span>
-                    {builds.length > 0 ? (
-                      <span className="topic-sample">{builds.slice(0, 3).map((b) => b.slug).join(" · ")}</span>
-                    ) : null}
-                  </Link>
-                );
-              })}
-          </div>
-        ) : (
-          <div className="unreachable">The directory could not be reached just now. Try again in a minute.</div>
-        )}
+        {trending.length ? (
+          <section className="topics-block" aria-labelledby="trending-h">
+            <h2 id="trending-h">Trending this week</h2>
+            <p className="formula">Ranked by new writing on the topic in the last 7 days.</p>
+            <div className="topic-grid">{trending.map((t, i) => <TopicCard key={t.slug} t={t} rank={i + 1} />)}</div>
+          </section>
+        ) : null}
+        <section className="topics-block" aria-labelledby="all-h">
+          <h2 id="all-h">All topics</h2>
+          {all.length ? (
+            <div className="topic-grid">{all.map((t) => <TopicCard key={t.slug} t={t} />)}</div>
+          ) : (
+            <div className="unreachable">No topics yet. Give your next post a topic and it starts here.</div>
+          )}
+        </section>
       </main>
       <SiteFooter />
       <TabBar current="/topics" />

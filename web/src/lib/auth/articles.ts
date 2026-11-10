@@ -8,6 +8,7 @@ import type { RenderNode } from "../forum";
 import type { Db } from "../server/db";
 import { parseVideoUrl, storedVideo, type Video } from "../video";
 import { builderOfAccount } from "./builders";
+import { topicsFor } from "./topics";
 import { newId } from "./crypto";
 
 export const MAX_ARTICLE_TITLE = 140;
@@ -21,6 +22,8 @@ const SLUG = /^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$/;
 export type Article = {
   id: string;
   title: string;
+  /** TC1: the topics it carries. */
+  topics: string[];
   body: RenderNode[];
   /** The source, for the edit form; only filled for its author. */
   source: string | null;
@@ -98,6 +101,7 @@ export async function deleteArticle(db: Db, accountId: string, id: string): Prom
   if (!row || row.author_account_id !== accountId) return false;
   await db.batch([
     db.prepare(`DELETE FROM articles WHERE id = ?`).bind(id),
+    db.prepare(`DELETE FROM content_topics WHERE content_kind = 'article' AND content_id = ?`).bind(id),
     db.prepare(`DELETE FROM reports WHERE target_kind = 'article' AND target_id = ?`).bind(id),
   ]);
   return true;
@@ -155,6 +159,7 @@ function toArticle(r: Row, accountId: string | null): Article {
     updatedAt: r.updated_at,
     hidden: r.hidden === 1,
     mine,
+    topics: [],
   };
 }
 
@@ -164,16 +169,21 @@ export async function getArticle(db: Db, id: string, viewer: { accountId: string
   const row = await db.prepare(`${SELECT} WHERE a.id = ?`).bind(id).first<Row>();
   if (!row) return null;
   if (row.hidden && !viewer.moderator && row.author_account_id !== viewer.accountId) return null;
-  return toArticle(row, viewer.accountId);
+  const a = toArticle(row, viewer.accountId);
+  return { ...a, topics: (await topicsFor(db, "article", [a.id]).catch(() => new Map())).get(a.id) ?? [] };
 }
 
 /** Visible posts, newest first: everyone's, one builder's, or about one build. */
 export async function listArticles(
   db: Db,
-  opts: { handle?: string; build?: string; limit?: number; accountId?: string | null } = {},
+  opts: { handle?: string; build?: string; topic?: string; limit?: number; accountId?: string | null } = {},
 ): Promise<Article[]> {
   const where = ["a.hidden = 0"];
   const binds: unknown[] = [];
+  if (opts.topic) {
+    where.push("a.id IN (SELECT content_id FROM content_topics WHERE content_kind = 'article' AND topic = ?)");
+    binds.push(opts.topic);
+  }
   if (opts.handle) {
     where.push("b.handle = ?");
     binds.push(opts.handle);
@@ -186,7 +196,9 @@ export async function listArticles(
     .prepare(`${SELECT} WHERE ${where.join(" AND ")} ORDER BY a.created_at DESC LIMIT ?`)
     .bind(...binds, opts.limit ?? 20)
     .all<Row>();
-  return rows.results.map((r) => toArticle(r, opts.accountId ?? null));
+  const list = rows.results.map((r) => toArticle(r, opts.accountId ?? null));
+  const tags = await topicsFor(db, "article", list.map((a) => a.id)).catch(() => new Map<string, string[]>());
+  return list.map((a) => ({ ...a, topics: tags.get(a.id) ?? [] }));
 }
 
 /** How many visible posts a builder has published — the "N posts" badge. */

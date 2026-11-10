@@ -11,7 +11,7 @@ import { TAG_LABELS, THREAD_TAGS, parseTag } from "@/lib/forum";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Start a discussion", robots: { index: false } };
 
-type Search = Promise<{ error?: string; tag?: string; title?: string }>;
+type Search = Promise<{ error?: string; tag?: string; title?: string; topics?: string; topic?: string }>;
 
 export default async function NewThreadPage({ searchParams }: { searchParams: Search }) {
   const q = await searchParams;
@@ -51,6 +51,10 @@ export default async function NewThreadPage({ searchParams }: { searchParams: Se
               <label>
                 Title
                 <input name="title" required maxLength={MAX_THREAD_TITLE} defaultValue={q.title ?? ""} placeholder="Vercel vs Cloudflare for a side project that might grow up" />
+              </label>
+              <label>
+                <span>Topics <span className="muted">(up to 5, comma-separated)</span></span>
+                <input name="topics" defaultValue={q.topics ?? q.topic ?? ""} placeholder="cloudflare-workers, pricing" maxLength={200} />
               </label>
               <label>
                 Opening post

@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PostBody } from "@/components/post-body";
+import { TopicChips } from "@/components/topic-chips";
+import { topicsFor } from "@/lib/auth/topics";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { TabBar } from "@/components/tab-bar";
@@ -81,6 +83,8 @@ export default async function ThreadPage({ params, searchParams }: { params: Par
   const local = v.db ? await getLocalThread(v.db, id, { accountId: v.session?.account.id ?? null, moderator: v.moderator }).catch(() => null) : null;
   const found = local ?? (await loadThread(id));
   if (found === null) notFound();
+  // TC1: a thread written here carries topics.
+  const threadTopics = local && v.db ? ((await topicsFor(v.db, "thread", [id]).catch(() => new Map<string, string[]>())).get(id) ?? []) : [];
   // Replies written here to an openproduct.live thread (OP-25).
   const here = !local && found !== "unreachable" && v.db ? await remoteReplies(v.db, id, { accountId: v.session?.account.id ?? null, moderator: v.moderator }).catch(() => []) : [];
   const replyBox = (
@@ -124,6 +128,7 @@ export default async function ThreadPage({ params, searchParams }: { params: Par
                 <Link className="thread-where mono" href={`/builds/${found.thread.slug}`}>p/{found.thread.slug}</Link>
               ) : null}
               <h1>{found.thread.title}</h1>
+              {threadTopics.length ? <TopicChips topics={threadTopics} /> : null}
               <div className="thread-meta">
                 <span className="thread-tag">{TAG_LABELS[found.thread.tag] ?? found.thread.tag}</span>
                 <span>{found.thread.replies} {found.thread.replies === 1 ? "post" : "posts"}</span>

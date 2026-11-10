@@ -11,6 +11,8 @@ import { getListing, isMaintainer, listingToDetail, missingForPublish, type List
 import { isStale, refreshStats, statsOf, type ListingStats } from "@/lib/auth/listing-stats";
 import { rolesOf } from "@/lib/auth/listing-roles";
 import { PostBody } from "@/components/post-body";
+import { TopicChips } from "@/components/topic-chips";
+import { parseTopics } from "@/lib/topics";
 import { parseBody } from "@/lib/body";
 import { buildersByGithubLogins } from "@/lib/auth/listing-team";
 import { redirectFor } from "@/lib/auth/listing-lifecycle";
@@ -182,6 +184,8 @@ export default async function BuildPage({ params, searchParams }: { params: Para
               {b.liveUrl ? <span className="pill live">● Live</span> : null}
             </div>
             <p className="build-tag">{b.tagline}</p>
+            {/* TC1: a build's category and stack are topics too. */}
+            <TopicChips topics={parseTopics([...(b.category ? [b.category] : []), ...b.stack]).slice(0, 5)} small />
             <div className="build-links">
               {b.repoUrl ? <a className="link" href={b.repoUrl}>{b.repoUrl.replace(/^https?:\/\//, "")}</a> : <span className="muted">No public repo linked yet</span>}
               {listing?.liveUrl ? <a className="link" href={listing.liveUrl} target="_blank" rel="noopener noreferrer nofollow">Open the live app ↗</a> : null}
