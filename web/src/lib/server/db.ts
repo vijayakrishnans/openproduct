@@ -241,6 +241,41 @@ export const MIGRATIONS: { version: number; name: string; statements: string[] }
       `CREATE INDEX IF NOT EXISTS email_links_email ON email_links(email, created_at)`,
     ],
   },
+  {
+    version: 8,
+    name: "listings",
+    statements: [
+      // list-your-build LB1 (D1, D2, D5): builds listed here. A listing is a
+      // public GitHub repo its maintainers proved they control; it's a draft,
+      // seen only by them, until verified with a tagline and a category.
+      `CREATE TABLE IF NOT EXISTS listings (
+         slug TEXT PRIMARY KEY COLLATE NOCASE,
+         repo TEXT NOT NULL UNIQUE COLLATE NOCASE,
+         state TEXT NOT NULL DEFAULT 'draft' CHECK (state IN ('draft', 'published', 'hidden', 'unavailable')),
+         verify_code TEXT NOT NULL,
+         verified_at TEXT,
+         tagline TEXT CHECK (tagline IS NULL OR length(tagline) <= 120),
+         category TEXT,
+         stack TEXT NOT NULL DEFAULT '[]',
+         description TEXT,
+         licence TEXT,
+         created_by TEXT REFERENCES accounts(id) ON DELETE SET NULL,
+         created_at TEXT NOT NULL,
+         updated_at TEXT NOT NULL,
+         published_at TEXT
+       )`,
+      `CREATE INDEX IF NOT EXISTS listings_state ON listings(state, published_at)`,
+      `CREATE INDEX IF NOT EXISTS listings_creator ON listings(created_by, created_at)`,
+      `CREATE TABLE IF NOT EXISTS listing_maintainers (
+         slug TEXT NOT NULL REFERENCES listings(slug) ON DELETE CASCADE ON UPDATE CASCADE,
+         account_id TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+         role TEXT NOT NULL DEFAULT 'maintainer' CHECK (role IN ('owner', 'maintainer')),
+         accepted_at TEXT,
+         PRIMARY KEY (slug, account_id)
+       )`,
+      `CREATE INDEX IF NOT EXISTS listing_maintainers_account ON listing_maintainers(account_id)`,
+    ],
+  },
 ];
 
 const applied = new WeakSet<object>();

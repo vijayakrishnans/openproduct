@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { currentSession } from "@/lib/auth/request";
-import { ORUNBASE } from "@/lib/links";
 import { isDemoAccount } from "@/lib/auth/demo";
 import { appEnv, demoSignIn } from "@/lib/server/env";
 import { SearchBox } from "./search-box";
@@ -84,7 +83,7 @@ export async function SiteHeader({ current, query }: { current?: string; query?:
               Sign in
             </Link>
           )}
-          <a className="btn btn-dark" href={ORUNBASE}>
+          <a className="btn btn-dark" href="/list">
             + List your build
           </a>
         </div>

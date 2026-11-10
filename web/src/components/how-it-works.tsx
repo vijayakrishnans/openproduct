@@ -1,4 +1,3 @@
-import { ORUNBASE } from "@/lib/links";
 
 const STEPS = [
   { n: "01", title: "Keep the repo public", body: "Your code and workspace are the listing. No pitch deck, no form to keep updated." },
@@ -14,7 +13,7 @@ export function HowItWorks() {
           <div className="kicker">HOW A BUILD GETS HERE</div>
           <h2 id="how">Ship on Orunbase, and your listing keeps itself up to date.</h2>
         </div>
-        <a className="btn" style={{ background: "#fff", color: "#17150f" }} href={ORUNBASE}>
+        <a className="btn" style={{ background: "#fff", color: "#17150f" }} href="/list">
           List your build, free
         </a>
       </div>

@@ -41,7 +41,7 @@ export async function buildRepos(db: Db, load: () => Promise<Record<string, stri
   return cached ? (JSON.parse(cached.value) as Record<string, string>) : {};
 }
 
-function headers(auth: GithubAuth): HeadersInit {
+export function githubHeaders(auth: GithubAuth): HeadersInit {
   const h: Record<string, string> = {
     accept: "application/vnd.github+json",
     "x-github-api-version": "2022-11-28",
@@ -64,7 +64,7 @@ export async function fetchMergedByRepo(
       const url = `https://api.github.com/search/issues?q=${encodeURIComponent(q)}&per_page=100&page=${page}`;
       let res: Response;
       try {
-        res = await deps.fetch(url, { headers: headers(deps.auth), signal: AbortSignal.timeout(5000) });
+        res = await deps.fetch(url, { headers: githubHeaders(deps.auth), signal: AbortSignal.timeout(5000) });
       } catch {
         return { ok: false, limited: false };
       }

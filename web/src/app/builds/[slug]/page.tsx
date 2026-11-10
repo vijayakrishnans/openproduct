@@ -7,6 +7,8 @@ import { SupportLinks } from "@/components/support-links";
 import { buildSupportLinks } from "@/lib/auth/support";
 import { followState, handsFor, voteState, type Hand } from "@/lib/auth/reactions";
 import { currentSession } from "@/lib/auth/request";
+import { getListing, isMaintainer, listingToDetail, missingForPublish, type Listing } from "@/lib/auth/listings";
+import Link from "next/link";
 import { database } from "@/lib/server/env";
 import { initials, loadBuild, loadDirectory, maintainsOf } from "@/lib/directory";
 import { ORUNBASE } from "@/lib/links";
@@ -62,7 +64,16 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 export default async function BuildPage({ params, searchParams }: { params: Params; searchParams: Search }) {
   const { slug } = await params;
   const q = await searchParams;
-  const b = await loadBuild(slug);
+  const [remote, db0, session0] = await Promise.all([loadBuild(slug), database(), currentSession()]);
+  // Not on openproduct.live: a build listed here (list-your-build D1). A draft
+  // is shown only to its maintainers; a hidden listing to nobody.
+  let listing: Listing | null = null;
+  if ((remote === null || remote === "unreachable") && db0) {
+    const l = await getListing(db0, slug).catch(() => null);
+    const mine = !!l && isMaintainer(l, session0?.account.id);
+    if (l && (l.state === "published" || (mine && l.state !== "hidden"))) listing = l;
+  }
+  const b = listing ? listingToDetail(listing) : remote;
   if (b === null) notFound();
   if (b === "unreachable") {
     return (
@@ -77,7 +88,8 @@ export default async function BuildPage({ params, searchParams }: { params: Para
       </>
     );
   }
-  const [dir, db, session] = await Promise.all([loadDirectory(), database(), currentSession()]);
+  const [dir, db, session] = [await loadDirectory(), db0, session0];
+  const manage = listing && isMaintainer(listing, session?.account.id) ? listing : null;
   const me = session?.account.id ?? null;
   const none = { count: 0, mine: false };
   const [support, votes, follows, hands] = db
@@ -97,6 +109,18 @@ export default async function BuildPage({ params, searchParams }: { params: Para
         <nav className="crumbs" aria-label="Breadcrumb">
           <a href="/">Builds</a> <span>/</span> <span>{b.slug}</span>
         </nav>
+        {manage ? (
+          <div className={`listing-bar${manage.state === "published" ? "" : " is-draft"}`} role="status">
+            <span>
+              {manage.state === "published" ? (
+                <><b>Your listing is live.</b> Edit it, or take it back to a draft, from its settings.</>
+              ) : (
+                <><b>Draft: only you can see this.</b> {missingForPublish(manage).length ? `Still to do: ${missingForPublish(manage).join(", ").toLowerCase()}.` : "Ready to publish."}</>
+              )}
+            </span>
+            <Link className="btn btn-dark" href={`/list/${manage.slug}`}>Listing settings</Link>
+          </div>
+        ) : null}
         <section className="build-head">
           <span className="tile-lg mono">{initials(b.slug)}</span>
           <div className="build-id">
@@ -119,14 +143,29 @@ export default async function BuildPage({ params, searchParams }: { params: Para
             <Act action="follow" fields={{ kind: "build", key: b.slug }} next={here} className={`btn btn-ghost${follows.mine ? " is-on" : ""}`}>
               {follows.mine ? "✓ Following" : "Follow"}{follows.count ? ` · ${follows.count}` : ""}
             </Act>
-            <a className="btn btn-accent" href={ORUNBASE}>Fork &amp; deploy</a>
+            {listing ? null : <a className="btn btn-accent" href={ORUNBASE}>Fork &amp; deploy</a>}
           </div>
         </section>
 
         <div className="build-grid">
           <div className="build-main">
-            <AppMap slug={b.slug} initials={initials(b.slug)} pieces={b.pieces} />
+            {listing ? (
+              <div className="panel">
+                <div className="panel-head"><h2>About</h2><span className="pill">Listed here</span></div>
+                <p style={{ margin: 0 }}>{listing.description ?? "The maintainers haven't written more yet."}</p>
+                {listing.stack.length ? (
+                  <div className="skills" style={{ marginTop: 12 }}>
+                    <span className="muted">Stack</span>
+                    {listing.stack.map((t) => <span key={t} className="skill mono">{t}</span>)}
+                  </div>
+                ) : null}
+                <p className="sample-tag">From the repo&apos;s own description and languages. Activity from the repo comes next.</p>
+              </div>
+            ) : (
+              <AppMap slug={b.slug} initials={initials(b.slug)} pieces={b.pieces} />
+            )}
 
+            {listing ? null : (
             <div className="panel">
               <div className="panel-head">
                 <div>
@@ -150,6 +189,7 @@ export default async function BuildPage({ params, searchParams }: { params: Para
               </ul>
               <div className="sample-tag">Sample: the API has no build log yet.</div>
             </div>
+            )}
 
             {b.pitch ? (
               <details className="panel pitch-panel">
@@ -168,11 +208,13 @@ export default async function BuildPage({ params, searchParams }: { params: Para
                 <SupportLinks links={support} title={`Support ${b.slug}`} />
               </div>
             ) : null}
+            {listing ? null : (
             <div className="panel dark">
               <h2>Run your own copy</h2>
               <p>Fork to your GitHub and deploy to your own cloud on Orunbase. Your fork stays linked to {b.slug}.</p>
               <a className="btn btn-light" href={ORUNBASE}>Fork &amp; deploy on Orunbase</a>
             </div>
+            )}
 
             <div className="panel" id="roles">
               <div className="panel-head">
@@ -217,7 +259,7 @@ export default async function BuildPage({ params, searchParams }: { params: Para
             <div className="panel">
               <div className="panel-head"><h2>Builders</h2></div>
               <p className="muted" style={{ margin: 0 }}>
-                {b.maintainers ? `${b.maintainers} maintainers` : "Maintainers and contributors are pulled from the repo once it is linked."} Join by opening a PR on any open role.
+                {b.maintainers ? `${b.maintainers} ${b.maintainers === 1 ? "maintainer" : "maintainers"}.` : "Maintainers and contributors are pulled from the repo once it is linked."} Join by opening a PR on any open role.
               </p>
             </div>
 

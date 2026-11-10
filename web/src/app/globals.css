@@ -784,3 +784,15 @@ a.channel-row .channel-text span { color: var(--link); font-weight: 600; }
 .demo-pick-text .muted { font-size: 13px; }
 .demo-go { font-weight: 600; font-size: 14px; color: var(--link); white-space: nowrap; }
 @media (max-width: 700px) { .demo-list { grid-template-columns: 1fr; } }
+
+/* List your build (LB1) */
+.list-page h1 { margin: 10px 0 6px; font-size: 32px; letter-spacing: -0.02em; }
+.list-page .sub { max-width: 640px; color: var(--ink-2); }
+.list-steps { margin: 18px 0 20px; max-width: 760px; }
+.list-form { max-width: 620px; }
+.list-form select, .list-settings select { font: inherit; padding: 9px 10px; border: 1px solid var(--line-2); border-radius: 10px; background: var(--card); color: var(--ink); }
+.verify-code { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; align-items: center; padding: 12px 14px; background: var(--sunken); border-radius: 10px; margin: 4px 0 12px; }
+.verify-code code { font-size: 14px; overflow-wrap: anywhere; }
+.listing-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 14px 0 0; padding: 10px 14px; border: 1px solid var(--ok-line); background: var(--ok-bg); border-radius: 12px; font-size: 14px; }
+.listing-bar.is-draft { border-color: var(--line-2); background: var(--warm-bg); }
+.btn[disabled] { opacity: .5; cursor: not-allowed; }
