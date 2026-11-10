@@ -7,8 +7,8 @@
 | LB2: live from the repo | ✅ Shipped | [#31](https://github.com/vijayakrishnans/openproduct/pull/31) |
 | LB3: open roles | ✅ Shipped | [#32](https://github.com/vijayakrishnans/openproduct/pull/32) |
 | LB4: maintainers and contributors | ✅ Shipped | [#33](https://github.com/vijayakrishnans/openproduct/pull/33) |
-| LB5: the pitch, a cover and a live link | 🚧 In review | |
-| LB6: moderation and lifecycle | ⏳ Not started | |
+| LB5: the pitch, a cover and a live link | ✅ Shipped | [#34](https://github.com/vijayakrishnans/openproduct/pull/34) |
+| LB6: moderation and lifecycle | 🚧 In review | |
 
 ## Departures from the design
 
@@ -59,3 +59,15 @@ An invite is a maintainer row with no `accepted_at`, so it never grants anything
 ### Q1 answered by its default: the workspace link is optional (LB5)
 
 openproduct.live's builds carry an Orunbase reference like `org_…`, and their "Fork & deploy" goes to the Orunbase app; there's no per-workspace fork address. A listing takes the same kind of reference (`org_…` or `ws_…`), and shows the same button and panel only when one is set.
+
+### Hiding is a listing state; restoring puts back what was there (LB6)
+
+A moderator's Hide sets `state = 'hidden'` and resolves the listing's reports. Restore publishes it again if it's still publishable (verified, tagline, category), otherwise returns it to a draft. Only published listings can be reported. A hidden listing is a 404 to everyone except moderators, who see a "Hidden by a moderator" banner with Restore; its maintainers see the same note in its settings.
+
+### Renames move everything keyed by the slug, and never chain (LB6)
+
+Maintainers, seats and stats follow by `ON UPDATE CASCADE`; votes, build follows, raised hands, build support links, listing reports and posts about the build are updated in the same batch. Earlier names are re-pointed at the newest, so `/builds/<old>` is always one redirect. A name renamed away from is held for 30 days, so nobody else can take a just-vacated address. Renaming and deleting are owners only; deleting asks for the build's name to be typed.
+
+### `?from=here` (D1, LB6)
+
+If openproduct.live ever lists a slug that a listing here already has, theirs wins on `/builds/<slug>`, and `?from=here` still shows this site's listing until its owners rename it.

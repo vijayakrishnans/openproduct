@@ -5,6 +5,8 @@ import { createListing, setPublished, updateListing, verifyListing } from "@/lib
 import { addRole, setRoleOpen, updateRole } from "@/lib/auth/listing-roles";
 import { answerInvite, inviteMaintainer, makeOwner, removeMaintainer } from "@/lib/auth/listing-team";
 import { removeCover, setCover, updateDetails } from "@/lib/auth/listing-media";
+import { deleteListing, renameListing, reportListing, setListingHidden } from "@/lib/auth/listing-lifecycle";
+import { isModerator, moderatorsFor } from "@/lib/auth/discussions";
 import { sameOrigin } from "@/lib/auth/request";
 import { SESSION_COOKIE, validateSession } from "@/lib/auth/session";
 import { loadDirectory, slugTakenOnOpenproduct } from "@/lib/directory";
@@ -47,6 +49,26 @@ export async function POST(request: NextRequest) {
     const r = await verifyListing(db, slug, me, github);
     return go(back, r.ok ? { verified: "1" } : { error: r.message });
   }
+  // Moderation and lifecycle (LB6).
+  if (action === "report") {
+    await reportListing(db, me, slug, field("reason"));
+    return go(`/builds/${slug}`, { reported: "1" });
+  }
+  if (action === "listing-hide" || action === "listing-restore") {
+    if (!(await isModerator(db, me, moderatorsFor(env)))) return new NextResponse("Forbidden", { status: 403 });
+    await setListingHidden(db, slug, action === "listing-hide");
+    return field("from") === "moderation" ? go("/community/moderation") : go(`/builds/${slug}`);
+  }
+  if (action === "delete") {
+    if (field("confirm") !== slug) return go(`${back}#danger`, { error: "Type the build's name to confirm deleting it." });
+    const r = await deleteListing(db, env.COVERS, slug, me);
+    return r.ok ? go("/account", { deleted: slug }) : go(`${back}#danger`, { error: r.message });
+  }
+  if (action === "rename") {
+    const r = await renameListing(db, slug, me, field("new_slug"), slugTakenOnOpenproduct);
+    return r.ok ? go(`/list/${r.slug}`, { renamed: "1" }) : go(`${back}#danger`, { error: r.message });
+  }
+
   // Pitch, live link, workspace and cover (LB5).
   if (action === "details") {
     const r = await updateDetails(db, slug, me, { pitch: field("pitch"), liveUrl: field("live_url"), workspaceRef: field("workspace_ref") });

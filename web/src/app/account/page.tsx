@@ -21,7 +21,7 @@ import { appEnv, database } from "@/lib/server/env";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Your account", robots: { index: false } };
 
-type Search = Promise<{ joined?: string; welcome?: string; next?: string; added?: string; error?: string; provider?: string; message?: string; saved?: string; sent?: string }>;
+type Search = Promise<{ deleted?: string; left?: string; joined?: string; welcome?: string; next?: string; added?: string; error?: string; provider?: string; message?: string; saved?: string; sent?: string }>;
 
 export default async function AccountPage({ searchParams }: { searchParams: Search }) {
   const q = await searchParams;
@@ -57,6 +57,8 @@ export default async function AccountPage({ searchParams }: { searchParams: Sear
             {next && next !== "/" ? <Link className="link" href={next}>Carry on where you were</Link> : null}
           </p>
         ) : null}
+        {q.deleted ? <p className="auth-ok" role="status">{q.deleted.slice(0, 40)} is deleted.</p> : null}
+        {q.left ? <p className="auth-ok" role="status">You&apos;ve left {q.left.slice(0, 40)}.</p> : null}
         {q.joined ? <p className="auth-ok" role="status">You&apos;re a maintainer of {q.joined.slice(0, 40)} now. It shows on your profile.</p> : null}
         {q.sent ? <p className="auth-ok" role="status">Check your inbox. Open the link there, in this browser, to add email as a way in.</p> : null}
         {q.added ? <p className="auth-ok" role="status">{PROVIDER_LABEL[q.added as keyof typeof PROVIDER_LABEL] ?? "That provider"} is now a way into this account.</p> : null}

@@ -822,3 +822,7 @@ a.channel-row .channel-text span { color: var(--link); font-weight: 600; }
 .cover-form input[type="file"] { font: inherit; font-size: 14px; max-width: 100%; }
 .listing-pitch .post-body { font-size: 15px; }
 .listing-cover { display: block; width: calc(100% + 32px); margin: -16px -16px 14px; aspect-ratio: 16 / 9; object-fit: cover; border-bottom: 1px solid var(--line); background: var(--sunken); }
+.listing-report { display: flex; gap: 16px; justify-content: flex-end; padding: 0 4px; }
+.listing-report form { margin: 0; }
+.danger-zone { border-color: var(--err-line); }
+.danger-zone .account-form { margin-top: 10px; }

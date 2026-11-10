@@ -245,7 +245,8 @@ export async function setHidden(db: Db, kind: ReportKind, id: string, hidden: bo
 }
 
 export type OpenReport = {
-  kind: ReportKind;
+  /** "listing" (LB6): a build listed here, reported by its slug. */
+  kind: ReportKind | "listing";
   id: string;
   /** The thread it's in; null for a builder post. */
   threadId: string | null;
@@ -264,26 +265,32 @@ export async function openReports(db: Db): Promise<OpenReport[]> {
     .prepare(
       `SELECT r.target_kind AS kind, r.target_id AS id, count(*) AS n, group_concat(coalesce(r.reason, ''), '\u001f') AS reasons,
               coalesce(t.id, p.thread_id) AS thread_id, coalesce(t.title, pt.title, a.title) AS title, coalesce(p.body, a.body) AS body,
-              coalesce(t.hidden, p.hidden, a.hidden) AS hidden, a.id AS article_id
+              coalesce(t.hidden, p.hidden, a.hidden, ls.state = 'hidden') AS hidden, a.id AS article_id,
+              ls.slug AS listing_slug, ls.tagline AS listing_tagline
          FROM reports r
          LEFT JOIN threads t ON r.target_kind = 'thread' AND t.id = r.target_id
          LEFT JOIN posts p ON r.target_kind = 'post' AND p.id = r.target_id
          LEFT JOIN threads pt ON pt.id = p.thread_id
          LEFT JOIN articles a ON r.target_kind = 'article' AND a.id = r.target_id
+         LEFT JOIN listings ls ON r.target_kind = 'listing' AND ls.slug = r.target_id
         WHERE r.resolved = 0
         GROUP BY r.target_kind, r.target_id
         ORDER BY n DESC`,
     )
-    .all<{ kind: ReportKind; id: string; n: number; reasons: string | null; thread_id: string | null; title: string | null; body: string | null; hidden: number | null; article_id: string | null }>();
+    .all<{ kind: ReportKind | "listing"; id: string; n: number; reasons: string | null; thread_id: string | null; title: string | null; body: string | null; hidden: number | null; article_id: string | null; listing_slug: string | null; listing_tagline: string | null }>();
   return rows.results
-    .filter((r) => r.thread_id || r.article_id)
+    .filter((r) => r.thread_id || r.article_id || r.listing_slug)
     .map((r) => ({
       kind: r.kind,
       id: r.id,
       threadId: r.thread_id,
-      href: r.article_id ? `/posts/${r.article_id}` : `/community/t/${r.thread_id}${r.kind === "post" ? `#p-${r.id}` : ""}`,
-      title: r.title ?? "",
-      excerpt: (r.body ?? "").slice(0, 200),
+      href: r.listing_slug
+        ? `/builds/${r.listing_slug}`
+        : r.article_id
+          ? `/posts/${r.article_id}`
+          : `/community/t/${r.thread_id}${r.kind === "post" ? `#p-${r.id}` : ""}`,
+      title: r.listing_slug ? `Build: ${r.listing_slug}` : (r.title ?? ""),
+      excerpt: (r.listing_tagline ?? r.body ?? "").slice(0, 200),
       reports: r.n,
       reasons: (r.reasons ?? "").split("\u001f").filter(Boolean),
       hidden: r.hidden === 1,
