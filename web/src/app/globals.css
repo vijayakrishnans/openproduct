@@ -668,13 +668,20 @@ a.channel-row .channel-text span { color: var(--link); font-weight: 600; }
 .person-section .section-head { align-items: center; margin-bottom: 10px; }
 .person-section .section-head h2 { margin: 0; font-size: 18px; letter-spacing: 0; }
 .person-section .section-head .btn { margin-left: auto; }
-.article-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; margin-top: 14px; align-items: start; }
+.article-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; margin-top: 14px; align-items: stretch; }
 .from-builders .article-grid, .person-section .article-grid { margin-top: 0; }
 .article-card { display: flex; flex-direction: column; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; min-width: 0; }
 .article-card .video-embed { margin: 0; border-bottom: 1px solid var(--line); }
 .article-card .video-embed figcaption { display: none; }
 .article-card .video-frame { border-radius: 0; }
-.article-card-body { padding: 14px 16px 16px; display: grid; gap: 8px; align-content: start; }
+.article-card-body { padding: 14px 16px 16px; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; flex: 1; }
+.article-card-body > * { margin: 0; }
+.article-card h3, .article-excerpt { display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; }
+.article-card h3 { -webkit-line-clamp: 2; }
+.article-card .article-excerpt { -webkit-line-clamp: 3; }
+.article-card .article-more { margin-top: auto; padding-top: 4px; }
+.article-cover { display: grid; place-items: center; aspect-ratio: 16 / 9; border-bottom: 1px solid var(--line); text-decoration: none; background: radial-gradient(var(--dot) 1px, transparent 1.2px) 0 0 / 14px 14px, var(--sunken); }
+.article-cover span { font: 600 12px/1 ui-monospace, monospace; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3); border: 1px solid var(--line); border-radius: 999px; padding: 8px 14px; background: var(--card); }
 .article-card h3 { margin: 0; font-size: 17px; line-height: 1.3; letter-spacing: -0.01em; }
 .article-card h3 a { text-decoration: none; color: var(--ink); }
 .article-card h3 a:hover { text-decoration: underline; text-underline-offset: 3px; }
