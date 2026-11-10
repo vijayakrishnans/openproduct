@@ -9,6 +9,7 @@ const ICON: Record<BadgeKind, string> = {
   contributor: "M7 7h10v10H7zM7 12h10M12 7v10",
   since: "M5 5h14v15H5zM5 10h14M9 3v4m6-4v4",
   discussion: "M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.6A8 8 0 1 1 21 12Z",
+  "merged-pr": "M6 21V9a9 9 0 0 0 9 9M6 3a3 3 0 1 0 0 6 3 3 0 0 0 0-6Zm12 12a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z",
   writer: "M4 20h4L19 9l-4-4L4 16v4Zm9-13 4 4",
   support: "M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z",
 };

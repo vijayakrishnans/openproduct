@@ -10,6 +10,8 @@ export type AppEnv = {
   GITHUB_CLIENT_SECRET?: string;
   GOOGLE_CLIENT_ID?: string;
   GOOGLE_CLIENT_SECRET?: string;
+  /** Optional: a GitHub token for reading merged PRs (BP7); otherwise the OAuth app's id and secret are used. */
+  GITHUB_TOKEN?: string;
   /** Comma-separated GitHub logins who may hide posts; defaults to the site owner. */
   MODERATORS?: string;
 };

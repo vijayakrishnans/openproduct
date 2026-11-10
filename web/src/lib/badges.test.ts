@@ -83,3 +83,22 @@ describe("cardBadges", () => {
     expect(card.map((b) => b.kind)).toEqual(["open", "launched", "maintains"]);
   });
 });
+
+describe("merged-PR badge (BP7)", () => {
+  const m = (total: number) => ({ login: "ada", total, builds: ["rateboard"], link: "https://github.com/pulls?q=x" });
+  it("names the first, counts the rest, and stops at 10", () => {
+    const label = (total: number) => builderBadges({ ...none, mergedPrs: m(total) }).find((b) => b.kind === "merged-pr")?.label;
+    expect(label(1)).toBe("First PR merged");
+    expect(label(4)).toBe("4 PRs merged");
+    expect(label(37)).toBe("10+ PRs merged");
+  });
+  it("links GitHub's own search so anyone can check it", () => {
+    const b = builderBadges({ ...none, mergedPrs: m(2) }).find((x) => x.kind === "merged-pr")!;
+    expect(b.href).toBe("https://github.com/pulls?q=x");
+    expect(b.from).toBe("2 pull requests by @ada merged into rateboard, on GitHub");
+  });
+  it("shows nothing, not a zero, without GitHub or without a merged PR", () => {
+    expect(builderBadges({ ...none, mergedPrs: null }).some((b) => b.kind === "merged-pr")).toBe(false);
+    expect(builderBadges({ ...none, mergedPrs: m(0) }).some((b) => b.kind === "merged-pr")).toBe(false);
+  });
+});

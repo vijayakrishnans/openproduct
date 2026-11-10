@@ -13,13 +13,15 @@ import { currentSession } from "@/lib/auth/request";
 import { builderSupportLinks } from "@/lib/auth/support";
 import { threadsStartedBy } from "@/lib/auth/discussions";
 import { articlesBy, listArticles, type Article } from "@/lib/auth/articles";
+import { mergedPrsOfAccount } from "@/lib/auth/github-prs";
+import { searchLink, type MergedPrs } from "@/lib/merged-prs";
 import { ArticleCard } from "@/components/article-card";
 import { SupportLinks } from "@/components/support-links";
 import type { Session } from "@/lib/auth/session";
 import { builderBadges } from "@/lib/badges";
-import { initials, loadDirectory, loadPerson, type Build, type PersonDetail } from "@/lib/directory";
+import { initials, loadBuildRepos, loadDirectory, loadPerson, type Build, type PersonDetail } from "@/lib/directory";
 import { OPENPRODUCT } from "@/lib/links";
-import { database } from "@/lib/server/env";
+import { appEnv, database } from "@/lib/server/env";
 
 export const dynamic = "force-dynamic";
 
@@ -180,15 +182,24 @@ export default async function PersonPage({ params, searchParams }: { params: Par
   const fromHere = remote === null && owner?.kind === "new";
   const person = fromHere ? localPerson(owner!) : remote;
   if (person === null) notFound();
-  const [support, discussions, posts, postCount] =
+  const env = await appEnv();
+  const [support, discussions, posts, postCount, merged] =
     db && person !== "unreachable"
       ? await Promise.all([
           builderSupportLinks(db, person.handle).catch(() => []),
           threadsStartedBy(db, person.handle).catch(() => 0),
           listArticles(db, { handle: person.handle, limit: 12, accountId: session?.account.id ?? null }).catch((): Article[] => []),
           articlesBy(db, person.handle).catch(() => 0),
+          // BP7: only a profile owned by an account signed in with GitHub is counted.
+          owner
+            ? mergedPrsOfAccount(db, owner.accountId, person.maintainsBuilds.map((b) => b.slug), {
+                fetch: (url, init) => fetch(url, init),
+                auth: { token: env.GITHUB_TOKEN, clientId: env.GITHUB_CLIENT_ID, clientSecret: env.GITHUB_CLIENT_SECRET },
+                loadRepos: loadBuildRepos,
+              }).catch((): MergedPrs | null => null)
+            : Promise.resolve(null),
         ])
-      : [[], 0, [] as Article[], 0];
+      : [[], 0, [] as Article[], 0, null];
   const isOwner = !!owner && !!session && owner.accountId === session.account.id;
   const badges =
     person === "unreachable"
@@ -203,6 +214,9 @@ export default async function PersonPage({ params, searchParams }: { params: Par
           supportLinks: support.length,
           discussions,
           posts: postCount,
+          mergedPrs: merged && merged.total > 0
+            ? { login: merged.login, total: merged.total, builds: Object.keys(merged.byBuild), link: searchLink(merged.login, merged.repos) }
+            : null,
         });
   return (
     <>
@@ -240,7 +254,7 @@ export default async function PersonPage({ params, searchParams }: { params: Par
               {badges.length > 0 ? (
                 <>
                   <BadgeList badges={badges} />
-                  <p className="badge-note">Every badge is worked out from public activity on openproduct. Nobody hands them out. Each one says where it came from.</p>
+                  <p className="badge-note">Every badge is worked out from public activity on openproduct and GitHub. Nobody hands them out. Each one says where it came from.</p>
                 </>
               ) : (
                 <p className="sample-note">No badges yet. They come from building and contributing in the open.</p>
