@@ -8,7 +8,7 @@ Today a topic is only a build category (one per build, from openproduct.live), a
 
 | Field | Value |
 |-------|-------|
-| Status | 📝 Proposed |
+| Status | ✅ Completed (2026-11-10) |
 | Cluster | **TC** (TC0–TC5) · Orunbase epic **EP-3** `topics-and-community` · tasks OP-38–OP-43 |
 | Owner(s) | `web/` here. openproduct.live is not changed. |
 | Builds on | builder-profiles (posts, discussions, moderation, badges, BP7's merged PRs), list-your-build (listings and their stats), OP-25 (follows), OP-37 (search) |
