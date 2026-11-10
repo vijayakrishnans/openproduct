@@ -963,3 +963,19 @@ a.channel-row .channel-text span { color: var(--link); font-weight: 600; }
   .person-top { grid-template-columns: minmax(0, 1fr); gap: 8px; }
   .person-side { position: static; margin-top: 24px; }
 }
+
+/* Comments under a build (OP-46) */
+.build-comments .panel-head { margin-bottom: 6px; }
+.comment-list { list-style: none; margin: 0; padding: 0; display: grid; }
+.comment { display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: 12px; padding: 14px 0; border-top: 1px solid var(--line); scroll-margin-top: 84px; }
+.comment:first-child { border-top: 0; }
+.comment.is-hidden { opacity: 0.6; }
+.comment-anon { width: 32px; height: 32px; border-radius: 50%; background: var(--sunken); }
+.comment-main { min-width: 0; }
+.comment-main .post-head { margin-bottom: 2px; }
+.comment-main p { margin: 4px 0; }
+.comment-main .post-actions { margin-top: 4px; }
+.comment-empty { margin: 4px 0 12px; }
+.comment-form { display: grid; gap: 10px; margin-top: 12px; padding-top: 14px; border-top: 1px solid var(--line); }
+.comment-form textarea { width: 100%; font: inherit; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line-2); background: var(--paper); color: var(--ink); resize: vertical; }
+.comment-form .btn { justify-self: start; }

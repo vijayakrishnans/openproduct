@@ -1,0 +1,14 @@
+apiVersion: orun.io/v1
+kind: TaskContract
+metadata:
+  name: OP-46
+spec:
+  goal: "Comments under every build page: builders comment, anyone signed in reports, moderators hide, authors delete their own."
+  affects:
+    - default/openproduct/web
+    - web/**
+    - tasks/**
+  doneWhen:
+    - "A builder posts a comment under a build and lands on it; a reported comment reaches the moderation queue and can be hidden."
+    - "Comments move with a renamed listing and go with a deleted one."
+  gates: []
