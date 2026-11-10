@@ -1,7 +1,7 @@
 // Who is looking, for pages that change with it: signed in, has a builder
 // profile, moderates.
 import { builderOfAccount, type OwnedBuilder } from "./builders";
-import { isModerator, parseModerators } from "./discussions";
+import { isModerator, moderatorsFor } from "./discussions";
 import { currentSession } from "./request";
 import type { Session } from "./session";
 import { appEnv, database } from "../server/env";
@@ -14,7 +14,7 @@ export async function viewer(): Promise<Viewer> {
   if (!session || !db) return { session, builder: null, moderator: false, db };
   const [builder, moderator] = await Promise.all([
     builderOfAccount(db, session.account.id),
-    isModerator(db, session.account.id, parseModerators(env.MODERATORS)),
+    isModerator(db, session.account.id, moderatorsFor(env)),
   ]);
   return { session, builder, moderator, db };
 }

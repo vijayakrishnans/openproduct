@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { currentSession } from "@/lib/auth/request";
 import { ORUNBASE } from "@/lib/links";
+import { isDemoAccount } from "@/lib/auth/demo";
+import { appEnv, demoSignIn } from "@/lib/server/env";
 import { SearchBox } from "./search-box";
 import { ThemeToggle } from "./theme-toggle";
 
@@ -12,10 +14,44 @@ const NAV = [
   { href: "/community", label: "Community" },
 ];
 
-export async function SiteHeader({ current, query }: { current?: string; query?: string }) {
-  const session = await currentSession();
-  const name = session?.account.displayName ?? "Your account";
+/** On stage (OP-34): who you're signed in as, if a demo account, or how to become one. */
+function DemoBar({ demoName }: { demoName: string | null }) {
   return (
+    <div className="demo-bar" role="note">
+      <div className="wrap">
+        {demoName ? (
+          <>
+            <span>
+              <b>Demo account.</b> You&apos;re signed in as {demoName} on stage. Nothing here is real.
+            </span>
+            <span className="demo-bar-acts">
+              <Link href="/demo">Switch</Link>
+              <form method="post" action="/signout">
+                <button type="submit">Sign out</button>
+              </form>
+            </span>
+          </>
+        ) : (
+          <>
+            <span>
+              <b>Stage.</b> See every signed-in screen without an account.
+            </span>
+            <Link href="/demo">Try a demo account →</Link>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export async function SiteHeader({ current, query }: { current?: string; query?: string }) {
+  const [session, env] = await Promise.all([currentSession(), appEnv()]);
+  const name = session?.account.displayName ?? "Your account";
+  const demo = demoSignIn(env);
+  const demoName = demo && session && isDemoAccount(session.account.id) ? name : null;
+  return (
+    <>
+    {demo && (!session || demoName) ? <DemoBar demoName={demoName} /> : null}
     <header className="site-header">
       <div className="wrap">
         <Link href="/" className="brand">
@@ -54,5 +90,6 @@ export async function SiteHeader({ current, query }: { current?: string; query?:
         </div>
       </div>
     </header>
+    </>
   );
 }

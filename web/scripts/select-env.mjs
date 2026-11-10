@@ -20,5 +20,8 @@ for (const db of Object.values(DATABASES)) {
   text = text.replaceAll(db.id, target.id).replaceAll(`"${db.name}"`, `"${target.name}"`);
 }
 if (!text.includes(target.id)) throw new Error("wrangler.jsonc has no D1 database id to select");
+// Demo sign-in is for stage only: prod must never sign anyone in without a provider.
+text = text.replace(/"DEMO_SIGNIN":\s*"[^"]*"/, `"DEMO_SIGNIN": "${env === "prod" ? "off" : "on"}"`);
+if (env === "prod" && !text.includes('"DEMO_SIGNIN": "off"')) throw new Error("could not turn demo sign-in off for prod");
 writeFileSync(path, text);
-console.log(`D1: ${target.name} (${env})`);
+console.log(`D1: ${target.name} (${env}); demo sign-in ${env === "prod" ? "off" : "on"}`);

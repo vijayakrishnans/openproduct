@@ -767,3 +767,20 @@ a.channel-row .channel-text span { color: var(--link); font-weight: 600; }
 .provider-mark.apple { background: var(--ink); color: var(--on-ink); }
 .provider-mark.email { background: var(--sunken); color: var(--ink); }
 .hand-icon { flex: none; margin-right: 2px; vertical-align: -2px; }
+
+/* Demo sign-in on stage (OP-34) */
+.demo-bar { background: var(--warm-bg, #fff4e5); border-bottom: 1px solid var(--line); font-size: 13.5px; color: var(--ink); }
+.demo-bar .wrap { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 7px; padding-bottom: 7px; flex-wrap: wrap; }
+.demo-bar a, .demo-bar button { color: var(--link); font: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; background: none; border: 0; padding: 0; cursor: pointer; }
+.demo-bar-acts { display: flex; gap: 14px; align-items: center; }
+.demo-bar form { margin: 0; }
+.demo-page h1 { margin: 10px 0 6px; font-size: 32px; letter-spacing: -0.02em; }
+.demo-page .sub { max-width: 680px; color: var(--ink-2); }
+.demo-list { list-style: none; margin: 20px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; }
+.demo-pick { margin: 0; }
+.demo-pick button { width: 100%; display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 12px; align-items: center; text-align: left; padding: 14px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); color: var(--ink); font: inherit; cursor: pointer; }
+.demo-pick button:hover { border-color: var(--ink-2); }
+.demo-pick-text { display: grid; gap: 3px; min-width: 0; }
+.demo-pick-text .muted { font-size: 13px; }
+.demo-go { font-weight: 600; font-size: 14px; color: var(--link); white-space: nowrap; }
+@media (max-width: 700px) { .demo-list { grid-template-columns: 1fr; } }

@@ -1,0 +1,16 @@
+apiVersion: orun.io/v1
+kind: TaskContract
+metadata:
+  name: OP-34
+spec:
+  goal: "Demo sign-in on stage: anyone can sign in as a demo builder or a demo moderator in one click to see every signed-in screen, never on prod, with demo data everywhere."
+  affects:
+    - default/openproduct/web
+    - web/**
+    - tasks/**
+    - specs/**
+  doneWhen:
+    - "On stage, /demo lists the demo builders and a demo moderator; picking one signs in without any provider, and a banner says it's a demo account."
+    - "On prod, /demo answers 404 and the demo sign-in route refuses, because the deploy turns DEMO_SIGNIN off there; a test covers the switch."
+    - "Stage's demo data includes upvotes, follows, raised hands and a report waiting in moderation, alongside the existing threads, posts and support links."
+  gates: []

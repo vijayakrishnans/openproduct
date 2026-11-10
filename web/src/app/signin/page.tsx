@@ -6,7 +6,8 @@ import { SiteHeader } from "@/components/site-header";
 import { emailConfigured } from "@/lib/auth/email-link";
 import { configuredProviders, PROVIDER_LABEL } from "@/lib/auth/providers";
 import { currentSession, safeNext } from "@/lib/auth/request";
-import { appEnv, database } from "@/lib/server/env";
+import { appEnv, database, demoSignIn } from "@/lib/server/env";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Sign in", robots: { index: false } };
@@ -39,6 +40,9 @@ export default async function SignInPage({ searchParams }: { searchParams: Searc
           <h1>Sign in to openproduct</h1>
           <p className="sub">Claim your builder profile, add support links, and join the discussions.</p>
           {error && ERRORS[error] ? <p className="auth-error" role="alert">{ERRORS[error]}</p> : null}
+          {demoSignIn(env) ? (
+            <Link className="btn btn-dark auth-btn" href={`/demo?next=${encodeURIComponent(next)}`}>Try a demo account (stage only)</Link>
+          ) : null}
           {sent ? (
             <p className="auth-ok" role="status">Check your inbox. If that address can get mail, a sign-in link is on its way; it works once, for 15 minutes.</p>
           ) : null}

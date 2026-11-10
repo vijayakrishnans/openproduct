@@ -20,6 +20,8 @@ export type AppEnv = {
   EMAIL_FROM?: string;
   /** Optional: a GitHub token for reading merged PRs (BP7); otherwise the OAuth app's id and secret are used. */
   GITHUB_TOKEN?: string;
+  /** "on" lets anyone sign in as a demo account at /demo (OP-34). Stage only: the deploy sets "off" for prod. */
+  DEMO_SIGNIN?: string;
   /** Comma-separated GitHub logins who may hide posts; defaults to the site owner. */
   MODERATORS?: string;
 };
@@ -40,4 +42,9 @@ export async function database(): Promise<Db | null> {
   if (!env.DB) return null;
   await ensureSchema(env.DB);
   return env.DB;
+}
+
+/** Demo sign-in is on (stage and local only). */
+export function demoSignIn(env: AppEnv): boolean {
+  return env.DEMO_SIGNIN === "on";
 }
