@@ -18,7 +18,8 @@ const STEPS = [
   { n: "3", title: "Get merged, get in", body: "A merged PR is how you join the team." },
 ];
 
-export default async function RolesPage() {
+export default async function RolesPage({ searchParams }: { searchParams: Promise<{ seat?: string }> }) {
+  const { seat } = await searchParams;
   const dir = await loadDirectory();
   const roles = dir.ok ? await loadRoles(dir.builds) : [];
   const builds = new Set(roles.map((r) => r.slug)).size;
@@ -46,7 +47,7 @@ export default async function RolesPage() {
           </ol>
         </section>
         {dir.ok ? (
-          <RolesBoard roles={roles} />
+          <RolesBoard roles={roles} initialSeat={typeof seat === "string" ? seat : null} />
         ) : (
           <div className="unreachable">
             The directory could not be reached just now. Roles are listed at <a className="link" href={OPENPRODUCT}>openproduct.live</a>.

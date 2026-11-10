@@ -1,0 +1,14 @@
+apiVersion: orun.io/v1
+kind: TaskContract
+metadata:
+  name: OP-24
+spec:
+  goal: The home page gets a right-hand column with open roles (moved from the full-width row), topics, and the community's latest threads and posts, beside the open builds.
+  affects:
+    - default/openproduct/web
+    - web/**
+    - tasks/**
+  doneWhen:
+    - At desktop widths the open builds sit on the left and a sidebar with Open roles, Topics and Community sits on the right; the full-width roles row is gone.
+    - At phone width the sidebar stacks without horizontal overflow, in light and dark.
+  gates: []

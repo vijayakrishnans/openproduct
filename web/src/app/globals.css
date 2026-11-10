@@ -705,3 +705,42 @@ a.channel-row .channel-text span { color: var(--link); font-weight: 600; }
 .post-body h2 { font-size: 1.35em; letter-spacing: -0.01em; margin: 26px 0 10px; line-height: 1.25; }
 .post-body h3 { font-size: 1.12em; margin: 20px 0 8px; }
 .post-body > h2:first-child, .post-body > h3:first-child { margin-top: 0; }
+
+/* Home: builds on the left, roles, topics and community on the right (OP-24) */
+.home-cols { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 36px; align-items: start; }
+.home-main { min-width: 0; }
+.home-main .grid { grid-template-columns: repeat(auto-fill, minmax(176px, 1fr)); }
+.home-side { display: grid; gap: 26px; padding-top: 44px; min-width: 0; }
+.home-side .side-box h2 { margin: 0; }
+.side-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.side-head .link { font-size: 13px; }
+.side-sub { margin: -4px 0 10px; font-size: 13px; color: var(--ink-3); }
+.side-roles { display: grid; gap: 4px; }
+.side-role { display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: 10px; align-items: center; padding: 8px; margin: 0 -8px; border-radius: 10px; text-decoration: none; color: inherit; }
+.side-role:hover { background: var(--card); }
+.side-role-text { display: grid; gap: 3px; min-width: 0; }
+.side-role-text strong { font-size: 14px; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.side-role-text > span { font-size: 12.5px; color: var(--ink-3); display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.side-topics { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.side-topics a { display: flex; justify-content: space-between; gap: 10px; padding: 6px 8px; margin: 0 -8px; border-radius: 8px; text-decoration: none; color: var(--ink-2); font-size: 14px; }
+.side-topics a:hover { background: var(--card); color: var(--ink); }
+.side-posts { margin-top: 18px; display: grid; gap: 12px; }
+.side-posts h3 { margin: 0; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-3); }
+.side-post { display: grid; gap: 3px; text-decoration: none; color: inherit; }
+.side-post strong { font-size: 14.5px; line-height: 1.35; }
+.side-post:hover strong { text-decoration: underline; }
+.side-post .muted { font-size: 12.5px; }
+@media (max-width: 960px) {
+  .home-cols { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .home-side { order: -1; padding-top: 28px; grid-template-columns: minmax(0, 1fr); }
+  .home-side .side-box { border-left: 0; padding-left: 0; }
+  .side-roles { grid-auto-flow: column; grid-auto-columns: minmax(230px, 70%); overflow-x: auto; scroll-snap-type: x mandatory; gap: 10px; padding-bottom: 6px; }
+  .side-role { margin: 0; border: 1px solid var(--line); background: var(--card); scroll-snap-align: start; }
+  .side-topics { display: flex; flex-wrap: wrap; gap: 6px; }
+  .side-topics a { margin: 0; border: 1px solid var(--line); border-radius: 999px; background: var(--card); padding: 4px 12px; font-size: 13px; }
+  /* Builds come right after: keep the community box short here. */
+  .home-side .trend-row:nth-child(n+3), .home-side .side-posts { display: none; }
+}
+@media (max-width: 700px) {
+  .home-main .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
