@@ -5,8 +5,8 @@
 | LB0: the spec | ✅ Shipped | [#28](https://github.com/vijayakrishnans/openproduct/pull/28) |
 | LB1: list and verify | ✅ Shipped | [#30](https://github.com/vijayakrishnans/openproduct/pull/30) |
 | LB2: live from the repo | ✅ Shipped | [#31](https://github.com/vijayakrishnans/openproduct/pull/31) |
-| LB3: open roles | 🚧 In review | |
-| LB4: maintainers and contributors | ⏳ Not started | |
+| LB3: open roles | ✅ Shipped | [#32](https://github.com/vijayakrishnans/openproduct/pull/32) |
+| LB4: maintainers and contributors | 🚧 In review | |
 | LB5: the pitch, a cover and a live link | ⏳ Not started | |
 | LB6: moderation and lifecycle | ⏳ Not started | |
 
@@ -47,3 +47,7 @@ The licence stored at listing time is used only until the repo has been read; af
 ### Seats: a kind to pick, twelve at most, and closed ones kept (LB3)
 
 A maintainer may pick the seat's kind (engineering, design, advisor, growth, design partner, contributor) or leave it to be read from the title, as openproduct.live's seats are. A build has at most twelve seats, open or closed. Closing a seat keeps it (`open = 0`) so a raised hand or a link to it still resolves; the settings page can reopen it. Seat ids start `lr_`, so they never collide with openproduct.live's `opr_` ids in raised hands.
+
+### Owners hand over; anyone leaves; contributors stay computed (LB4)
+
+An invite is a maintainer row with no `accepted_at`, so it never grants anything until accepted. Any maintainer can invite. Only an owner removes others or makes someone an owner, so a team can hand a build over; anyone can leave, and the last owner can't. Contributors are the repo's own (up to 100 people, bots left out), read with the hourly stats, and count for a builder only by an exact GitHub-login match through a GitHub sign-in, never by a typed name. A listing counts toward badges, projects and support links only while it's published.

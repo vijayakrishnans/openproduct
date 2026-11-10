@@ -10,6 +10,7 @@ import { currentSession } from "@/lib/auth/request";
 import { getListing, isMaintainer, listingToDetail, missingForPublish, type Listing } from "@/lib/auth/listings";
 import { isStale, refreshStats, statsOf, type ListingStats } from "@/lib/auth/listing-stats";
 import { rolesOf } from "@/lib/auth/listing-roles";
+import { buildersByGithubLogins } from "@/lib/auth/listing-team";
 import { githubDepsFor } from "@/lib/auth/github-prs";
 import { appEnv } from "@/lib/server/env";
 import Link from "next/link";
@@ -91,6 +92,8 @@ export default async function BuildPage({ params, searchParams }: { params: Para
     }
   }
   const seats = listing && db0 ? await rolesOf(db0, listing.slug, { skills: listing.stack }).catch(() => []) : [];
+  // LB4: the repo's contributors who are builders here, and how many others.
+  const contributorsHere = listing && db0 && stats?.contributors.length ? await buildersByGithubLogins(db0, stats.contributors).catch(() => []) : [];
   const b = listing ? listingToDetail(listing, stats, seats) : remote;
   if (b === null) notFound();
   if (b === "unreachable") {
@@ -287,12 +290,44 @@ export default async function BuildPage({ params, searchParams }: { params: Para
               )}
             </div>
 
+            {listing ? (
+              <div className="panel">
+                <div className="panel-head"><h2>Builders</h2></div>
+                <p className="builders-line">
+                  <span className="muted">Maintained by </span>
+                  {listing.maintainers.map((m, i) => (
+                    <span key={m.accountId}>
+                      {i ? ", " : ""}
+                      {m.handle ? <Link className="link" href={`/builders/${m.handle}`}>@{m.handle}</Link> : "someone"}
+                    </span>
+                  ))}
+                </p>
+                {stats?.contributors.length ? (
+                  <p className="builders-line">
+                    <span className="muted">{stats.contributors.length} {stats.contributors.length === 1 ? "contributor" : "contributors"} on GitHub</span>
+                    {contributorsHere.length ? (
+                      <>
+                        <span className="muted">, including </span>
+                        {contributorsHere.map((c, i) => (
+                          <span key={c.handle}>
+                            {i ? ", " : ""}
+                            <Link className="link" href={`/builders/${c.handle}`}>@{c.handle}</Link>
+                          </span>
+                        ))}
+                      </>
+                    ) : null}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+            {listing ? null : (
             <div className="panel">
               <div className="panel-head"><h2>Builders</h2></div>
               <p className="muted" style={{ margin: 0 }}>
                 {b.maintainers ? `${b.maintainers} ${b.maintainers === 1 ? "maintainer" : "maintainers"}.` : "Maintainers and contributors are pulled from the repo once it is linked."} Join by opening a PR on any open role.
               </p>
             </div>
+            )}
 
             <div className="panel">
               <div className="panel-head"><h2>Embed this build</h2></div>

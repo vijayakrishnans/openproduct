@@ -808,3 +808,12 @@ a.channel-row .channel-text span { color: var(--link); font-weight: 600; }
 .seat-add > summary { list-style: none; display: inline-flex; cursor: pointer; }
 .seat-add > summary::-webkit-details-marker { display: none; }
 .seat-add[open] > summary { margin-bottom: 12px; }
+.team-list, .invite-list { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 8px; }
+.team-list li { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.team-list .team-acts { margin-left: auto; display: flex; gap: 12px; }
+.team-list form { margin: 0; }
+.invite-form input { font: inherit; padding: 9px 12px; border: 1px solid var(--line-2); border-radius: 10px; background: var(--card); color: var(--ink); min-width: 220px; }
+.invite-box { border-color: var(--ok-line); background: var(--ok-bg); }
+.invite-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.builders-line { margin: 0 0 6px; font-size: 14px; }
