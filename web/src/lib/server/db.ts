@@ -325,6 +325,18 @@ export const MIGRATIONS: { version: number; name: string; statements: string[] }
       `ALTER TABLE listing_stats ADD COLUMN contributors TEXT NOT NULL DEFAULT '[]'`,
     ],
   },
+  {
+    version: 12,
+    name: "listing pitch and cover",
+    statements: [
+      // list-your-build LB5: a pitch in the posts' Markdown subset, a live
+      // URL, an optional Orunbase workspace reference, and an R2 cover key.
+      `ALTER TABLE listings ADD COLUMN pitch TEXT CHECK (pitch IS NULL OR length(pitch) <= 5000)`,
+      `ALTER TABLE listings ADD COLUMN live_url TEXT`,
+      `ALTER TABLE listings ADD COLUMN workspace_ref TEXT`,
+      `ALTER TABLE listings ADD COLUMN cover_key TEXT`,
+    ],
+  },
 ];
 
 const applied = new WeakSet<object>();

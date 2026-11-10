@@ -10,6 +10,8 @@ import { currentSession } from "@/lib/auth/request";
 import { getListing, isMaintainer, listingToDetail, missingForPublish, type Listing } from "@/lib/auth/listings";
 import { isStale, refreshStats, statsOf, type ListingStats } from "@/lib/auth/listing-stats";
 import { rolesOf } from "@/lib/auth/listing-roles";
+import { PostBody } from "@/components/post-body";
+import { parseBody } from "@/lib/body";
 import { buildersByGithubLogins } from "@/lib/auth/listing-team";
 import { githubDepsFor } from "@/lib/auth/github-prs";
 import { appEnv } from "@/lib/server/env";
@@ -160,6 +162,7 @@ export default async function BuildPage({ params, searchParams }: { params: Para
             <p className="build-tag">{b.tagline}</p>
             <div className="build-links">
               {b.repoUrl ? <a className="link" href={b.repoUrl}>{b.repoUrl.replace(/^https?:\/\//, "")}</a> : <span className="muted">No public repo linked yet</span>}
+              {listing?.liveUrl ? <a className="link" href={listing.liveUrl} target="_blank" rel="noopener noreferrer nofollow">Open the live app ↗</a> : null}
               {b.publishedAt ? <span className="muted">listed {new Date(b.publishedAt).toISOString().slice(0, 10)}</span> : null}
             </div>
           </div>
@@ -170,7 +173,7 @@ export default async function BuildPage({ params, searchParams }: { params: Para
             <Act action="follow" fields={{ kind: "build", key: b.slug }} next={here} className={`btn btn-ghost${follows.mine ? " is-on" : ""}`}>
               {follows.mine ? "✓ Following" : "Follow"}{follows.count ? ` · ${follows.count}` : ""}
             </Act>
-            {listing ? null : <a className="btn btn-accent" href={ORUNBASE}>Fork &amp; deploy</a>}
+            {listing && !listing.workspaceRef ? null : <a className="btn btn-accent" href={ORUNBASE}>Fork &amp; deploy</a>}
           </div>
         </section>
 
@@ -178,6 +181,10 @@ export default async function BuildPage({ params, searchParams }: { params: Para
           <div className="build-main">
             {listing ? (
               <div className="panel">
+                {listing.coverKey ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img className="listing-cover" src={`/${listing.coverKey}`} alt={`${listing.slug}: cover image`} />
+                ) : null}
                 <div className="panel-head"><h2>About</h2><span className="pill">Listed here</span></div>
                 <p style={{ margin: 0 }}>{listing.description ?? "The maintainers haven't written more yet."}</p>
                 {listing.stack.length ? (
@@ -226,12 +233,16 @@ export default async function BuildPage({ params, searchParams }: { params: Para
             )}
 
             {b.pitch ? (
-              <details className="panel pitch-panel">
+              <details className="panel pitch-panel" open={!!listing}>
                 <summary className="panel-head">
                   <h2>The pitch</h2>
                   <span className="link">Read it</span>
                 </summary>
-                <div className="pitch">{b.pitch}</div>
+                {listing ? (
+                  <div className="pitch listing-pitch"><PostBody nodes={parseBody(b.pitch, { headings: true })} /></div>
+                ) : (
+                  <div className="pitch">{b.pitch}</div>
+                )}
               </details>
             ) : null}
           </div>
@@ -242,7 +253,7 @@ export default async function BuildPage({ params, searchParams }: { params: Para
                 <SupportLinks links={support} title={`Support ${b.slug}`} />
               </div>
             ) : null}
-            {listing ? null : (
+            {listing && !listing.workspaceRef ? null : (
             <div className="panel dark">
               <h2>Run your own copy</h2>
               <p>Fork to your GitHub and deploy to your own cloud on Orunbase. Your fork stays linked to {b.slug}.</p>

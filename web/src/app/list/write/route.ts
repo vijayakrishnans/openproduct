@@ -4,6 +4,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createListing, setPublished, updateListing, verifyListing } from "@/lib/auth/listings";
 import { addRole, setRoleOpen, updateRole } from "@/lib/auth/listing-roles";
 import { answerInvite, inviteMaintainer, makeOwner, removeMaintainer } from "@/lib/auth/listing-team";
+import { removeCover, setCover, updateDetails } from "@/lib/auth/listing-media";
 import { sameOrigin } from "@/lib/auth/request";
 import { SESSION_COOKIE, validateSession } from "@/lib/auth/session";
 import { loadDirectory, slugTakenOnOpenproduct } from "@/lib/directory";
@@ -46,6 +47,23 @@ export async function POST(request: NextRequest) {
     const r = await verifyListing(db, slug, me, github);
     return go(back, r.ok ? { verified: "1" } : { error: r.message });
   }
+  // Pitch, live link, workspace and cover (LB5).
+  if (action === "details") {
+    const r = await updateDetails(db, slug, me, { pitch: field("pitch"), liveUrl: field("live_url"), workspaceRef: field("workspace_ref") });
+    return go(`${back}#details`, r.ok ? { details: "saved" } : { error: r.message });
+  }
+  if (action === "cover") {
+    const file = form?.get("cover");
+    if (!env.COVERS) return go(`${back}#cover`, { error: "Cover uploads aren't switched on here yet." });
+    if (!file || typeof file === "string") return go(`${back}#cover`, { error: "Choose an image first." });
+    const r = await setCover(db, env.COVERS, slug, me, file);
+    return go(`${back}#cover`, r.ok ? { details: "cover" } : { error: r.message });
+  }
+  if (action === "cover-remove") {
+    const r = await removeCover(db, env.COVERS, slug, me);
+    return go(`${back}#cover`, r.ok ? { details: "cover-removed" } : { error: r.message });
+  }
+
   // The team (LB4).
   if (action === "invite") {
     const r = await inviteMaintainer(db, slug, me, field("handle"));

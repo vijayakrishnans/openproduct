@@ -20,11 +20,20 @@ export type AppEnv = {
   EMAIL_FROM?: string;
   /** Optional: a GitHub token for reading merged PRs (BP7); otherwise the OAuth app's id and secret are used. */
   GITHUB_TOKEN?: string;
+  /** Cover images for builds listed here (LB5): an R2 bucket. */
+  COVERS?: CoverBucket;
   /** "on" lets anyone sign in as a demo account at /demo (OP-34). Stage only: the deploy sets "off" for prod. */
   DEMO_SIGNIN?: string;
   /** Comma-separated GitHub logins who may hide posts; defaults to the site owner. */
   MODERATORS?: string;
 };
+
+/** The slice of R2's bucket API the covers use (and the tests fake). */
+export interface CoverBucket {
+  put(key: string, value: ArrayBuffer | Uint8Array, options?: { httpMetadata?: { contentType?: string; cacheControl?: string } }): Promise<unknown>;
+  get(key: string): Promise<{ body: ReadableStream; httpMetadata?: { contentType?: string } } | null>;
+  delete(key: string): Promise<void>;
+}
 
 export async function appEnv(): Promise<AppEnv> {
   try {

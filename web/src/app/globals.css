@@ -817,3 +817,8 @@ a.channel-row .channel-text span { color: var(--link); font-weight: 600; }
 .invite-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .builders-line { margin: 0 0 6px; font-size: 14px; }
+.cover-preview { display: block; width: 100%; max-width: 420px; aspect-ratio: 16 / 9; object-fit: cover; border: 1px solid var(--line); border-radius: 10px; margin: 0 0 12px; background: var(--sunken); }
+.cover-form { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.cover-form input[type="file"] { font: inherit; font-size: 14px; max-width: 100%; }
+.listing-pitch .post-body { font-size: 15px; }
+.listing-cover { display: block; width: calc(100% + 32px); margin: -16px -16px 14px; aspect-ratio: 16 / 9; object-fit: cover; border-bottom: 1px solid var(--line); background: var(--sunken); }
