@@ -1,0 +1,15 @@
+apiVersion: orun.io/v1
+kind: TaskContract
+metadata:
+  name: OP-32
+spec:
+  goal: "The pitch, a cover and a live link (LB5): a Markdown pitch, a cover image in R2, a live URL, and the optional Orunbase workspace link."
+  affects:
+    - default/openproduct/web
+    - web/**
+    - tasks/**
+    - specs/**
+  doneWhen:
+    - "A listing shows its uploaded cover on its card and its pitch on its page."
+    - "A file that isn't a PNG, JPEG or WebP is refused even when named .png, and covers are served with nosniff."
+  gates: []

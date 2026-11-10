@@ -1,0 +1,14 @@
+apiVersion: orun.io/v1
+kind: TaskContract
+metadata:
+  name: OP-30
+spec:
+  goal: "Open roles on listings (LB3): maintainers add, edit and close seats, shown on the build page, /roles and the home sidebar."
+  affects:
+    - default/openproduct/web
+    - web/**
+    - tasks/**
+    - specs/**
+  doneWhen:
+    - "A seat added to a listing here shows on /roles and in the home sidebar, and a builder can raise a hand for it."
+  gates: []

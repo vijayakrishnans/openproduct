@@ -1,0 +1,15 @@
+apiVersion: orun.io/v1
+kind: TaskContract
+metadata:
+  name: OP-29
+spec:
+  goal: "Live from the repo (LB2): a listing's changes, licence, last commit and languages are read from GitHub and cached, and drive its ranking."
+  affects:
+    - default/openproduct/web
+    - web/**
+    - tasks/**
+    - specs/**
+  doneWhen:
+    - "A commit merged into a listed repo shows as a change on its card within the hour."
+    - "Making the repo private takes the listing out of Open builds within the hour, and public again brings it back; tests cover caching and backoff."
+  gates: []

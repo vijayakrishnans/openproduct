@@ -1,0 +1,15 @@
+apiVersion: orun.io/v1
+kind: TaskContract
+metadata:
+  name: OP-33
+spec:
+  goal: "Moderation and lifecycle (LB6): report and hide listings, unpublish, delete, rename with redirects, and expire unverified drafts."
+  affects:
+    - default/openproduct/web
+    - web/**
+    - tasks/**
+    - specs/**
+  doneWhen:
+    - "A reported listing hidden by a moderator leaves Open builds and its page answers 404 to everyone else."
+    - "A renamed listing keeps its upvotes, follows and raised hands, and its old address redirects for 30 days."
+  gates: []
