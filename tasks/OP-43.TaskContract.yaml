@@ -1,0 +1,15 @@
+apiVersion: orun.io/v1
+kind: TaskContract
+metadata:
+  name: OP-43
+spec:
+  goal: "Rankings (TC5): helpful votes, top contributors and top builds per topic, formulas shown."
+  affects:
+    - default/openproduct/web
+    - web/**
+    - tasks/**
+    - specs/**
+  doneWhen:
+    - "A topic page names its top three contributors, each with what earned the place."
+    - "Every ranking shows its formula; one helpful vote per account."
+  gates: []

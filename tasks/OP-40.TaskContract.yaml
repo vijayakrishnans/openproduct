@@ -1,0 +1,15 @@
+apiVersion: orun.io/v1
+kind: TaskContract
+metadata:
+  name: OP-40
+spec:
+  goal: "Kinds of writing (TC2): blog, tutorial, doc, baseline and launch, with kind tabs."
+  affects:
+    - default/openproduct/web
+    - web/**
+    - tasks/**
+    - specs/**
+  doneWhen:
+    - "A topic page's Tutorials tab lists only tutorials."
+    - "A baseline post shows its repo and Use this baseline; a launch must name a build its author maintains."
+  gates: []
