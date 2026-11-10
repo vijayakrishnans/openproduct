@@ -28,6 +28,8 @@ export type Build = {
   sample: string[];
   /** "here" for a build listed on this site (list-your-build); absent for openproduct.live's. */
   source?: "here";
+  /** The repo is archived on GitHub (LB2). */
+  archived?: boolean;
 };
 
 export type Topic = { value: string; label: string; products: number };

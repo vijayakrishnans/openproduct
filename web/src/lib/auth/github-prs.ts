@@ -26,6 +26,17 @@ async function setSetting(db: Db, key: string, value: string, now: number): Prom
     .run();
 }
 
+/** Is every GitHub read paused after a rate limit? Shared by BP7 and listing stats (LB2). */
+export async function githubBackedOff(db: Db, now = Date.now()): Promise<boolean> {
+  const b = await setting(db, "github_backoff_until");
+  return !!b && Number(b.value) > now;
+}
+
+/** Pause GitHub reads for a while after a 403 or 429. */
+export async function backOffGithub(db: Db, now = Date.now()): Promise<void> {
+  await setSetting(db, "github_backoff_until", String(now + BACKOFF), now);
+}
+
 /**
  * Repo → build slug for every public build with a GitHub repo, refreshed
  * once a day. If the refresh fails, yesterday's map is used.
@@ -132,4 +143,9 @@ export async function mergedPrsOfAccount(
   const counts = await mergedByRepo(db, login, Object.keys(repoToSlug), deps);
   if (!counts) return null;
   return countMerged(login, counts.byRepo, repoToSlug, maintains, counts.fetchedAt);
+}
+
+/** GitHub access as this site has it: GITHUB_TOKEN if set, else the OAuth app's id and secret. */
+export function githubDepsFor(env: { GITHUB_TOKEN?: string; GITHUB_CLIENT_ID?: string; GITHUB_CLIENT_SECRET?: string }): { fetch: Fetch; auth: GithubAuth } {
+  return { fetch: (url, init) => fetch(url, init), auth: { token: env.GITHUB_TOKEN, clientId: env.GITHUB_CLIENT_ID, clientSecret: env.GITHUB_CLIENT_SECRET } };
 }

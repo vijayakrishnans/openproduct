@@ -276,6 +276,25 @@ export const MIGRATIONS: { version: number; name: string; statements: string[] }
       `CREATE INDEX IF NOT EXISTS listing_maintainers_account ON listing_maintainers(account_id)`,
     ],
   },
+  {
+    version: 9,
+    name: "listing stats",
+    statements: [
+      // list-your-build LB2 (D3): what the repo says, cached for an hour.
+      // `status` is "missing" while GitHub answers 404 (private or deleted);
+      // the directory leaves such a listing out until the repo is back.
+      `CREATE TABLE IF NOT EXISTS listing_stats (
+         slug TEXT PRIMARY KEY REFERENCES listings(slug) ON DELETE CASCADE ON UPDATE CASCADE,
+         status TEXT NOT NULL CHECK (status IN ('ok', 'missing')),
+         changes_7d INTEGER NOT NULL DEFAULT 0,
+         licence TEXT,
+         last_commit_at TEXT,
+         languages TEXT NOT NULL DEFAULT '[]',
+         archived INTEGER NOT NULL DEFAULT 0,
+         fetched_at TEXT NOT NULL
+       )`,
+    ],
+  },
 ];
 
 const applied = new WeakSet<object>();

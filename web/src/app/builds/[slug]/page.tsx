@@ -8,9 +8,12 @@ import { buildSupportLinks } from "@/lib/auth/support";
 import { followState, handsFor, voteState, type Hand } from "@/lib/auth/reactions";
 import { currentSession } from "@/lib/auth/request";
 import { getListing, isMaintainer, listingToDetail, missingForPublish, type Listing } from "@/lib/auth/listings";
+import { isStale, refreshStats, statsOf, type ListingStats } from "@/lib/auth/listing-stats";
+import { githubDepsFor } from "@/lib/auth/github-prs";
+import { appEnv } from "@/lib/server/env";
 import Link from "next/link";
 import { database } from "@/lib/server/env";
-import { initials, loadBuild, loadDirectory, maintainsOf } from "@/lib/directory";
+import { ago, initials, loadBuild, loadDirectory, maintainsOf } from "@/lib/directory";
 import { ORUNBASE } from "@/lib/links";
 import { ROLE_GUIDE, ROLE_LABEL } from "@/lib/roles";
 
@@ -30,6 +33,12 @@ function Act({ action, fields, next, className, children, label }: { action: str
     </form>
   );
 }
+
+/** "just now" or "3h ago". */
+const when = (iso: string) => {
+  const a = ago(iso);
+  return a === "now" ? "just now" : `${a} ago`;
+};
 
 /** Drawn, not an emoji: some systems have no emoji font and show an empty box. */
 function HandIcon() {
@@ -68,12 +77,19 @@ export default async function BuildPage({ params, searchParams }: { params: Para
   // Not on openproduct.live: a build listed here (list-your-build D1). A draft
   // is shown only to its maintainers; a hidden listing to nobody.
   let listing: Listing | null = null;
+  let stats: ListingStats | null = null;
   if ((remote === null || remote === "unreachable") && db0) {
     const l = await getListing(db0, slug).catch(() => null);
     const mine = !!l && isMaintainer(l, session0?.account.id);
-    if (l && (l.state === "published" || (mine && l.state !== "hidden"))) listing = l;
+    if (l && (l.state === "published" || (mine && l.state !== "hidden"))) {
+      // LB2: the repo's numbers, refreshed here when an hour old (one repo, a few calls).
+      stats = await statsOf(db0, l.slug).catch(() => null);
+      if (isStale(stats)) stats = await refreshStats(db0, l.slug, l.repo, githubDepsFor(await appEnv())).catch(() => stats);
+      // A repo gone private or deleted takes the listing down for everyone but its maintainers.
+      if (stats?.status !== "missing" || mine) listing = l;
+    }
   }
-  const b = listing ? listingToDetail(listing) : remote;
+  const b = listing ? listingToDetail(listing, stats) : remote;
   if (b === null) notFound();
   if (b === "unreachable") {
     return (
@@ -109,6 +125,11 @@ export default async function BuildPage({ params, searchParams }: { params: Para
         <nav className="crumbs" aria-label="Breadcrumb">
           <a href="/">Builds</a> <span>/</span> <span>{b.slug}</span>
         </nav>
+        {manage && stats?.status === "missing" ? (
+          <div className="listing-bar is-draft" role="alert">
+            <span><b>We can&apos;t see the repo.</b> GitHub says {manage.repo} is private or gone, so this build is out of Open builds until it&apos;s public again.</span>
+          </div>
+        ) : null}
         {manage ? (
           <div className={`listing-bar${manage.state === "published" ? "" : " is-draft"}`} role="status">
             <span>
@@ -128,6 +149,7 @@ export default async function BuildPage({ params, searchParams }: { params: Para
               <h1>{b.slug}</h1>
               {label ? <span className="pill">{label}</span> : null}
               {b.licence ? <span className="pill mono">{b.licence}</span> : null}
+              {b.archived ? <span className="pill">Archived</span> : null}
               {b.liveUrl ? <span className="pill live">● Live</span> : null}
             </div>
             <p className="build-tag">{b.tagline}</p>
@@ -159,7 +181,14 @@ export default async function BuildPage({ params, searchParams }: { params: Para
                     {listing.stack.map((t) => <span key={t} className="skill mono">{t}</span>)}
                   </div>
                 ) : null}
-                <p className="sample-tag">From the repo&apos;s own description and languages. Activity from the repo comes next.</p>
+                {stats?.status === "ok" ? (
+                  <p className="listing-activity">
+                    <b>{stats.changes7d}</b> {stats.changes7d === 1 ? "commit" : "commits"} to the default branch in the last 7 days
+                    {stats.lastCommitAt ? <> · last {when(stats.lastCommitAt)}</> : null}
+                    {stats.languages.length ? <> · written in {stats.languages.join(", ")}</> : null}
+                  </p>
+                ) : null}
+                <p className="sample-tag">Read from the repo on GitHub{stats ? `, ${when(stats.fetchedAt)}` : ""}. Nothing here is typed in by hand.</p>
               </div>
             ) : (
               <AppMap slug={b.slug} initials={initials(b.slug)} pieces={b.pieces} />

@@ -48,3 +48,17 @@ export async function database(): Promise<Db | null> {
 export function demoSignIn(env: AppEnv): boolean {
   return env.DEMO_SIGNIN === "on";
 }
+
+/**
+ * Run work after the response is sent (Workers' waitUntil), so a page never
+ * waits on it. Outside the Worker (tests, plain `next dev`) it just runs.
+ */
+export async function afterResponse(work: Promise<unknown>): Promise<void> {
+  const quiet = work.catch(() => undefined);
+  try {
+    const { ctx } = await getCloudflareContext({ async: true });
+    ctx.waitUntil(quiet);
+  } catch {
+    void quiet;
+  }
+}

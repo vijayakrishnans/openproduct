@@ -9,6 +9,7 @@ import { githubLoginOf } from "./accounts";
 import { builderOfAccount } from "./builders";
 import { randomToken } from "./crypto";
 import { githubHeaders, type Fetch, type GithubAuth } from "./github-prs";
+import type { ListingStats } from "./listing-stats";
 
 export const LISTINGS_PER_DAY = 3;
 export const MAX_DRAFTS = 10;
@@ -352,19 +353,21 @@ export async function setPublished(db: Db, slug: string, accountId: string, publ
 
 /* ── As builds ── */
 
-export function listingToBuild(l: Listing): Build {
+/** A listing as a directory build, with its numbers from the repo (LB2) once read. */
+export function listingToBuild(l: Listing, stats?: ListingStats | null): Build {
   return {
     slug: l.slug,
     tagline: l.tagline ?? "",
     category: l.category,
-    licence: l.licence,
-    // LB2 reads these from the repo; until then a listing starts at zero.
-    changes7d: 0,
+    // Once read, GitHub's answer wins, "no licence" included.
+    licence: stats?.status === "ok" ? stats.licence : l.licence,
+    changes7d: stats?.status === "ok" ? stats.changes7d : 0,
     upvotes: 0,
     roleCount: 0,
     stack: l.stack,
     publishedAt: l.publishedAt,
-    lastCommitAt: null,
+    lastCommitAt: stats?.status === "ok" ? stats.lastCommitAt : null,
+    archived: stats?.status === "ok" && stats.archived ? true : undefined,
     pieces: [],
     cover: null,
     sample: [],
@@ -372,10 +375,11 @@ export function listingToBuild(l: Listing): Build {
   };
 }
 
-export function listingToDetail(l: Listing): BuildDetail {
+export function listingToDetail(l: Listing, stats?: ListingStats | null): BuildDetail {
   return {
-    ...listingToBuild(l),
-    pitch: l.description,
+    ...listingToBuild(l, stats),
+    // The repo's description shows under About; a pitch of the maintainers' own comes with LB5.
+    pitch: null,
     repoUrl: `https://github.com/${l.repo}`,
     liveUrl: null,
     workspaceRef: null,
