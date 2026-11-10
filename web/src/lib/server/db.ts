@@ -398,6 +398,17 @@ export const MIGRATIONS: { version: number; name: string; statements: string[] }
       `CREATE INDEX IF NOT EXISTS articles_kind ON articles(kind, hidden, created_at)`,
     ],
   },
+  {
+    version: 16,
+    name: "issues and solutions",
+    statements: [
+      // topics-and-community TC3 (D2): a discussion or an issue; an issue's
+      // author can mark one reply as its solution.
+      `ALTER TABLE threads ADD COLUMN kind TEXT NOT NULL DEFAULT 'discussion' CHECK (kind IN ('discussion', 'issue'))`,
+      `ALTER TABLE threads ADD COLUMN solution_post_id TEXT`,
+      `CREATE INDEX IF NOT EXISTS threads_kind ON threads(kind, hidden, last_post_at)`,
+    ],
+  },
 ];
 
 const applied = new WeakSet<object>();

@@ -20,10 +20,11 @@ export function ThreadRow({ thread: t }: { thread: Thread }) {
         {t.slug ? <span className="thread-where mono">p/{t.slug}</span> : null}
         <strong>{t.title}</strong>
         <span className="thread-meta">
+          {t.kind === "issue" ? <span className={`thread-kind${t.solved ? " solved" : ""}`}>{t.solved ? "✓ Solved" : "Issue"}</span> : null}
           <span className="thread-tag">{TAG_LABELS[t.tag] ?? t.tag}</span>
           {t.author ? <span>by {t.author}</span> : null}
           <span>{t.lastPostAt ? `last reply ${ago(moved)} ago` : `started ${ago(moved)} ago`}</span>
-          {t.state === "answered" ? <span className="thread-answered">Answered</span> : null}
+          {t.state === "answered" && t.kind !== "issue" ? <span className="thread-answered">Answered</span> : null}
           {t.state === "locked" ? <span>Locked</span> : null}
         </span>
       </span>

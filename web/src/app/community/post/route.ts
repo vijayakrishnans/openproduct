@@ -1,7 +1,7 @@
 // POST /community/post — every write in the community: start a thread,
 // reply, report, and (moderators) hide or restore. Same-origin forms only.
 import { NextResponse, type NextRequest } from "next/server";
-import { REMOTE_THREAD_ID, createRemoteReply, createReply, createThread, isModerator, moderatorsFor, reportContent, setHidden } from "@/lib/auth/discussions";
+import { markSolution, REMOTE_THREAD_ID, createRemoteReply, createReply, createThread, isModerator, moderatorsFor, reportContent, setHidden } from "@/lib/auth/discussions";
 import { loadThread } from "@/lib/forum";
 import { setTopics } from "@/lib/auth/topics";
 import { parseTopics } from "@/lib/topics";
@@ -27,12 +27,12 @@ export async function POST(request: NextRequest) {
   const me = session.account.id;
 
   if (action === "thread") {
-    const r = await createThread(db, me, { tag: field("tag"), title: field("title"), body: field("body") });
+    const r = await createThread(db, me, { tag: field("tag"), title: field("title"), body: field("body"), kind: field("kind") });
     if (r.ok) {
       await setTopics(db, "thread", r.id, parseTopics(field("topics")));
       return go(`/community/t/${r.id}`);
     }
-    const q = new URLSearchParams({ error: r.message, tag: field("tag"), title: field("title").slice(0, 140), topics: field("topics").slice(0, 200) });
+    const q = new URLSearchParams({ error: r.message, tag: field("tag"), title: field("title").slice(0, 140), topics: field("topics").slice(0, 200), kind: field("kind").slice(0, 12) });
     return go(`/community/new?${q}`);
   }
   if (back === "/community") return go("/community");
@@ -51,6 +51,12 @@ export async function POST(request: NextRequest) {
           : { ok: false as const, message: remote === "unreachable" ? "That thread couldn't be read just now. Try again in a minute." : "That thread isn't open for replies." };
     }
     return go(r.ok ? `${back}#p-${r.id}` : `${back}?error=${encodeURIComponent(r.message)}#reply`);
+  }
+  // TC3: the issue's author marks (or clears) the reply that solved it.
+  if (action === "solve" || action === "unsolve") {
+    const post = field("post");
+    const r = await markSolution(db, threadId, me, action === "solve" && ID.test(post) ? post : null);
+    return go(r.ok ? `${back}${action === "solve" ? `#p-${post}` : ""}` : `${back}?error=${encodeURIComponent(r.message)}#reply`);
   }
   if (!ID.test(threadId) && field("kind") !== "post") return go(back);
   const kind = field("kind") === "post" ? "post" : "thread";

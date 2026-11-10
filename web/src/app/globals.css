@@ -892,3 +892,18 @@ a.channel-row .channel-text span { color: var(--link); font-weight: 600; }
 .kind-tag.k-launch { background: var(--role-bg); color: var(--role-ink); }
 .kind-facts { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; font-size: 14px; color: var(--ink-2); }
 .kind-tabs { margin: 0 0 6px; }
+
+/* Issues and solutions (TC3) */
+.pill.issue-open { color: var(--warm-ink); background: var(--warm-bg); border-color: transparent; }
+.post.is-solution { border-color: var(--ok-line); box-shadow: 0 0 0 1px var(--ok-line) inset; }
+.solution-tag { display: inline-block; font-size: 12.5px; font-weight: 600; color: var(--ok-ink); background: var(--ok-bg); border-radius: 6px; padding: 2px 8px; margin-bottom: 8px; }
+.solve-form { margin: 8px 0 0; }
+.solve-btn { font-size: 13px; padding: 5px 10px; }
+.square-tabs { margin: 16px 0 6px; flex-wrap: wrap; }
+.square-section { margin: 18px 0 26px; }
+.square-section .section-head h2 { font-size: 21px; }
+.square-section .section-head .end { margin-left: auto; font-size: 14px; }
+.square-empty { margin: 0; color: var(--ink-3); font-size: 14px; }
+.thread-kind { font-size: 12px; font-weight: 600; color: var(--warm-ink); background: var(--warm-bg); padding: 0 7px; border-radius: 6px; }
+.thread-kind.solved { color: var(--ok-ink); background: var(--ok-bg); }
+.forum-head-actions { flex-wrap: wrap; }

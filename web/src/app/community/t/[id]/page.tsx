@@ -64,7 +64,8 @@ function PostActions({ threadId, post, kind, v }: { threadId: string; post?: Loc
 function PostItem({ post, reply, children }: { post: Post | LocalPost; reply?: boolean; children?: React.ReactNode }) {
   const hidden = "hidden" in post && post.hidden;
   return (
-    <article className={`post${reply ? " reply" : ""}${hidden ? " is-hidden" : ""}`} id={`p-${post.id}`}>
+    <article className={`post${reply ? " reply" : ""}${hidden ? " is-hidden" : ""}${"solution" in post && post.solution ? " is-solution" : ""}`} id={`p-${post.id}`}>
+      {"solution" in post && post.solution ? <span className="solution-tag">✓ Solution, chosen by the person who raised it</span> : null}
       <div className="post-head">
         <Author name={post.author} handle={post.authorHandle} />
         <span className="muted">{ago(post.createdAt)} ago</span>
@@ -136,6 +137,9 @@ export default async function ThreadPage({ params, searchParams }: { params: Par
                 {found.thread.state === "answered" ? <span className="thread-answered">Answered</span> : null}
                 {found.thread.state === "locked" ? <span>Locked</span> : null}
                 {local?.thread.hidden ? <span className="pill">Hidden</span> : null}
+                {local?.thread.kind === "issue" ? (
+                  <span className={`pill ${local.thread.solved ? "live" : "issue-open"}`}>{local.thread.solved ? "✓ Solved" : "Open issue"}</span>
+                ) : null}
               </div>
               {local ? <PostActions threadId={id} kind="thread" v={v} /> : null}
             </header>
@@ -144,9 +148,17 @@ export default async function ThreadPage({ params, searchParams }: { params: Par
             {local ? (
               <>
                 <div className="posts">
-                  {local.posts.map((p) => (
+                  {local.posts.map((p, i) => (
                     <PostItem key={p.id} post={p}>
                       <PostActions threadId={id} post={p} kind="post" v={v} />
+                      {local.thread.kind === "issue" && local.thread.mine && i > 0 ? (
+                        <form method="post" action="/community/post" className="solve-form">
+                          <input type="hidden" name="thread" value={id} />
+                          <input type="hidden" name="post" value={p.id} />
+                          <input type="hidden" name="action" value={p.solution ? "unsolve" : "solve"} />
+                          <button type="submit" className={p.solution ? "text-btn" : "btn btn-ghost solve-btn"}>{p.solution ? "Unmark as solution" : "✓ Mark as the solution"}</button>
+                        </form>
+                      ) : null}
                     </PostItem>
                   ))}
                 </div>

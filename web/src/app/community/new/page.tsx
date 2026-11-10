@@ -11,7 +11,7 @@ import { TAG_LABELS, THREAD_TAGS, parseTag } from "@/lib/forum";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Start a discussion", robots: { index: false } };
 
-type Search = Promise<{ error?: string; tag?: string; title?: string; topics?: string; topic?: string }>;
+type Search = Promise<{ error?: string; tag?: string; title?: string; topics?: string; topic?: string; kind?: string }>;
 
 export default async function NewThreadPage({ searchParams }: { searchParams: Search }) {
   const q = await searchParams;
@@ -39,6 +39,17 @@ export default async function NewThreadPage({ searchParams }: { searchParams: Se
             {q.error ? <p className="auth-error" role="alert">{q.error.slice(0, 200)}</p> : null}
             <form method="post" action="/community/post" className="panel account-form">
               <input type="hidden" name="action" value="thread" />
+              <fieldset className="tag-picker kind-picker">
+                <legend>Is it a discussion, or an issue?</legend>
+                <label>
+                  <input type="radio" name="kind" value="discussion" defaultChecked={q.kind !== "issue"} />
+                  <span><b>Discussion</b> <span className="muted">A question, an idea, a debate.</span></span>
+                </label>
+                <label>
+                  <input type="radio" name="kind" value="issue" defaultChecked={q.kind === "issue"} />
+                  <span><b>Issue</b> <span className="muted">Something&apos;s broken or unclear. Mark the reply that fixes it.</span></span>
+                </label>
+              </fieldset>
               <fieldset className="tag-picker">
                 <legend>Category</legend>
                 {THREAD_TAGS.map((t) => (
