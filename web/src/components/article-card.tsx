@@ -54,7 +54,14 @@ function Meta({ a, withAuthor }: { a: Article; withAuthor: boolean }) {
 export function ArticleCard({ article: a, withAuthor = true }: { article: Article; withAuthor?: boolean }) {
   return (
     <article className="article-card">
-      {a.video ? <VideoEmbed video={a.video} title={a.title} /> : null}
+      {/* Every card gets the same 16:9 top, so a grid of posts lines up. */}
+      {a.video ? (
+        <VideoEmbed video={a.video} title={a.title} />
+      ) : (
+        <Link className={`article-cover k-${a.kind}`} href={`/posts/${a.id}`} tabIndex={-1} aria-hidden>
+          <span>{POST_KIND[a.kind].label}</span>
+        </Link>
+      )}
       <div className="article-card-body">
         {a.kind !== "blog" ? <span className={`kind-tag k-${a.kind}`}>{POST_KIND[a.kind].label}{a.kind === "tutorial" && a.minutes ? ` · ${a.minutes} min` : ""}</span> : null}
         <h3>
@@ -63,7 +70,7 @@ export function ArticleCard({ article: a, withAuthor = true }: { article: Articl
         <Meta a={a} withAuthor={withAuthor} />
         <TopicChips topics={a.topics} small />
         {a.excerpt ? <p className="article-excerpt">{a.excerpt}</p> : null}
-        <Link className="link" href={`/posts/${a.id}`}>Read the post →</Link>
+        <Link className="link article-more" href={`/posts/${a.id}`}>Read the post →</Link>
       </div>
     </article>
   );

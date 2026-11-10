@@ -1,0 +1,13 @@
+apiVersion: orun.io/v1
+kind: TaskContract
+metadata:
+  name: OP-44
+spec:
+  goal: "Post cards line up: same-height cards in a row, the same 16:9 top on every card."
+  affects:
+    - default/openproduct/web
+    - web/**
+    - tasks/**
+  doneWhen:
+    - "In Community's New ways and Launches, cards in a row are the same height, with or without a video."
+  gates: []
