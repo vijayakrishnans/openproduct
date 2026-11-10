@@ -8,12 +8,12 @@ Today "List your build" sends people to Orunbase, and every build on this site c
 
 | Field | Value |
 |-------|-------|
-| Status | 📝 Proposed |
+| Status | ✅ Shipped (2026-11-10): LB0–LB6 in #28, #30–#34, #36. What stays open is at the end of IMPLEMENTATION-STATUS. |
 | Cluster | **LB** (LB0–LB6) · Orunbase epic **EP-2** `list-your-build` · tasks OP-27–OP-33 |
 | Owner(s) | `web/` here. openproduct.live is not changed and is not written to. |
 | Builds on | builder-profiles (accounts, D1, builder profiles, support links, moderation, merged-PR reads from GitHub) and OP-25 (votes, follows, raised hands) |
 | Decisions locked | (1) A listing is a **public GitHub repo** whose control the lister has proved. (2) Listings are stored **here** and shown **with** openproduct.live's, in one slug namespace. (3) Numbers on a listing (changes, licence, last commit) come **from the repo**, never from a form. (4) A listing is a draft, seen only by its maintainers, until it's verified and has a tagline and a category. |
-| Open | Q1: must a listing also be an Orunbase workspace? Default: no, it's optional and adds the "Fork & deploy" button (see risks). |
+| Open | None. Q1 was settled by its default: a workspace link is optional and adds "Fork & deploy" (LB5). |
 | Gate | LB1 (list and verify) comes before anything else. |
 
 ## Read order
