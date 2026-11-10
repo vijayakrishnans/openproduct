@@ -1,0 +1,13 @@
+apiVersion: orun.io/v1
+kind: TaskContract
+metadata:
+  name: OP-45
+spec:
+  goal: "A builder profile gets a right-hand panel: their numbers here, the topics they're known for, and recent activity."
+  affects:
+    - default/openproduct/web
+    - web/**
+    - tasks/**
+  doneWhen:
+    - "A builder profile shows At a glance, Known for and Recent activity on the right, beside badges, projects and posts."
+  gates: []

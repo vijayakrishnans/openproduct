@@ -16,6 +16,8 @@ import { articlesBy, listArticles, type Article } from "@/lib/auth/articles";
 import { mergedPrsOfAccount } from "@/lib/auth/github-prs";
 import { MIN_RANKED, earnedLine, knownFor, topContributors, type KnownFor } from "@/lib/auth/rankings";
 import { buildTopicMap, loadTopics } from "@/lib/server/topics-here";
+import { builderActivity, type ActivityItem } from "@/lib/auth/builder-activity";
+import { ago } from "@/lib/directory";
 import { topicLabel } from "@/lib/topics";
 import { searchLink, type MergedPrs } from "@/lib/merged-prs";
 import { ArticleCard } from "@/components/article-card";
@@ -155,6 +157,86 @@ function ProjectBody({ p, draft }: { p: Project; draft?: boolean }) {
   );
 }
 
+const RECENT_LABEL: Record<ActivityItem["kind"], string> = { post: "Wrote", thread: "Started", reply: "Replied in" };
+
+/**
+ * The right-hand side of a profile: the builder's numbers here, the topics
+ * they're known for (TC5), and what they did last. Every number links back
+ * to something on the site.
+ */
+function PersonSide({
+  counts,
+  followers,
+  known,
+  recent,
+  name,
+}: {
+  counts: { posts: number; discussions: number; replies: number; solutions: number; helpful: number };
+  followers: number;
+  known: (KnownFor & { label: string; place: number | null })[];
+  recent: ActivityItem[];
+  name: string;
+}) {
+  const stats: [number, string][] = [
+    [counts.posts, counts.posts === 1 ? "post" : "posts"],
+    [counts.discussions, counts.discussions === 1 ? "discussion" : "discussions"],
+    [counts.replies, counts.replies === 1 ? "reply" : "replies"],
+    [counts.solutions, counts.solutions === 1 ? "solution" : "solutions"],
+    [counts.helpful, counts.helpful === 1 ? "helpful vote" : "helpful votes"],
+    [followers, followers === 1 ? "follower" : "followers"],
+  ];
+  return (
+    <aside className="person-side" aria-label={`${name} at a glance`}>
+      <div className="side-card">
+        <h2>At a glance</h2>
+        <dl className="glance">
+          {stats.map(([n, label]) => (
+            <div key={label} className={n ? "" : "is-zero"}>
+              <dt>{label}</dt>
+              <dd className="mono">{n}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+      {known.length ? (
+        <div className="side-card">
+          <h2>Known for</h2>
+          <ol className="known-list">
+            {known.map((k) => (
+              <li key={k.topic}>
+                <Link href={`/topics/${k.topic}`}>
+                  <strong>
+                    #{k.label}
+                    {k.place ? <span className="known-place mono">#{k.place}</span> : null}
+                  </strong>
+                  <span>{earnedLine(k)}</span>
+                </Link>
+              </li>
+            ))}
+          </ol>
+          <p className="formula rank-formula">From each topic&apos;s ranking: 3 × writing + helpful votes + 5 × solutions + 5 × merged PRs, 90 days.</p>
+        </div>
+      ) : null}
+      <div className="side-card">
+        <h2>Recent activity</h2>
+        {recent.length ? (
+          <ul className="recent-list">
+            {recent.map((r) => (
+              <li key={r.href}>
+                <span className="muted">{RECENT_LABEL[r.kind]}</span>{" "}
+                <Link href={r.href}>{r.title}</Link>
+                <span className="mono muted recent-at">{ago(r.at)} ago</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="muted">Nothing here yet.</p>
+        )}
+      </div>
+    </aside>
+  );
+}
+
 function Projects({ projects }: { projects: Project[] }) {
   return (
     <section className="person-section">
@@ -237,6 +319,7 @@ export default async function PersonPage({ params, searchParams }: { params: Par
         ])
       : [[], 0, [] as Article[], 0, null];
   const isOwner = !!owner && !!session && owner.accountId === session.account.id;
+  const activity = db && owner ? await builderActivity(db, owner.accountId).catch(() => null) : null;
   // TC5: the topics this builder is known for, by the topic ranking's score,
   // with their place where the topic has enough contributors to rank.
   const known: (KnownFor & { label: string; place: number | null })[] =
@@ -286,23 +369,14 @@ export default async function PersonPage({ params, searchParams }: { params: Par
           <div className="unreachable" style={{ marginTop: 16 }}>This profile could not be reached just now. Try again in a minute.</div>
         ) : (
           <>
+            <div className={activity ? "person-top" : undefined}>
+            <div className="person-main">
             <div className="person-hero">
               <Avatar handle={person.handle} size={64} />
               <div>
                 <h1>{person.displayName}</h1>
                 <span className="mono handle">@{person.handle}</span>
                 {person.bio ? <p>{person.bio}</p> : null}
-                {known.length ? (
-                  <p className="known-for">
-                    <span className="known-label">Known for</span>
-                    {known.map((k) => (
-                      <Link key={k.topic} className="known-topic" href={`/topics/${k.topic}`} title={earnedLine(k)}>
-                        {k.place ? <span className="mono">#{k.place} in </span> : null}#{k.label}
-                        <span className="known-why">{earnedLine(k)}</span>
-                      </Link>
-                    ))}
-                  </p>
-                ) : null}
                 <div className="card-badges">
                   {fromHere ? <span className="badge">Started on this site</span> : null}
                   {person.followers + follow.count > 0 ? (
@@ -344,6 +418,17 @@ export default async function PersonPage({ params, searchParams }: { params: Par
             </section>
             <Projects projects={projectsOf(person, directory.ok ? directory.builds : [])} />
             <Posts posts={posts} total={postCount} name={person.displayName} isOwner={isOwner} />
+            </div>
+            {activity ? (
+              <PersonSide
+                counts={activity.counts}
+                followers={person.followers + follow.count}
+                known={known}
+                recent={activity.recent}
+                name={person.displayName}
+              />
+            ) : null}
+            </div>
           </>
         )}
       </main>
