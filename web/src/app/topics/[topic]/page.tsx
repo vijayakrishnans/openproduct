@@ -5,6 +5,8 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { TabBar } from "@/components/tab-bar";
 import { TopicFeed, type FeedItem } from "@/components/topic-feed";
+import { KindTabs, parseKindTab } from "@/components/kind-tabs";
+import { POST_KIND } from "@/lib/post-kinds";
 import { listArticles } from "@/lib/auth/articles";
 import { listLocalThreads } from "@/lib/auth/discussions";
 import { topicRow } from "@/lib/auth/topics";
@@ -27,8 +29,9 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
  * A topic (TC1): its writing and discussions, newest first, with its
  * builds in a side panel. Kind tabs come in TC2, contributors in TC5.
  */
-export default async function TopicPage({ params }: { params: Params }) {
+export default async function TopicPage({ params, searchParams }: { params: Params; searchParams: Promise<{ kind?: string }> }) {
   const { topic } = await params;
+  const tab = parseKindTab((await searchParams).kind, true);
   const slug = normalizeTopic(decodeURIComponent(topic));
   if (!slug) notFound();
   // "next-js" and "#NextJS" land on the one topic page.
@@ -48,10 +51,14 @@ export default async function TopicPage({ params }: { params: Params }) {
   if (!summary && !posts.length && !threads.length && !inTopic.length) notFound();
   const label = summary?.label ?? row?.label ?? topicLabel(slug);
 
-  const feed: FeedItem[] = [
+  const all: FeedItem[] = [
     ...posts.map((p) => ({ kind: "post" as const, at: p.createdAt, post: p })),
     ...threads.map((t) => ({ kind: "thread" as const, at: t.lastPostAt ?? t.createdAt, thread: t })),
   ].sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
+  // TC2: one tab per kind of writing, plus discussions.
+  const counts: Record<string, number> = { all: all.length, discussions: threads.length };
+  for (const p of posts) counts[p.kind] = (counts[p.kind] ?? 0) + 1;
+  const feed = all.filter((i) => !tab || (tab === "discussions" ? i.kind === "thread" : i.kind === "post" && i.post.kind === tab));
 
   return (
     <>
@@ -62,7 +69,7 @@ export default async function TopicPage({ params }: { params: Params }) {
           <div>
             <h1>#{label}</h1>
             <p className="sub">
-              {feed.length} {feed.length === 1 ? "piece of writing" : "pieces of writing"} · {inTopic.length} {inTopic.length === 1 ? "build" : "builds"}
+              {all.length} {all.length === 1 ? "piece of writing" : "pieces of writing"} · {inTopic.length} {inTopic.length === 1 ? "build" : "builds"}
             </p>
           </div>
           <div className="topic-acts">
@@ -73,11 +80,12 @@ export default async function TopicPage({ params }: { params: Params }) {
 
         <div className="topic-cols">
           <section className="topic-main" aria-label="Writing">
+            <KindTabs base={`/topics/${slug}`} current={tab} discussions counts={counts} />
             {feed.length ? (
               <TopicFeed items={feed} />
             ) : (
               <div className="forum-empty">
-                <strong>Nothing written about {label} yet.</strong>
+                <strong>{tab ? `No ${tab === "discussions" ? "discussions" : POST_KIND[tab].plural.toLowerCase()} on ${label} yet.` : `Nothing written about ${label} yet.`}</strong>
                 <p>A tutorial, a build log or a question: the first one starts this topic.</p>
                 <Link className="btn btn-ghost" href={`/posts/new?topics=${slug}`}>Write the first post</Link>
               </div>

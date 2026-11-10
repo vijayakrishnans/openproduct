@@ -882,3 +882,13 @@ a.channel-row .channel-text span { color: var(--link); font-weight: 600; }
   .topic-side .side-box { border-left: 0; padding-left: 0; }
   .topic-side .side-roles { grid-auto-flow: column; grid-auto-columns: minmax(200px, 60%); overflow-x: auto; }
 }
+
+/* Kinds of writing (TC2) */
+.kind-picker label { align-items: flex-start; }
+.kind-picker .muted { font-weight: 400; }
+.kind-tag { display: inline-block; width: fit-content; font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; padding: 2px 8px; border-radius: 6px; background: var(--sunken); color: var(--ink-2); }
+.kind-tag.k-tutorial { background: var(--ok-bg); color: var(--ok-ink); }
+.kind-tag.k-baseline { background: var(--warm-bg); color: var(--warm-ink); }
+.kind-tag.k-launch { background: var(--role-bg); color: var(--role-ink); }
+.kind-facts { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; font-size: 14px; color: var(--ink-2); }
+.kind-tabs { margin: 0 0 6px; }

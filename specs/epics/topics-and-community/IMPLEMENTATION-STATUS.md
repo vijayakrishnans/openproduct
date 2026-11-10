@@ -3,8 +3,8 @@
 | Milestone | State | PR |
 |---|---|---|
 | TC0: the spec | ✅ Shipped | [#39](https://github.com/vijayakrishnans/openproduct/pull/39) |
-| TC1: topics as tags | 🚧 In review | |
-| TC2: kinds of writing | ⏳ Not started | |
+| TC1: topics as tags | ✅ Shipped | [#40](https://github.com/vijayakrishnans/openproduct/pull/40) |
+| TC2: kinds of writing | 🚧 In review | |
 | TC3: Community as the public square | ⏳ Not started | |
 | TC4: personal topics | ⏳ Not started | |
 | TC5: rankings | ⏳ Not started | |
@@ -22,3 +22,7 @@ A build's topics are its category and its stack, normalised (so openproduct.live
 ### Trending in TC1 counts new writing only
 
 Until TC4 adds searches and follows, "Trending this week" ranks topics by new writing in the last 7 days, and the page says so.
+
+### Kinds are a picker on the one post form (TC2)
+
+The write form gets a "What are you writing?" picker, and the per-kind fields (repo, minutes, build) are always on the form with their kinds named, so it works without script. A doc's "last reviewed" is its author's last save. "Use this baseline" links to Orunbase's app, as "Fork & deploy" does: there's no per-repo copy address yet. A launch checks the author maintains the build only when the kind is launch, so other posts don't wait on openproduct.live.

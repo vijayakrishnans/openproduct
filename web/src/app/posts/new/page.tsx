@@ -7,11 +7,12 @@ import { TabBar } from "@/components/tab-bar";
 import { MAX_ARTICLE_BODY, MAX_ARTICLE_TITLE, getArticle } from "@/lib/auth/articles";
 import { viewer } from "@/lib/auth/viewer";
 import { watchUrl } from "@/lib/video";
+import { POST_KIND, POST_KINDS, isPostKind } from "@/lib/post-kinds";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Write a post", robots: { index: false } };
 
-type Search = Promise<{ edit?: string; error?: string; title?: string; body?: string; video?: string; build?: string; topics?: string }>;
+type Search = Promise<{ edit?: string; error?: string; title?: string; body?: string; video?: string; build?: string; topics?: string; kind?: string; repo?: string; minutes?: string }>;
 
 // The browser's first check; the server checks again (parseVideoUrl).
 const VIDEO_PATTERN = String.raw`https?://(www\.|m\.)?(youtube\.com|youtu\.be|youtube-nocookie\.com|vimeo\.com|player\.vimeo\.com|loom\.com)/.+`;
@@ -31,6 +32,9 @@ export default async function WritePostPage({ searchParams }: { searchParams: Se
     video: q.video ?? (editing?.video ? watchUrl(editing.video) : ""),
     build: q.build ?? editing?.buildSlug ?? "",
     topics: q.topics ?? editing?.topics.join(", ") ?? "",
+    kind: q.kind && isPostKind(q.kind) ? q.kind : (editing?.kind ?? "blog"),
+    repo: q.repo ?? editing?.repoUrl ?? "",
+    minutes: q.minutes ?? (editing?.minutes ? String(editing.minutes) : ""),
   };
 
   return (
@@ -54,6 +58,15 @@ export default async function WritePostPage({ searchParams }: { searchParams: Se
             <form method="post" action="/posts/write" className="panel account-form">
               <input type="hidden" name="action" value={editing ? "update" : "create"} />
               {editing ? <input type="hidden" name="id" value={editing.id} /> : null}
+              <fieldset className="tag-picker kind-picker">
+                <legend>What are you writing?</legend>
+                {POST_KINDS.map((k) => (
+                  <label key={k}>
+                    <input type="radio" name="kind" value={k} defaultChecked={k === value.kind} />
+                    <span><b>{POST_KIND[k].label}</b> <span className="muted">{POST_KIND[k].hint}</span></span>
+                  </label>
+                ))}
+              </fieldset>
               <label>
                 Title
                 <input name="title" required maxLength={MAX_ARTICLE_TITLE} defaultValue={value.title} placeholder="How we moved our build from Vercel to Workers" />
@@ -64,7 +77,15 @@ export default async function WritePostPage({ searchParams }: { searchParams: Se
               </label>
               <p className="support-hint">YouTube, Vimeo or Loom. It plays right in the post.</p>
               <label>
-                <span>About a build <span className="muted">(optional)</span></span>
+                <span>Repo <span className="muted">(baselines need one; anything else, optional)</span></span>
+                <input name="repo" defaultValue={value.repo} placeholder="github.com/you/your-starter" maxLength={200} />
+              </label>
+              <label>
+                <span>Minutes to complete <span className="muted">(tutorials)</span></span>
+                <input name="minutes" type="number" min={1} max={600} defaultValue={value.minutes} placeholder="10" />
+              </label>
+              <label>
+                <span>About a build <span className="muted">(optional; a launch names a build you maintain)</span></span>
                 <input name="build" maxLength={64} pattern="[a-zA-Z0-9][a-zA-Z0-9\-]*" defaultValue={value.build} placeholder="the name after /builds/, like makan" />
               </label>
               <label>

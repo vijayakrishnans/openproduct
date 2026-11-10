@@ -4,6 +4,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createArticle, deleteArticle, updateArticle } from "@/lib/auth/articles";
 import { setTopics } from "@/lib/auth/topics";
+import { maintainedBuilds } from "@/lib/auth/support";
+import { maintainsOf } from "@/lib/directory";
 import { parseTopics } from "@/lib/topics";
 import { isModerator, moderatorsFor, reportContent, setHidden } from "@/lib/auth/discussions";
 import { sameOrigin } from "@/lib/auth/request";
@@ -26,25 +28,30 @@ export async function POST(request: NextRequest) {
   const session = db ? await validateSession(db, request.cookies.get(SESSION_COOKIE)?.value) : null;
   if (!db || !session) return go(`/signin?next=${encodeURIComponent(back)}`);
   const me = session.account.id;
-  const input = { title: field("title"), body: field("body"), video: field("video"), build: field("build") };
+  const input = { title: field("title"), body: field("body"), video: field("video"), build: field("build"), kind: field("kind"), repo: field("repo"), minutes: field("minutes") };
+  // A launch must name one of the author's builds (TC2); only then is the list read.
+  const maintained = input.kind === "launch" ? await maintainedBuilds(db, me, maintainsOf).catch(() => []) : undefined;
   // A refused draft goes back to the form with what was typed. A body too long
   // for a URL is left out; the form's own checks catch most mistakes first.
   const retry = (message: string, edit: string | null) => {
     const q = new URLSearchParams({ error: message, title: input.title.slice(0, 140), video: input.video.slice(0, 300), build: input.build.slice(0, 64) });
     if (input.body.length <= 3000) q.set("body", input.body);
     q.set("topics", field("topics").slice(0, 200));
+    q.set("kind", input.kind.slice(0, 20));
+    q.set("repo", input.repo.slice(0, 200));
+    q.set("minutes", input.minutes.slice(0, 4));
     if (edit) q.set("edit", edit);
     return go(`/posts/new?${q}`);
   };
 
   if (action === "create") {
-    const r = await createArticle(db, me, input);
+    const r = await createArticle(db, me, input, Date.now(), maintained);
     if (r.ok) await setTopics(db, "article", r.id, parseTopics(field("topics")));
     return r.ok ? go(`/posts/${r.id}?published=1`) : retry(r.message, null);
   }
   if (!id) return go("/community");
   if (action === "update") {
-    const r = await updateArticle(db, me, id, input);
+    const r = await updateArticle(db, me, id, input, Date.now(), maintained);
     if (r.ok) await setTopics(db, "article", id, parseTopics(field("topics")));
     return r.ok ? go(`/posts/${id}?saved=1`) : retry(r.message, id);
   }
