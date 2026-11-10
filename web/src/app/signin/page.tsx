@@ -41,13 +41,13 @@ export default async function SignInPage({ searchParams }: { searchParams: Searc
           <p className="sub">Claim your builder profile, add support links, and join the discussions.</p>
           {error && ERRORS[error] ? <p className="auth-error" role="alert">{ERRORS[error]}</p> : null}
           {demoSignIn(env) ? (
-            <Link className="btn btn-dark auth-btn" href={`/demo?next=${encodeURIComponent(next)}`}>Try a demo account (stage only)</Link>
+            <Link className="btn btn-dark auth-btn" href={`/demo?next=${encodeURIComponent(next)}`}>Try a demo account</Link>
           ) : null}
           {sent ? (
             <p className="auth-ok" role="status">Check your inbox. If that address can get mail, a sign-in link is on its way; it works once, for 15 minutes.</p>
           ) : null}
           {providers.length === 0 && !byEmail ? (
-            <p className="unreachable">Sign-in isn&apos;t switched on yet. Check back soon.</p>
+            demoSignIn(env) ? null : <p className="unreachable">Sign-in isn&apos;t switched on yet. Check back soon.</p>
           ) : (
             <div className="auth-buttons">
               {providers.map((p) => (

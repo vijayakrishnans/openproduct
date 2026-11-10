@@ -23,8 +23,9 @@ if (!text.includes(target.id)) throw new Error("wrangler.jsonc has no D1 databas
 // Each environment's cover bucket (list-your-build LB5).
 text = text.replace(/"openproduct-web-covers-(stage|prod)"/, `"openproduct-web-covers-${env}"`);
 if (!text.includes(`"openproduct-web-covers-${env}"`)) throw new Error("wrangler.jsonc has no cover bucket to select");
-// Demo sign-in is for stage only: prod must never sign anyone in without a provider.
-text = text.replace(/"DEMO_SIGNIN":\s*"[^"]*"/, `"DEMO_SIGNIN": "${env === "prod" ? "off" : "on"}"`);
-if (env === "prod" && !text.includes('"DEMO_SIGNIN": "off"')) throw new Error("could not turn demo sign-in off for prod");
+// Demo sign-in follows wrangler.jsonc in every environment. The site is a
+// demo for now (OP-35), so it's on; set "DEMO_SIGNIN": "off" there before
+// it goes live, and no environment will sign anyone in without a provider.
 writeFileSync(path, text);
-console.log(`D1: ${target.name} (${env}); covers: openproduct-web-covers-${env}; demo sign-in ${env === "prod" ? "off" : "on"}`);
+const demo = /"DEMO_SIGNIN":\s*"on"/.test(text) ? "on" : "off";
+console.log(`D1: ${target.name} (${env}); covers: openproduct-web-covers-${env}; demo sign-in ${demo}`);

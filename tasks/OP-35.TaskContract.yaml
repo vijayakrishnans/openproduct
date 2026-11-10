@@ -1,0 +1,15 @@
+apiVersion: orun.io/v1
+kind: TaskContract
+metadata:
+  name: OP-35
+spec:
+  goal: "The prod site is a demo for now: demo sign-in works there too, and the Orunbase button is hidden until Orunbase approves this site's sign-in address."
+  affects:
+    - default/openproduct/web
+    - web/**
+    - tasks/**
+    - specs/**
+  doneWhen:
+    - "/demo works on stage and prod; turning DEMO_SIGNIN off in wrangler.jsonc turns it off everywhere, and a test covers both settings."
+    - "The sign-in page no longer offers Orunbase unless ORUNBASE_SIGNIN is on, since Orunbase refuses this site's redirect address today."
+  gates: []

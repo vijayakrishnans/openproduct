@@ -216,10 +216,11 @@ describe("request guards", () => {
 describe("providers", () => {
   const env = { GITHUB_CLIENT_ID: "gh-id", GITHUB_CLIENT_SECRET: "gh-secret" };
 
-  it("offers only providers whose secrets are set; Orunbase needs none", () => {
-    expect(configuredProviders({}, true)).toEqual(["orunbase"]);
-    expect(configuredProviders(env, true)).toEqual(["github", "orunbase"]);
-    expect(configuredProviders(env, false)).toEqual([]);
+  it("offers only providers whose secrets are set; Orunbase only when switched on (OP-35)", () => {
+    expect(configuredProviders({}, true)).toEqual([]);
+    expect(configuredProviders(env, true)).toEqual(["github"]);
+    expect(configuredProviders({ ...env, ORUNBASE_SIGNIN: "on" }, true)).toEqual(["github", "orunbase"]);
+    expect(configuredProviders({ ORUNBASE_SIGNIN: "on" }, false)).toEqual([]);
   });
 
   it("sends state and an S256 PKCE challenge", async () => {

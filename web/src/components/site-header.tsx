@@ -21,7 +21,7 @@ function DemoBar({ demoName }: { demoName: string | null }) {
         {demoName ? (
           <>
             <span>
-              <b>Demo account.</b> You&apos;re signed in as {demoName} on stage. Nothing here is real.
+              <b>Demo account.</b> You&apos;re signed in as {demoName}. Nothing here is real.
             </span>
             <span className="demo-bar-acts">
               <Link href="/demo">Switch</Link>
@@ -33,7 +33,7 @@ function DemoBar({ demoName }: { demoName: string | null }) {
         ) : (
           <>
             <span>
-              <b>Stage.</b> See every signed-in screen without an account.
+              <b>Demo site.</b> See every signed-in screen without an account.
             </span>
             <Link href="/demo">Try a demo account →</Link>
           </>
