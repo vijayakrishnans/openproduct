@@ -29,6 +29,16 @@ function Act({ action, fields, next, className, children, label }: { action: str
   );
 }
 
+/** Drawn, not an emoji: some systems have no emoji font and show an empty box. */
+function HandIcon() {
+  return (
+    <svg className="hand-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M18 11V6a2 2 0 0 0-4 0v5M14 10V4a2 2 0 0 0-4 0v6M10 10.5V6a2 2 0 0 0-4 0v8" />
+      <path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15" />
+    </svg>
+  );
+}
+
 function Hands({ hands }: { hands: Hand[] }) {
   if (!hands.length) return null;
   return (
@@ -193,7 +203,7 @@ export default async function BuildPage({ params, searchParams }: { params: Para
                           next={`${here}#roles`}
                           className={`btn ${b.repoUrl ? "btn-ghost" : "btn-dark"} role-claim${(hands.get(r.id) ?? []).some((h) => h.mine) ? " is-on" : ""}`}
                         >
-                          {(hands.get(r.id) ?? []).some((h) => h.mine) ? "✓ Hand raised" : "✋ Raise your hand"}
+                          {(hands.get(r.id) ?? []).some((h) => h.mine) ? "✓ Hand raised" : <><HandIcon /> Raise your hand</>}
                         </Act>
                       </div>
                     </div>

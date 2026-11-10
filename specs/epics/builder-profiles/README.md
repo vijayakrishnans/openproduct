@@ -8,7 +8,7 @@ Profiles stay honest. Every badge is computed from public data, and each one say
 
 | Field | Value |
 |-------|-------|
-| Status | 📝 Proposed |
+| Status | 🚧 Built; waiting on the owner for the starter threads, Apple and email setup, and the GitHub sign-in secrets (see IMPLEMENTATION-STATUS) |
 | Cluster | **BP** (BP0–BP7) |
 | Owner(s) | `web/` here. Nothing in orun-cloud: openproduct.live is not changed by this epic (revised 2026-11-09) |
 | Builds on | openproduct-reimagined (OP), and openproduct.live's existing profiles, maker marks (PE2), discussions and render subset |

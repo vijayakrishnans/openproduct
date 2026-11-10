@@ -766,3 +766,4 @@ a.channel-row .channel-text span { color: var(--link); font-weight: 600; }
 .account-email { max-width: 420px; }
 .provider-mark.apple { background: var(--ink); color: var(--on-ink); }
 .provider-mark.email { background: var(--sunken); color: var(--ink); }
+.hand-icon { flex: none; margin-right: 2px; vertical-align: -2px; }
