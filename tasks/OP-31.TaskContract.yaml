@@ -1,0 +1,15 @@
+apiVersion: orun.io/v1
+kind: TaskContract
+metadata:
+  name: OP-31
+spec:
+  goal: "Maintainers and contributors (LB4): co-maintainer invites, contributors from GitHub, and badges, projects and support links that count listings made here."
+  affects:
+    - default/openproduct/web
+    - web/**
+    - tasks/**
+    - specs/**
+  doneWhen:
+    - "An invited builder accepts, and the build shows on their profile with Maintains 1 and in their support-link form."
+    - "A builder whose GitHub login is among the repo's contributors gets Contributor · <slug>."
+  gates: []

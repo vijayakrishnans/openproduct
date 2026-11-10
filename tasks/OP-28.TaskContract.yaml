@@ -1,0 +1,16 @@
+apiVersion: orun.io/v1
+kind: TaskContract
+metadata:
+  name: OP-28
+spec:
+  goal: "List and verify (LB1): a builder lists a public GitHub repo here, proves control by owner login or a .openproduct file, and publishes it into Open builds."
+  affects:
+    - default/openproduct/web
+    - web/**
+    - tasks/**
+    - specs/**
+  doneWhen:
+    - "A builder signed in with GitHub lists a repo they own, it is verified in one click, and once published it shows in Open builds and at /builds/<slug>."
+    - "A repo owned by someone else stays a draft until the .openproduct file holds its code; a private repo is refused; a slug taken here or on openproduct.live is refused."
+    - "List your build in the header, hero and How it works opens /list; tests cover verification, drafts, limits and the slug namespace."
+  gates: []
