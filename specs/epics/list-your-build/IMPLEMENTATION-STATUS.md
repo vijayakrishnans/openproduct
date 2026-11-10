@@ -6,8 +6,8 @@
 | LB1: list and verify | ✅ Shipped | [#30](https://github.com/vijayakrishnans/openproduct/pull/30) |
 | LB2: live from the repo | ✅ Shipped | [#31](https://github.com/vijayakrishnans/openproduct/pull/31) |
 | LB3: open roles | ✅ Shipped | [#32](https://github.com/vijayakrishnans/openproduct/pull/32) |
-| LB4: maintainers and contributors | 🚧 In review | |
-| LB5: the pitch, a cover and a live link | ⏳ Not started | |
+| LB4: maintainers and contributors | ✅ Shipped | [#33](https://github.com/vijayakrishnans/openproduct/pull/33) |
+| LB5: the pitch, a cover and a live link | 🚧 In review | |
 | LB6: moderation and lifecycle | ⏳ Not started | |
 
 ## Departures from the design
@@ -51,3 +51,11 @@ A maintainer may pick the seat's kind (engineering, design, advisor, growth, des
 ### Owners hand over; anyone leaves; contributors stay computed (LB4)
 
 An invite is a maintainer row with no `accepted_at`, so it never grants anything until accepted. Any maintainer can invite. Only an owner removes others or makes someone an owner, so a team can hand a build over; anyone can leave, and the last owner can't. Contributors are the repo's own (up to 100 people, bots left out), read with the hourly stats, and count for a builder only by an exact GitHub-login match through a GitHub sign-in, never by a typed name. A listing counts toward badges, projects and support links only while it's published.
+
+### Covers live in R2, one bucket per environment (LB5)
+
+`openproduct-web-covers-stage` and `openproduct-web-covers-prod` (created 2026-11-10), bound as `COVERS`; `select-env.mjs` swaps in prod's for prod. A cover is checked by its magic bytes (PNG, JPEG, WebP; never SVG), capped at 2 MB, stored under `covers/<slug>/<random>.<ext>` with its true type, and served by `/covers/…` with `nosniff` and a sandboxing CSP. Only keys of that shape can be requested. Replacing a cover deletes the old object.
+
+### Q1 answered by its default: the workspace link is optional (LB5)
+
+openproduct.live's builds carry an Orunbase reference like `org_…`, and their "Fork & deploy" goes to the Orunbase app; there's no per-workspace fork address. A listing takes the same kind of reference (`org_…` or `ws_…`), and shows the same button and panel only when one is set.

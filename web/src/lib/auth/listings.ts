@@ -134,6 +134,11 @@ export type Listing = {
   createdAt: string;
   publishedAt: string | null;
   maintainers: { accountId: string; handle: string | null; role: "owner" | "maintainer" }[];
+  /** LB5: the maintainers' pitch (Markdown subset), live app, Orunbase workspace, cover. */
+  pitch: string | null;
+  liveUrl: string | null;
+  workspaceRef: string | null;
+  coverKey: string | null;
 };
 
 type Row = {
@@ -149,6 +154,10 @@ type Row = {
   licence: string | null;
   created_at: string;
   published_at: string | null;
+  pitch?: string | null;
+  live_url?: string | null;
+  workspace_ref?: string | null;
+  cover_key?: string | null;
 };
 
 function parseStack(raw: string): string[] {
@@ -186,6 +195,10 @@ function toListing(r: Row, maintainers: Listing["maintainers"]): Listing {
     createdAt: r.created_at,
     publishedAt: r.published_at,
     maintainers,
+    pitch: r.pitch ?? null,
+    liveUrl: r.live_url ?? null,
+    workspaceRef: r.workspace_ref ?? null,
+    coverKey: r.cover_key ?? null,
   };
 }
 
@@ -369,7 +382,7 @@ export function listingToBuild(l: Listing, stats?: ListingStats | null, openRole
     lastCommitAt: stats?.status === "ok" ? stats.lastCommitAt : null,
     archived: stats?.status === "ok" && stats.archived ? true : undefined,
     pieces: [],
-    cover: null,
+    cover: l.coverKey ? { src: `/${l.coverKey}`, alt: `${l.slug}: cover image` } : null,
     sample: [],
     source: "here",
   };
@@ -378,11 +391,11 @@ export function listingToBuild(l: Listing, stats?: ListingStats | null, openRole
 export function listingToDetail(l: Listing, stats?: ListingStats | null, roles: Role[] = []): BuildDetail {
   return {
     ...listingToBuild(l, stats, roles.length),
-    // The repo's description shows under About; a pitch of the maintainers' own comes with LB5.
-    pitch: null,
+    // The repo's description shows under About; the pitch is the maintainers' own (LB5).
+    pitch: l.pitch,
     repoUrl: `https://github.com/${l.repo}`,
-    liveUrl: null,
-    workspaceRef: null,
+    liveUrl: l.liveUrl,
+    workspaceRef: l.workspaceRef,
     maintainers: l.maintainers.length,
     roles,
     log: [],

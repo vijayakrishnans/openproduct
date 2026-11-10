@@ -38,6 +38,11 @@ if (!remove) {
     sql(`INSERT INTO listing_maintainers (slug, account_id, role, accepted_at) VALUES (${q(slug)}, ${q(`demo-${owner}`)}, 'owner', ${q(at(hoursAgo))});`);
     for (const o of others) sql(`INSERT INTO listing_maintainers (slug, account_id, role, accepted_at) VALUES (${q(slug)}, ${q(`demo-${o}`)}, 'maintainer', ${q(at(hoursAgo - 3))});`);
   }
+  // A pitch, live link and workspace (LB5). The cover is uploaded through
+  // the listing's settings, since it lives in R2, not the database.
+  sql(`UPDATE listings SET pitch = ${q("## Why\nopenproduct.live lists builds; this is the same directory, rebuilt so builders can do everything in one place: list a build, open seats, raise a hand, write posts and talk.\n\n## What's next\n- Covers and pitches for every listing\n- Moderation for listings\n\nThe whole site is an open build: every change is a pull request.")}, live_url = 'https://openproduct-web-prod.vijayakrishnan12994.workers.dev/', workspace_ref = 'ws_ENVF0PHY' WHERE slug = 'openproduct-web';`);
+  sql(`UPDATE listings SET pitch = ${q("Short essays on getting hired when everyone's CV is written by the same model, and small tools that help you stand out with real work instead.")}, live_url = NULL WHERE slug = 'hired-blog';`);
+
   // A waiting invite (LB4): sign in as Sam to accept or decline it.
   sql(`INSERT INTO listing_maintainers (slug, account_id, role, accepted_at, invited_at) VALUES ('openproduct-web', 'demo-sam', 'maintainer', NULL, ${q(at(2))});`);
 

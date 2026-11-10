@@ -10,13 +10,15 @@ import { loadDirectory } from "@/lib/directory";
 import { MAX_ROLE_COMMITMENT, MAX_ROLE_DESCRIPTION, MAX_ROLE_TITLE, MAX_ROLES, rolesOf, type ListingRole } from "@/lib/auth/listing-roles";
 import { ROLE_LABEL, ROLE_TYPES } from "@/lib/roles";
 import { MAX_MAINTAINERS, teamOf } from "@/lib/auth/listing-team";
+import { MAX_PITCH } from "@/lib/auth/listing-media";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Listing settings", robots: { index: false } };
 
 type Params = Promise<{ slug: string }>;
-type Search = Promise<{ error?: string; created?: string; saved?: string; verified?: string; unpublished?: string; seat?: string; team?: string }>;
+type Search = Promise<{ error?: string; created?: string; saved?: string; verified?: string; unpublished?: string; seat?: string; team?: string; details?: string }>;
 
+const DETAILS_DONE: Record<string, string> = { saved: "Saved.", cover: "Cover uploaded.", "cover-removed": "Cover removed." };
 const TEAM_DONE: Record<string, string> = { invited: "Invite sent. It waits on their account page until they accept.", removed: "Removed from the team.", owner: "They're an owner now." };
 const SEAT_DONE: Record<string, string> = { added: "Seat added.", saved: "Seat saved.", closed: "Seat closed.", reopened: "Seat reopened." };
 
@@ -128,6 +130,64 @@ export default async function ListingSettings({ params, searchParams }: { params
             <label>
               <span>Stack <span className="muted">(comma-separated)</span></span>
               <input name="stack" defaultValue={l.stack.join(", ")} />
+            </label>
+            <button className="btn btn-ghost" type="submit">Save</button>
+          </form>
+        </section>
+
+        <section className="panel account-section" id="cover">
+          <div className="panel-head">
+            <div>
+              <h2>Cover image</h2>
+              <p className="sub">Shown on the build&apos;s card and page. PNG, JPEG or WebP, up to 2 MB; a screenshot of the app works well.</p>
+            </div>
+          </div>
+          {q.details === "cover" || q.details === "cover-removed" ? <p className="auth-ok" role="status">{DETAILS_DONE[q.details]}</p> : null}
+          {l.coverKey ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img className="cover-preview" src={`/${l.coverKey}`} alt={`${l.slug}: current cover`} />
+          ) : (
+            <p className="muted" style={{ margin: "0 0 10px" }}>No cover yet; the card shows the build&apos;s initials.</p>
+          )}
+          <div className="account-actions">
+            <form method="post" action="/list/write" encType="multipart/form-data" className="cover-form">
+              <input type="hidden" name="action" value="cover" />
+              <input type="hidden" name="slug" value={l.slug} />
+              <input type="file" name="cover" accept="image/png,image/jpeg,image/webp" required />
+              <button className="btn btn-ghost" type="submit">{l.coverKey ? "Replace cover" : "Upload cover"}</button>
+            </form>
+            {l.coverKey ? (
+              <form method="post" action="/list/write">
+                <input type="hidden" name="action" value="cover-remove" />
+                <input type="hidden" name="slug" value={l.slug} />
+                <button className="text-btn danger" type="submit">Remove</button>
+              </form>
+            ) : null}
+          </div>
+        </section>
+
+        <section className="panel account-section" id="details">
+          <div className="panel-head">
+            <div>
+              <h2>Pitch and links</h2>
+              <p className="sub">The pitch is your own words on the build page: what it is, who it&apos;s for, where it&apos;s going.</p>
+            </div>
+          </div>
+          {q.details === "saved" ? <p className="auth-ok" role="status">Saved.</p> : null}
+          <form method="post" action="/list/write" className="account-form">
+            <input type="hidden" name="action" value="details" />
+            <input type="hidden" name="slug" value={l.slug} />
+            <label>
+              <span>Pitch <span className="muted">(optional)</span></span>
+              <textarea name="pitch" rows={8} maxLength={MAX_PITCH} defaultValue={l.pitch ?? ""} placeholder="## Why\nWhat problem it solves, for whom. **bold**, *italic*, lists and links work." />
+            </label>
+            <label>
+              <span>Live app <span className="muted">(optional)</span></span>
+              <input name="live_url" type="url" inputMode="url" defaultValue={l.liveUrl ?? ""} placeholder="https://your-build.app" />
+            </label>
+            <label>
+              <span>Orunbase workspace <span className="muted">(optional; adds &ldquo;Fork &amp; deploy on Orunbase&rdquo;)</span></span>
+              <input name="workspace_ref" defaultValue={l.workspaceRef ?? ""} placeholder="ws_ABC12345" pattern="(org|ws)_[A-Za-z0-9]{6,40}" />
             </label>
             <button className="btn btn-ghost" type="submit">Save</button>
           </form>
