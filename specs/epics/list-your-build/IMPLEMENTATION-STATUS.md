@@ -8,7 +8,7 @@
 | LB3: open roles | ✅ Shipped | [#32](https://github.com/vijayakrishnans/openproduct/pull/32) |
 | LB4: maintainers and contributors | ✅ Shipped | [#33](https://github.com/vijayakrishnans/openproduct/pull/33) |
 | LB5: the pitch, a cover and a live link | ✅ Shipped | [#34](https://github.com/vijayakrishnans/openproduct/pull/34) |
-| LB6: moderation and lifecycle | 🚧 In review | |
+| LB6: moderation and lifecycle | ✅ Shipped | [#36](https://github.com/vijayakrishnans/openproduct/pull/36) |
 
 ## Departures from the design
 
@@ -71,3 +71,13 @@ Maintainers, seats and stats follow by `ON UPDATE CASCADE`; votes, build follows
 ### `?from=here` (D1, LB6)
 
 If openproduct.live ever lists a slug that a listing here already has, theirs wins on `/builds/<slug>`, and `?from=here` still shows this site's listing until its owners rename it.
+
+## Closed (2026-11-10)
+
+All seven milestones shipped, LB0 through LB6, in PRs #28 and #30–#34 and #36. Along the way, OP-34 (#29) and OP-35 (#35) added demo sign-in, so the site can be shown without real accounts. Both stage and prod carry marked demo data (`web/scripts/seed-demo.mjs`, `seed-demo-listings.mjs`). In Orunbase, EP-2 rolls up 7/7 tasks done; its status label is set in the Orunbase console, since neither the CLI nor the MCP tools can change it.
+
+What stays open, none of it blocking:
+
+- **Before going live:** set `DEMO_SIGNIN` to `"off"` in `web/wrangler.jsonc`, remove the demo data (`--remove` on both seed scripts), and set the GitHub sign-in secrets or have Orunbase approve this site's sign-in address (OP-35).
+- **GitHub rate limits:** set `GITHUB_TOKEN` (or the GitHub sign-in secrets) on both workers once listings grow past a handful; anonymous reads allow 60 an hour.
+- **R6:** re-verifying a listing when its repo changes hands isn't built; a listing keeps its verification.

@@ -1,0 +1,13 @@
+apiVersion: orun.io/v1
+kind: TaskContract
+metadata:
+  name: OP-36
+spec:
+  goal: "Close the list-your-build epic: its README and status file record every milestone shipped, with the PRs, and what stays open."
+  affects:
+    - default/openproduct/web
+    - specs/**
+    - tasks/**
+  doneWhen:
+    - "The list-your-build README says shipped and every row of IMPLEMENTATION-STATUS links its PR."
+  gates: []
