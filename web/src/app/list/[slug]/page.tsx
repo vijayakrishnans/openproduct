@@ -16,7 +16,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Listing settings", robots: { index: false } };
 
 type Params = Promise<{ slug: string }>;
-type Search = Promise<{ error?: string; created?: string; saved?: string; verified?: string; unpublished?: string; seat?: string; team?: string; details?: string }>;
+type Search = Promise<{ error?: string; created?: string; saved?: string; verified?: string; unpublished?: string; seat?: string; team?: string; details?: string; renamed?: string }>;
 
 const DETAILS_DONE: Record<string, string> = { saved: "Saved.", cover: "Cover uploaded.", "cover-removed": "Cover removed." };
 const TEAM_DONE: Record<string, string> = { invited: "Invite sent. It waits on their account page until they accept.", removed: "Removed from the team.", owner: "They're an owner now." };
@@ -79,6 +79,8 @@ export default async function ListingSettings({ params, searchParams }: { params
         {q.verified ? <p className="auth-ok" role="status">Verified. You can delete the {VERIFY_FILE} file now.</p> : null}
         {q.saved ? <p className="auth-ok" role="status">Saved.</p> : null}
         {q.unpublished ? <p className="auth-ok" role="status">Back to a draft. Only maintainers can see it.</p> : null}
+        {q.renamed ? <p className="auth-ok" role="status">Renamed. The old address forwards here for 30 days.</p> : null}
+        {l.state === "hidden" ? <p className="auth-error" role="status">A moderator has hidden this build. It&apos;s out of Open builds and nobody else can see its page.</p> : null}
         {q.error ? <p className="auth-error" role="alert">{q.error.slice(0, 300)}</p> : null}
 
         <section className="panel account-section">
@@ -314,6 +316,31 @@ export default async function ListingSettings({ params, searchParams }: { params
             </form>
           )}
         </section>
+        {meOwner ? (
+          <section className="panel account-section danger-zone" id="danger">
+            <h2>Rename or delete</h2>
+            <form method="post" action="/list/write" className="account-form">
+              <input type="hidden" name="action" value="rename" />
+              <input type="hidden" name="slug" value={l.slug} />
+              <label>
+                <span>New name</span>
+                <input name="new_slug" required maxLength={40} pattern="[a-zA-Z0-9][a-zA-Z0-9\-]*" placeholder={l.slug} />
+              </label>
+              <p className="support-hint">Upvotes, follows, raised hands and support links move with it, and /builds/{l.slug} forwards to the new name for 30 days.</p>
+              <button className="btn btn-ghost" type="submit">Rename</button>
+            </form>
+            <form method="post" action="/list/write" className="account-form">
+              <input type="hidden" name="action" value="delete" />
+              <input type="hidden" name="slug" value={l.slug} />
+              <label>
+                <span>Type <b>{l.slug}</b> to delete this listing</span>
+                <input name="confirm" required autoComplete="off" />
+              </label>
+              <p className="support-hint">Deletes the listing, its seats, its cover and everything people left on it here. The repo on GitHub isn&apos;t touched.</p>
+              <button className="btn btn-danger" type="submit">Delete the listing</button>
+            </form>
+          </section>
+        ) : null}
       </main>
       <SiteFooter />
       <TabBar current="/" />

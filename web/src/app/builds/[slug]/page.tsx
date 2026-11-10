@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { AppMap } from "@/components/app-map";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
@@ -13,6 +13,8 @@ import { rolesOf } from "@/lib/auth/listing-roles";
 import { PostBody } from "@/components/post-body";
 import { parseBody } from "@/lib/body";
 import { buildersByGithubLogins } from "@/lib/auth/listing-team";
+import { redirectFor } from "@/lib/auth/listing-lifecycle";
+import { isModerator, moderatorsFor } from "@/lib/auth/discussions";
 import { githubDepsFor } from "@/lib/auth/github-prs";
 import { appEnv } from "@/lib/server/env";
 import Link from "next/link";
@@ -24,7 +26,7 @@ import { ROLE_GUIDE, ROLE_LABEL } from "@/lib/roles";
 export const dynamic = "force-dynamic";
 
 type Params = Promise<{ slug: string }>;
-type Search = Promise<{ error?: string }>;
+type Search = Promise<{ error?: string; from?: string; reported?: string }>;
 
 /** A small same-origin form for a toggle on this page; signed-out visitors go to sign in first. */
 function Act({ action, fields, next, className, children, label }: { action: string; fields: Record<string, string>; next: string; className: string; children: React.ReactNode; label?: string }) {
@@ -82,10 +84,14 @@ export default async function BuildPage({ params, searchParams }: { params: Para
   // is shown only to its maintainers; a hidden listing to nobody.
   let listing: Listing | null = null;
   let stats: ListingStats | null = null;
-  if ((remote === null || remote === "unreachable") && db0) {
+  let moderator = false;
+  // `?from=here` shows this site's listing even when openproduct.live later took the slug (D1).
+  if ((remote === null || remote === "unreachable" || q.from === "here") && db0) {
     const l = await getListing(db0, slug).catch(() => null);
     const mine = !!l && isMaintainer(l, session0?.account.id);
-    if (l && (l.state === "published" || (mine && l.state !== "hidden"))) {
+    // LB6: a hidden listing is a 404 to everyone but moderators.
+    moderator = !!session0 && (await isModerator(db0, session0.account.id, moderatorsFor(await appEnv())).catch(() => false));
+    if (l && (l.state === "published" || (mine && l.state !== "hidden") || (moderator && l.state === "hidden"))) {
       // LB2: the repo's numbers, refreshed here when an hour old (one repo, a few calls).
       stats = await statsOf(db0, l.slug).catch(() => null);
       if (isStale(stats)) stats = await refreshStats(db0, l.slug, l.repo, githubDepsFor(await appEnv())).catch(() => stats);
@@ -96,8 +102,13 @@ export default async function BuildPage({ params, searchParams }: { params: Para
   const seats = listing && db0 ? await rolesOf(db0, listing.slug, { skills: listing.stack }).catch(() => []) : [];
   // LB4: the repo's contributors who are builders here, and how many others.
   const contributorsHere = listing && db0 && stats?.contributors.length ? await buildersByGithubLogins(db0, stats.contributors).catch(() => []) : [];
-  const b = listing ? listingToDetail(listing, stats, seats) : remote;
-  if (b === null) notFound();
+  const b = listing ? listingToDetail(listing, stats, seats) : q.from === "here" ? null : remote;
+  if (b === null) {
+    // LB6: a renamed listing's old address forwards for 30 days.
+    const moved = db0 ? await redirectFor(db0, slug).catch(() => null) : null;
+    if (moved) redirect(`/builds/${moved}`);
+    notFound();
+  }
   if (b === "unreachable") {
     return (
       <>
@@ -132,6 +143,17 @@ export default async function BuildPage({ params, searchParams }: { params: Para
         <nav className="crumbs" aria-label="Breadcrumb">
           <a href="/">Builds</a> <span>/</span> <span>{b.slug}</span>
         </nav>
+        {listing?.state === "hidden" ? (
+          <div className="listing-bar is-draft" role="status">
+            <span><b>Hidden by a moderator.</b> Nobody else can see this build.</span>
+            <form method="post" action="/list/write">
+              <input type="hidden" name="action" value="listing-restore" />
+              <input type="hidden" name="slug" value={listing.slug} />
+              <button className="btn btn-ghost" type="submit">Restore</button>
+            </form>
+          </div>
+        ) : null}
+        {q.reported ? <p className="auth-ok" role="status">Thanks. A moderator will take a look.</p> : null}
         {manage && stats?.status === "missing" ? (
           <div className="listing-bar is-draft" role="alert">
             <span><b>We can&apos;t see the repo.</b> GitHub says {manage.repo} is private or gone, so this build is out of Open builds until it&apos;s public again.</span>
@@ -339,6 +361,25 @@ export default async function BuildPage({ params, searchParams }: { params: Para
               </p>
             </div>
             )}
+
+            {listing && session && listing.state === "published" && (!manage || moderator) ? (
+              <div className="listing-report">
+                {!manage ? (
+                  <form method="post" action="/list/write">
+                    <input type="hidden" name="action" value="report" />
+                    <input type="hidden" name="slug" value={listing.slug} />
+                    <button className="text-btn" type="submit">Report this build</button>
+                  </form>
+                ) : null}
+                {moderator ? (
+                  <form method="post" action="/list/write">
+                    <input type="hidden" name="action" value="listing-hide" />
+                    <input type="hidden" name="slug" value={listing.slug} />
+                    <button className="text-btn danger" type="submit">Hide (moderator)</button>
+                  </form>
+                ) : null}
+              </div>
+            ) : null}
 
             <div className="panel">
               <div className="panel-head"><h2>Embed this build</h2></div>

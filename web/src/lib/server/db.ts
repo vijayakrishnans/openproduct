@@ -337,6 +337,33 @@ export const MIGRATIONS: { version: number; name: string; statements: string[] }
       `ALTER TABLE listings ADD COLUMN cover_key TEXT`,
     ],
   },
+  {
+    version: 13,
+    name: "listing moderation",
+    statements: [
+      // list-your-build LB6: listings can be reported (target_id is the slug).
+      // Reports are rebuilt to widen the CHECK, as in migration 4; running it
+      // twice copies the already-rebuilt table, so racing isolates lose nothing.
+      `CREATE TABLE IF NOT EXISTS reports_v13 (
+         target_kind TEXT NOT NULL CHECK (target_kind IN ('thread', 'post', 'article', 'listing')),
+         target_id TEXT NOT NULL,
+         reporter_account_id TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+         reason TEXT,
+         created_at TEXT NOT NULL,
+         resolved INTEGER NOT NULL DEFAULT 0,
+         PRIMARY KEY (target_kind, target_id, reporter_account_id)
+       )`,
+      `INSERT OR IGNORE INTO reports_v13 SELECT target_kind, target_id, reporter_account_id, reason, created_at, resolved FROM reports`,
+      `DROP TABLE reports`,
+      `ALTER TABLE reports_v13 RENAME TO reports`,
+      // A renamed listing's old address redirects for 30 days.
+      `CREATE TABLE IF NOT EXISTS listing_redirects (
+         old_slug TEXT PRIMARY KEY COLLATE NOCASE,
+         new_slug TEXT NOT NULL COLLATE NOCASE,
+         created_at TEXT NOT NULL
+       )`,
+    ],
+  },
 ];
 
 const applied = new WeakSet<object>();

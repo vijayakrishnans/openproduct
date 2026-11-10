@@ -3,6 +3,7 @@
 // (OP-25), so cards, sorting and build pages agree.
 import { githubDepsFor } from "../auth/github-prs";
 import { allStats, refreshStale } from "../auth/listing-stats";
+import { expireStale } from "../auth/listing-lifecycle";
 import { openRoleCounts, openRolesFor, rowToRole } from "../auth/listing-roles";
 import { publishedListings, listingToBuild } from "../auth/listings";
 import { voteCounts, withVotes } from "../auth/reactions";
@@ -21,6 +22,8 @@ export async function loadDirectoryHere(): Promise<Directory> {
   // LB2: numbers come from the repo. Stale ones refresh after this response,
   // so the page never waits on GitHub; a repo gone private or deleted is left out.
   void afterResponse(refreshStale(db, githubDepsFor(env)));
+  // LB6: unverified drafts older than 14 days, and old redirects, go quietly.
+  void afterResponse(expireStale(db));
   const listed = published.filter((l) => stats.get(l.slug)?.status !== "missing");
   const asBuild = (l: (typeof listed)[number]) => listingToBuild(l, stats.get(l.slug), seats.get(l.slug) ?? 0);
   if (!dir.ok) {
