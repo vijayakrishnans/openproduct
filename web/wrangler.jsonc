@@ -13,8 +13,8 @@
   // Cover images for builds listed here (list-your-build LB5). This names
   // stage's bucket; scripts/select-env.mjs swaps in prod's for prod.
   "r2_buckets": [{ "binding": "COVERS", "bucket_name": "openproduct-web-covers-stage" }],
-  // Demo sign-in (OP-34): on for stage and local; scripts/select-env.mjs
-  // turns it off for prod, so prod never signs anyone in without a provider.
+  // Demo sign-in (OP-34, OP-35): anyone can be a demo account at /demo, in
+  // every environment, while the site is a demo. Set "off" before it goes live.
   "vars": { "DEMO_SIGNIN": "on" },
   "observability": { "enabled": true }
 }

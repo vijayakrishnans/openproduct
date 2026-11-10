@@ -22,12 +22,12 @@ export default async function DemoPage({ searchParams }: { searchParams: Promise
     <>
       <SiteHeader />
       <main className="wrap section demo-page">
-        <span className="chip">STAGE · DEMO</span>
+        <span className="chip">DEMO</span>
         <h1>Look around as a demo builder</h1>
         <p className="sub">
           Pick anyone below and you&apos;re signed in as them, with no GitHub or Orunbase account needed. Everything signed-in works:
           your account page, writing posts and discussions, upvoting, following, raising a hand for a seat, and listing a build. The
-          moderator can hide posts and sees the reports queue. This exists on stage only; the real site never offers it.
+          moderator can hide posts and sees the reports queue. Demo sign-in is switched off before the site goes live.
         </p>
         {q.error ? <p className="auth-error" role="alert">That demo account doesn&apos;t exist. Pick one below.</p> : null}
         {accounts.length === 0 ? (

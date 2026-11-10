@@ -40,7 +40,9 @@ export function configuredProviders(env: AppEnv, hasDb: boolean): ProviderId[] {
     if (p === "github") return !!(env.GITHUB_CLIENT_ID && env.GITHUB_CLIENT_SECRET);
     if (p === "google") return !!(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET);
     if (p === "apple") return !!(env.APPLE_CLIENT_ID && env.APPLE_TEAM_ID && env.APPLE_KEY_ID && env.APPLE_PRIVATE_KEY);
-    return true;
+    // Orunbase registers clients only for approved redirect hosts, and this
+    // site's isn't one yet (OP-35); offer it once ORUNBASE_SIGNIN is "on".
+    return env.ORUNBASE_SIGNIN === "on";
   });
 }
 

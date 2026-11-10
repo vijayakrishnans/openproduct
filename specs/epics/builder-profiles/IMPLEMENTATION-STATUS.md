@@ -139,3 +139,7 @@ All eight milestones are built and deployed to stage and prod, with migrations 1
 1. **BP5's starter threads.** The five drafts are written. The owner signs in on prod, starts or claims a builder profile, and approves them; they are then posted under that account.
 2. **BP3 setup.** Apple: a Services ID, a key and four secrets. Email: a domain on Cloudflare onboarded to Email Sending, the `send_email` binding, and `EMAIL_FROM`. The steps are in "Apple and email sign-in ship switched off" above.
 3. **GitHub sign-in secrets** (`GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`) on both workers. Without them only Orunbase sign-in shows, and BP7's merged-PR badge can't appear for anyone on the live site.
+
+### Orunbase sign-in is off until Orunbase approves this site (OP-35, 2026-11-10)
+
+Orunbase's client registration now accepts only approved redirect hosts (claude.ai, claude.com, chatgpt.com, and loopback); it answers `invalid_redirect_uri` for this site's `workers.dev` addresses, so every Orunbase sign-in failed with "We couldn't reach that provider". The button is hidden unless `ORUNBASE_SIGNIN` is `on`. Meanwhile the site is a demo, and demo sign-in is on in every environment (`DEMO_SIGNIN` in `wrangler.jsonc`), to be set `off` before it goes live.

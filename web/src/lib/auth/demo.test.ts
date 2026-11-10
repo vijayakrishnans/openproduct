@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { copyFileSync, mkdirSync, mkdtempSync, readFileSync } from "node:fs";
+import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
@@ -46,17 +46,19 @@ describe("demo sign-in (OP-34)", () => {
     expect(moderatorsFor({ MODERATORS: "alice" })).toEqual(["alice"]);
   });
 
-  it("the deploy turns demo sign-in off for prod and keeps it on for stage", () => {
+  it("the deploy keeps wrangler.jsonc's demo setting in every environment, off included", () => {
     const dir = mkdtempSync(join(tmpdir(), "select-env-"));
     mkdirSync(join(dir, "scripts"));
     copyFileSync(join(__dirname, "../../../scripts/select-env.mjs"), join(dir, "scripts/select-env.mjs"));
-    const run = (env: string) => {
-      copyFileSync(join(__dirname, "../../../wrangler.jsonc"), join(dir, "wrangler.jsonc"));
+    const run = (env: string, demo: "on" | "off") => {
+      const config = readFileSync(join(__dirname, "../../../wrangler.jsonc"), "utf8").replace(/"DEMO_SIGNIN":\s*"[^"]*"/, `"DEMO_SIGNIN": "${demo}"`);
+      writeFileSync(join(dir, "wrangler.jsonc"), config);
       execFileSync("node", [join(dir, "scripts/select-env.mjs")], { env: { ...process.env, ORUN_ENVIRONMENT: env } });
       return readFileSync(join(dir, "wrangler.jsonc"), "utf8");
     };
-    expect(run("prod")).toContain('"DEMO_SIGNIN": "off"');
-    expect(run("prod")).not.toContain('"DEMO_SIGNIN": "on"');
-    expect(run("stage")).toContain('"DEMO_SIGNIN": "on"');
+    expect(run("prod", "on")).toContain('"DEMO_SIGNIN": "on"');
+    expect(run("stage", "on")).toContain('"DEMO_SIGNIN": "on"');
+    expect(run("prod", "off")).toContain('"DEMO_SIGNIN": "off"');
+    expect(run("stage", "off")).toContain('"DEMO_SIGNIN": "off"');
   });
 });

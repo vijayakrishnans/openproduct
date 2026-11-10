@@ -20,6 +20,8 @@ export type AppEnv = {
   EMAIL_FROM?: string;
   /** Optional: a GitHub token for reading merged PRs (BP7); otherwise the OAuth app's id and secret are used. */
   GITHUB_TOKEN?: string;
+  /** "on" offers Orunbase sign-in; off until Orunbase approves this site's redirect address (OP-35). */
+  ORUNBASE_SIGNIN?: string;
   /** Cover images for builds listed here (LB5): an R2 bucket. */
   COVERS?: CoverBucket;
   /** "on" lets anyone sign in as a demo account at /demo (OP-34). Stage only: the deploy sets "off" for prod. */
