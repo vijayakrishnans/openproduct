@@ -4,8 +4,8 @@
 |---|---|---|
 | LB0: the spec | ✅ Shipped | [#28](https://github.com/vijayakrishnans/openproduct/pull/28) |
 | LB1: list and verify | ✅ Shipped | [#30](https://github.com/vijayakrishnans/openproduct/pull/30) |
-| LB2: live from the repo | 🚧 In review | |
-| LB3: open roles | ⏳ Not started | |
+| LB2: live from the repo | ✅ Shipped | [#31](https://github.com/vijayakrishnans/openproduct/pull/31) |
+| LB3: open roles | 🚧 In review | |
 | LB4: maintainers and contributors | ⏳ Not started | |
 | LB5: the pitch, a cover and a live link | ⏳ Not started | |
 | LB6: moderation and lifecycle | ⏳ Not started | |
@@ -43,3 +43,7 @@ The directory refreshes at most three stale listings after the response is sent 
 ### The repo's licence wins once read (LB2)
 
 The licence stored at listing time is used only until the repo has been read; after that, GitHub's answer is shown, "no licence" included. Demo listings no longer claim MIT.
+
+### Seats: a kind to pick, twelve at most, and closed ones kept (LB3)
+
+A maintainer may pick the seat's kind (engineering, design, advisor, growth, design partner, contributor) or leave it to be read from the title, as openproduct.live's seats are. A build has at most twelve seats, open or closed. Closing a seat keeps it (`open = 0`) so a raised hand or a link to it still resolves; the settings page can reopen it. Seat ids start `lr_`, so they never collide with openproduct.live's `opr_` ids in raised hands.

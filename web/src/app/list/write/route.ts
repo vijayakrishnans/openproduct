@@ -2,6 +2,7 @@
 // (list-your-build LB1). Same-origin forms; maintainers only past create.
 import { NextResponse, type NextRequest } from "next/server";
 import { createListing, setPublished, updateListing, verifyListing } from "@/lib/auth/listings";
+import { addRole, setRoleOpen, updateRole } from "@/lib/auth/listing-roles";
 import { sameOrigin } from "@/lib/auth/request";
 import { SESSION_COOKIE, validateSession } from "@/lib/auth/session";
 import { loadDirectory, slugTakenOnOpenproduct } from "@/lib/directory";
@@ -43,6 +44,17 @@ export async function POST(request: NextRequest) {
   if (action === "verify") {
     const r = await verifyListing(db, slug, me, github);
     return go(back, r.ok ? { verified: "1" } : { error: r.message });
+  }
+  // Open seats (LB3).
+  const seat = { title: field("title"), type: field("type"), description: field("description"), commitment: field("commitment") };
+  if (action === "role-add") {
+    const r = await addRole(db, slug, me, seat);
+    return go(`${back}#seats`, r.ok ? { seat: "added" } : { error: r.message });
+  }
+  if (action === "role-update" || action === "role-close" || action === "role-reopen") {
+    const id = field("role");
+    const r = action === "role-update" ? await updateRole(db, id, me, seat) : await setRoleOpen(db, id, me, action === "role-reopen");
+    return go(`${back}#seats`, r.ok ? { seat: action === "role-update" ? "saved" : action === "role-close" ? "closed" : "reopened" } : { error: r.message });
   }
   if (action === "publish" || action === "unpublish") {
     const r = await setPublished(db, slug, me, action === "publish");

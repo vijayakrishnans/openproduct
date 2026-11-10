@@ -7,12 +7,43 @@ import { TabBar } from "@/components/tab-bar";
 import { getListing, isMaintainer, MAX_TAGLINE, missingForPublish, VERIFY_FILE } from "@/lib/auth/listings";
 import { viewer } from "@/lib/auth/viewer";
 import { loadDirectory } from "@/lib/directory";
+import { MAX_ROLE_COMMITMENT, MAX_ROLE_DESCRIPTION, MAX_ROLE_TITLE, MAX_ROLES, rolesOf, type ListingRole } from "@/lib/auth/listing-roles";
+import { ROLE_LABEL, ROLE_TYPES } from "@/lib/roles";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Listing settings", robots: { index: false } };
 
 type Params = Promise<{ slug: string }>;
-type Search = Promise<{ error?: string; created?: string; saved?: string; verified?: string; unpublished?: string }>;
+type Search = Promise<{ error?: string; created?: string; saved?: string; verified?: string; unpublished?: string; seat?: string }>;
+
+const SEAT_DONE: Record<string, string> = { added: "Seat added.", saved: "Seat saved.", closed: "Seat closed.", reopened: "Seat reopened." };
+
+/** The fields of a seat, for adding one or editing it. */
+function SeatFields({ role }: { role?: ListingRole }) {
+  return (
+    <>
+      <label>
+        <span>Title</span>
+        <input name="title" required maxLength={MAX_ROLE_TITLE} defaultValue={role?.title ?? ""} placeholder="Frontend engineer, Design partner, Growth lead…" />
+      </label>
+      <label>
+        <span>Kind of seat</span>
+        <select name="type" defaultValue={role?.type ?? ""}>
+          <option value="">Work it out from the title</option>
+          {ROLE_TYPES.map((t) => <option key={t} value={t}>{ROLE_LABEL[t]}</option>)}
+        </select>
+      </label>
+      <label>
+        <span>What it involves <span className="muted">(optional)</span></span>
+        <textarea name="description" rows={3} maxLength={MAX_ROLE_DESCRIPTION} defaultValue={role?.description ?? ""} />
+      </label>
+      <label>
+        <span>Time <span className="muted">(optional)</span></span>
+        <input name="commitment" maxLength={MAX_ROLE_COMMITMENT} defaultValue={role?.commitment ?? ""} placeholder="A few hours a week" />
+      </label>
+    </>
+  );
+}
 
 /** A listing's settings: proof of control, the fields, and publishing (LB1). Maintainers only. */
 export default async function ListingSettings({ params, searchParams }: { params: Params; searchParams: Search }) {
@@ -25,6 +56,7 @@ export default async function ListingSettings({ params, searchParams }: { params
   const dir = await loadDirectory();
   const topics = dir.ok ? dir.topics : [];
   const missing = missingForPublish(l);
+  const seats = v.db ? await rolesOf(v.db, l.slug, { withClosed: true }) : [];
   const fileUrl = `https://github.com/${l.repo}/new/HEAD?filename=${encodeURIComponent(VERIFY_FILE)}&value=${encodeURIComponent(l.verifyCode)}`;
 
   return (
@@ -96,6 +128,56 @@ export default async function ListingSettings({ params, searchParams }: { params
             </label>
             <button className="btn btn-ghost" type="submit">Save</button>
           </form>
+        </section>
+
+        <section className="panel account-section" id="seats">
+          <div className="panel-head">
+            <div>
+              <h2>Open seats</h2>
+              <p className="sub">The people you&apos;re looking for. Seats show on the build page, on Open roles and on the home page, and builders can raise a hand for one.</p>
+            </div>
+          </div>
+          {q.seat && SEAT_DONE[q.seat] ? <p className="auth-ok" role="status">{SEAT_DONE[q.seat]}</p> : null}
+          {seats.length ? (
+            <ul className="seat-admin">
+              {seats.map((r) => (
+                <li key={r.id} className={r.open ? "" : "is-closed"}>
+                  <details>
+                    <summary>
+                      <span className={`role-type t-${r.type}`}>{ROLE_LABEL[r.type]}</span>
+                      <strong>{r.title}</strong>
+                      {r.open ? null : <span className="pill">Closed</span>}
+                      <span className="link seat-edit">Edit</span>
+                    </summary>
+                    <form method="post" action="/list/write" className="account-form">
+                      <input type="hidden" name="action" value="role-update" />
+                      <input type="hidden" name="slug" value={l.slug} />
+                      <input type="hidden" name="role" value={r.id} />
+                      <SeatFields role={r} />
+                      <button className="btn btn-ghost" type="submit">Save seat</button>
+                    </form>
+                  </details>
+                  <form method="post" action="/list/write">
+                    <input type="hidden" name="action" value={r.open ? "role-close" : "role-reopen"} />
+                    <input type="hidden" name="slug" value={l.slug} />
+                    <input type="hidden" name="role" value={r.id} />
+                    <button className="text-btn" type="submit">{r.open ? "Close" : "Reopen"}</button>
+                  </form>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          {seats.length < MAX_ROLES ? (
+            <details className="seat-add" open={seats.length === 0}>
+              <summary className="btn btn-ghost">+ Add a seat</summary>
+              <form method="post" action="/list/write" className="account-form">
+                <input type="hidden" name="action" value="role-add" />
+                <input type="hidden" name="slug" value={l.slug} />
+                <SeatFields />
+                <button className="btn btn-dark" type="submit">Add the seat</button>
+              </form>
+            </details>
+          ) : null}
         </section>
 
         <section className="panel account-section">
