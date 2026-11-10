@@ -12,8 +12,8 @@ export const THREADS_PER_HOUR = 3;
 export const REPLIES_PER_HOUR = 20;
 const HOUR = 60 * 60 * 1000;
 
-export type LocalThread = Thread & { local: true; hidden: boolean };
-export type LocalPost = Post & { hidden: boolean; mine: boolean };
+export type LocalThread = Thread & { local: true; hidden: boolean; solutionPostId?: string | null; mine?: boolean };
+export type LocalPost = Post & { hidden: boolean; mine: boolean; solution?: boolean };
 
 export type WriteResult = { ok: true; id: string } | { ok: false; message: string };
 
@@ -53,7 +53,7 @@ async function recentCount(db: Db, sql: string, accountId: string, now: number):
 export async function createThread(
   db: Db,
   accountId: string,
-  input: { tag: string; title: string; body: string },
+  input: { tag: string; title: string; body: string; kind?: string },
   now = Date.now(),
 ): Promise<WriteResult> {
   const author = await authorOf(db, accountId);
@@ -72,8 +72,8 @@ export async function createThread(
   const at = new Date(now).toISOString();
   await db.batch([
     db
-      .prepare(`INSERT INTO threads (id, author_account_id, tag, title, created_at, last_post_at, post_count) VALUES (?, ?, ?, ?, ?, ?, 1)`)
-      .bind(id, accountId, input.tag, title, at, at),
+      .prepare(`INSERT INTO threads (id, author_account_id, tag, title, created_at, last_post_at, post_count, kind) VALUES (?, ?, ?, ?, ?, ?, 1, ?)`)
+      .bind(id, accountId, input.tag, title, at, at, input.kind === "issue" ? "issue" : "discussion"),
     db.prepare(`INSERT INTO posts (id, thread_id, author_account_id, body, created_at) VALUES (?, ?, ?, ?, ?)`).bind(newId(), id, accountId, body, at),
   ]);
   return { ok: true, id };
@@ -108,11 +108,14 @@ type ThreadRow = {
   post_count: number;
   hidden: number;
   remote: number;
+  kind?: string | null;
+  solution_post_id?: string | null;
+  author_account_id?: string | null;
   handle: string | null;
   display_name: string | null;
 };
 
-const THREAD_SELECT = `SELECT t.id, t.tag, t.title, t.created_at, t.last_post_at, t.post_count, t.hidden, t.remote, b.handle, b.display_name
+const THREAD_SELECT = `SELECT t.id, t.tag, t.title, t.created_at, t.last_post_at, t.post_count, t.hidden, t.remote, t.kind, t.solution_post_id, t.author_account_id, b.handle, b.display_name
   FROM threads t LEFT JOIN builders b ON b.account_id = t.author_account_id`;
 
 function toLocalThread(r: ThreadRow): LocalThread {
@@ -123,7 +126,10 @@ function toLocalThread(r: ThreadRow): LocalThread {
     title: r.title,
     author: r.handle ? (r.display_name ?? r.handle) : "deleted builder",
     authorHandle: r.handle,
-    state: "open",
+    // A solved issue reads as "answered", the state openproduct.live's threads use.
+    state: r.solution_post_id ? "answered" : "open",
+    kind: r.kind === "issue" ? "issue" : "discussion",
+    solved: !!r.solution_post_id,
     createdAt: r.created_at,
     // Thread rows say "last reply" only when someone has replied.
     lastPostAt: r.post_count > 1 ? r.last_post_at : null,
@@ -134,9 +140,22 @@ function toLocalThread(r: ThreadRow): LocalThread {
 }
 
 /** Visible threads written here, in the forum's order. */
-export async function listLocalThreads(db: Db, order: ForumOrder, tag: ThreadTag | null, limit = 50, topic?: string): Promise<LocalThread[]> {
+export async function listLocalThreads(
+  db: Db,
+  order: ForumOrder,
+  tag: ThreadTag | null,
+  limit = 50,
+  topic?: string,
+  /** TC3: only issues or only discussions, and solved or open issues. */
+  filter: { kind?: "discussion" | "issue"; solved?: boolean } = {},
+): Promise<LocalThread[]> {
   const where = ["t.hidden = 0", "t.remote = 0"];
   const binds: unknown[] = [];
+  if (filter.kind) {
+    where.push("t.kind = ?");
+    binds.push(filter.kind);
+  }
+  if (filter.solved !== undefined) where.push(filter.solved ? "t.solution_post_id IS NOT NULL" : "t.solution_post_id IS NULL");
   if (tag) {
     where.push("t.tag = ?");
     binds.push(tag);
@@ -161,7 +180,15 @@ export async function getLocalThread(
   const row = await db.prepare(`${THREAD_SELECT} WHERE t.id = ?`).bind(id).first<ThreadRow>();
   // A remote row only carries replies to an openproduct.live thread; that thread is read from there.
   if (!row || row.remote || (row.hidden && !viewer.moderator)) return null;
-  return { thread: toLocalThread(row), posts: await postsOf(db, id, viewer) };
+  const thread = { ...toLocalThread(row), solutionPostId: row.solution_post_id ?? null, mine: !!viewer.accountId && row.author_account_id === viewer.accountId };
+  const posts = await postsOf(db, id, viewer);
+  // TC3: the accepted solution comes straight after the question.
+  const sol = posts.findIndex((p) => p.id === row.solution_post_id);
+  if (sol > 0) {
+    const [answer] = posts.splice(sol, 1);
+    posts.splice(1, 0, { ...answer!, solution: true });
+  }
+  return { thread, posts };
 }
 
 async function postsOf(db: Db, id: string, viewer: { accountId: string | null; moderator: boolean }): Promise<LocalPost[]> {
@@ -185,6 +212,27 @@ async function postsOf(db: Db, id: string, viewer: { accountId: string | null; m
       hidden: p.hidden === 1,
       mine: !!viewer.accountId && p.author_account_id === viewer.accountId,
     }));
+}
+
+/**
+ * Mark a reply as an issue's solution, or clear it (postId null). Only the
+ * issue's author can, and only a visible reply in the thread, never the
+ * question itself.
+ */
+export async function markSolution(db: Db, threadId: string, accountId: string, postId: string | null): Promise<WriteResult> {
+  const t = await db
+    .prepare(`SELECT author_account_id, kind, hidden FROM threads WHERE id = ? AND remote = 0`)
+    .bind(threadId)
+    .first<{ author_account_id: string | null; kind: string; hidden: number }>();
+  if (!t || t.hidden || t.author_account_id !== accountId) return { ok: false, message: "Only the person who raised the issue can mark its solution." };
+  if (t.kind !== "issue") return { ok: false, message: "Only an issue has a solution." };
+  if (postId) {
+    const first = await db.prepare(`SELECT id FROM posts WHERE thread_id = ? ORDER BY created_at, id LIMIT 1`).bind(threadId).first<{ id: string }>();
+    const p = await db.prepare(`SELECT id FROM posts WHERE id = ? AND thread_id = ? AND hidden = 0`).bind(postId, threadId).first();
+    if (!p || first?.id === postId) return { ok: false, message: "Pick a reply as the solution." };
+  }
+  await db.prepare(`UPDATE threads SET solution_post_id = ? WHERE id = ?`).bind(postId, threadId).run();
+  return { ok: true, id: threadId };
 }
 
 /** An openproduct.live thread's id: whatever the API uses, kept to safe characters. */

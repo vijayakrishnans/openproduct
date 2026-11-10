@@ -33,6 +33,9 @@ export type Thread = {
   replies: number;
   /** Written on this site (BP5) rather than read from openproduct.live. */
   local?: boolean;
+  /** TC3: an issue, solved once its author marks a reply as the solution. */
+  kind?: "discussion" | "issue";
+  solved?: boolean;
 };
 
 export type RenderNode =
@@ -127,7 +130,8 @@ export function safeHref(href: string): string | null {
 }
 
 async function get(path: string): Promise<Response> {
-  return fetch(`${API_ORIGIN}${path}`, { headers: { accept: "application/json" }, cache: "no-store" });
+  // A slow openproduct.live must not hang a page: give up after 8 seconds ("unreachable").
+  return fetch(`${API_ORIGIN}${path}`, { headers: { accept: "application/json" }, cache: "no-store", signal: AbortSignal.timeout(8000) });
 }
 
 export async function loadThreads(order: ForumOrder, tag: ThreadTag | null): Promise<Thread[] | "unreachable"> {
