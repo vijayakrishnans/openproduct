@@ -15,10 +15,10 @@ function Spark({ build }: { build: Build }) {
   );
 }
 
-export function BuildCard({ build, topics }: { build: Build; topics: Topic[] }) {
+export function BuildCard({ build, topics, quiet, anchor }: { build: Build; topics: Topic[]; quiet?: boolean; anchor?: string }) {
   const label = topics.find((t) => t.value === build.category)?.label ?? build.category;
   return (
-    <Link href={`/builds/${build.slug}`} className="card">
+    <Link href={`/builds/${build.slug}`} className={`card${quiet ? " is-quiet" : ""}`} id={anchor}>
       <CardCover build={build} />
       <div className="card-body">
         <div className="card-title">
@@ -28,6 +28,7 @@ export function BuildCard({ build, topics }: { build: Build; topics: Topic[] }) 
         <p className="card-tag">{build.tagline}</p>
         <div className="card-badges">
           {build.licence ? <span className="badge mono">{build.licence}</span> : null}
+          {quiet ? <span className="badge quiet-tag">Quiet this week</span> : null}
           {build.roleCount > 0 ? (
             <span className="badge role">
               {build.roleCount} {build.roleCount === 1 ? "role" : "roles"} open

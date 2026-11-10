@@ -1,0 +1,15 @@
+apiVersion: orun.io/v1
+kind: TaskContract
+metadata:
+  name: OP-37
+spec:
+  goal: "Open builds shows 20 at a time with Load more, and can be searched, filtered and ranked."
+  affects:
+    - default/openproduct/web
+    - web/**
+    - tasks/**
+  doneWhen:
+    - "With more than 20 builds, the grid shows 20 and Load more adds the next 20, keeping the reader's place."
+    - "Search matches names, taglines, stacks and categories."
+    - "Filter chips combine with categories and the four rankings; tests cover the matching."
+  gates: []

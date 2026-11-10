@@ -7,7 +7,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { listArticles, type Article } from "@/lib/auth/articles";
 import { listLocalThreads } from "@/lib/auth/discussions";
-import { SORTS, type Sort } from "@/lib/directory";
+import { SORTS, parseFilters, parseShow, type Sort } from "@/lib/directory";
 import { loadThreads, mergeThreads, type Thread } from "@/lib/forum";
 import { database } from "@/lib/server/env";
 import { loadDirectoryHere, loadRolesHere } from "@/lib/server/directory-here";
@@ -16,7 +16,7 @@ import { SOURCE } from "@/lib/links";
 // The directory is read per request: it is the live list, not a snapshot.
 export const dynamic = "force-dynamic";
 
-type Search = Promise<{ sort?: string; cat?: string }>;
+type Search = Promise<{ sort?: string; cat?: string; q?: string; f?: string; show?: string }>;
 
 export default async function Home({ searchParams }: { searchParams: Search }) {
   const q = await searchParams;
@@ -59,7 +59,11 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
         <div className="home-cols">
           <div className="home-main">
             {dir.ok ? (
-              <OpenBuilds builds={dir.builds} topics={dir.topics} sort={sort} cat={cat} />
+              <OpenBuilds
+                builds={dir.builds}
+                topics={dir.topics}
+                view={{ sort, cat, q: (q.q ?? "").trim().slice(0, 80), filters: parseFilters(q.f), show: parseShow(q.show) }}
+              />
             ) : (
               <div className="unreachable section">
                 The directory could not be reached just now ({dir.reason}). Try again in a minute.
