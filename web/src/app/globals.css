@@ -796,3 +796,4 @@ a.channel-row .channel-text span { color: var(--link); font-weight: 600; }
 .listing-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 14px 0 0; padding: 10px 14px; border: 1px solid var(--ok-line); background: var(--ok-bg); border-radius: 12px; font-size: 14px; }
 .listing-bar.is-draft { border-color: var(--line-2); background: var(--warm-bg); }
 .btn[disabled] { opacity: .5; cursor: not-allowed; }
+.listing-activity { margin: 12px 0 0; font-size: 14px; color: var(--ink-2); }

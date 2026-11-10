@@ -32,7 +32,7 @@ if (!remove) {
   for (const [slug, repo, state, verified, tagline, category, stack, owner, others, hoursAgo] of listings) {
     const published = state === "published";
     sql(
-      `INSERT INTO listings (slug, repo, state, verify_code, verified_at, tagline, category, stack, description, licence, created_by, created_at, updated_at, published_at) VALUES (${q(slug)}, ${q(repo)}, ${q(state)}, ${q(`op-demo-${slug}`)}, ${verified ? q(at(hoursAgo - 1)) : "NULL"}, ${q(tagline)}, ${q(category)}, ${q(JSON.stringify(stack))}, ${q("Demo listing on stage: the maintainers shown here are demo builders.")}, ${published ? q("MIT") : "NULL"}, ${q(`demo-${owner}`)}, ${q(at(hoursAgo))}, ${q(at(hoursAgo))}, ${published ? q(at(hoursAgo - 2)) : "NULL"});`,
+      `INSERT INTO listings (slug, repo, state, verify_code, verified_at, tagline, category, stack, description, licence, created_by, created_at, updated_at, published_at) VALUES (${q(slug)}, ${q(repo)}, ${q(state)}, ${q(`op-demo-${slug}`)}, ${verified ? q(at(hoursAgo - 1)) : "NULL"}, ${q(tagline)}, ${q(category)}, ${q(JSON.stringify(stack))}, ${q("Demo listing on stage: the maintainers shown here are demo builders.")}, NULL, ${q(`demo-${owner}`)}, ${q(at(hoursAgo))}, ${q(at(hoursAgo))}, ${published ? q(at(hoursAgo - 2)) : "NULL"});`,
     );
     sql(`INSERT INTO listing_maintainers (slug, account_id, role, accepted_at) VALUES (${q(slug)}, ${q(`demo-${owner}`)}, 'owner', ${q(at(hoursAgo))});`);
     for (const o of others) sql(`INSERT INTO listing_maintainers (slug, account_id, role, accepted_at) VALUES (${q(slug)}, ${q(`demo-${o}`)}, 'maintainer', ${q(at(hoursAgo - 3))});`);
